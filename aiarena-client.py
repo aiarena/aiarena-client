@@ -13,7 +13,7 @@ import shutil
 count = 0
 
 # read config file
-with open('aiarena-client.json') as config_file:  
+with open('/home/aiarena/aiarena-client/aiarena-client.json') as config_file:  
     config = json.load(config_file)
 
 # print to console
