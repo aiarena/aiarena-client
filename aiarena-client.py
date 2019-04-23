@@ -10,6 +10,8 @@ import os
 import time
 import shutil
 
+count = 0
+
 # read config file
 with open('aiarena-client.json') as config_file:  
     config = json.load(config_file)
@@ -83,13 +85,26 @@ def getbotdata(botid):
             elif botrace == 'R':
                 bot_data['Race'] = 'Random'
 
-            bot_data['Type'] = bottype
             bot_data['RootPath'] = "/home/aiarena/aiarena-client/bots/" + botname
 
             if bottype == 'Python':
                 bot_data['FileName'] = 'run.py'
-            else:
+                bot_data['Type'] = 'Python'
+            elif bottype == 'cppwin32':
                 bot_data['FileName'] = botname + ".exe"
+                bot_data['Type'] = 'Wine'
+            elif bottype == 'cpplinux':
+                bot_data['FileName'] = botname
+                bot_data['Type'] = 'BinaryCpp'
+            elif bottype == 'dotnetcore':
+                bot_data['FileName'] = botname + ".dll"
+                bot_data['Type'] = 'DotNetCore'
+            elif bottype == 'java':
+                bot_data['FileName'] = botname + ".jar"
+                bot_data['Type'] = 'Java'
+            elif bottype == 'nodejs':
+                bot_data['FileName'] = botname + ".js"
+                bot_data['Type'] = 'NodeJS'
 
             return(botname, bot_data)
 
@@ -138,7 +153,7 @@ def getnextmatch():
         postresult(nextmatchid)
 
 def runmatch():
-    printout("Starting Game")
+    printout("Starting Game - Round " + str(count))
     subprocess.Popen(["/home/aiarena/aiarena-client/Sc2LadderServer","-e","/home/aiarena/StarCraftII/Versions/Base70154/SC2_x64"], stdout=DEVNULL, stderr=DEVNULL)
 
 def postresult(matchid):
@@ -150,12 +165,11 @@ def postresult(matchid):
             result = p['Result']
 
     # Collect the replayfile
-    for file in os.listdir("./replays"):
+    for file in os.listdir("/home/aiarena/aiarena-client/replays"):
         if file.endswith(".SC2Replay"):
-            print(os.path.join("./replays", file))
             replayfile = file
 
-    replay_file = {'file': open("replays/" + replayfile, 'rb')}
+    replay_file = {'replay_file': open("/home/aiarena/aiarena-client/replays/" + replayfile, 'rb')}
     payload = {'type': result, 'match': matchid, 'winner': winner}
     post = requests.post("https://ai-arena.net/api/results/", files=replay_file, data=payload, headers={'Authorization': "Token " + config['token']})
     print(post.text)
@@ -174,5 +188,9 @@ def cleanup():
     for dir in os.listdir("/home/aiarena/aiarena-client/bots"):
         shutil.rmtree("/home/aiarena/aiarena-client/bots/" + dir)
 
-# Start
-getnextmatch()
+while count <= 4:
+    count = count + 1
+    getnextmatch()
+
+printout("Stopping system")
+os.system('shutdown')
