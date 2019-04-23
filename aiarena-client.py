@@ -188,9 +188,10 @@ def cleanup():
     for dir in os.listdir("/home/aiarena/aiarena-client/bots"):
         shutil.rmtree("/home/aiarena/aiarena-client/bots/" + dir)
 
-while count <= 4:
+while count <= config['rounds']:
     count = count + 1
     getnextmatch()
 
-printout("Stopping system")
-os.system('shutdown')
+if config['shutdown'] == true:
+    printout("Stopping system")
+    os.system('sudo shutdown -h now')
