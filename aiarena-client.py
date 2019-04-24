@@ -111,7 +111,7 @@ def getbotdata(botid):
                 bot_data['FileName'] = botname + ".jar"
                 bot_data['Type'] = 'Java'
             elif bottype == 'nodejs':
-                bot_data['FileName'] = botname + ".js"
+                bot_data['FileName'] = "main.js"
                 bot_data['Type'] = 'NodeJS'
 
             return(botname, bot_data)
