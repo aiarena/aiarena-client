@@ -64,6 +64,14 @@ def getbotfile(botid):
                 printout("MD5 hash doesent match transferred file...")
                 return 0
 
+# Get bot id by name
+def getbotid(botname):
+    botresponse = requests.get('https://ai-arena.net/api/bots/', headers={'Authorization': "Token " + config['token']})
+    botdata = json.loads(botresponse.text)
+    for i in botdata:
+        if i['name'] == botname:
+            return i['id']
+
 # Get bot file from api by bot id
 def getbotdata(botid):
     botresponse = requests.get('https://ai-arena.net/api/bots/', headers={'Authorization': "Token " + config['token']})
@@ -170,9 +178,8 @@ def postresult(matchid):
             replayfile = file
 
     replay_file = {'replay_file': open("/home/aiarena/aiarena-client/replays/" + replayfile, 'rb')}
-    payload = {'type': result, 'match': matchid, 'winner': winner}
+    payload = {'type': result, 'match': int(matchid), 'winner': getbotid(winner)}
     post = requests.post("https://ai-arena.net/api/results/", files=replay_file, data=payload, headers={'Authorization': "Token " + config['token']})
-    print(post.text)
 
     cleanup()
 
