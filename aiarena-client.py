@@ -87,7 +87,7 @@ def getbotdata(botid):
 
             bot_data['RootPath'] = "/home/aiarena/aiarena-client/bots/" + botname
 
-            if bottype == 'Python':
+            if bottype == 'python':
                 bot_data['FileName'] = 'run.py'
                 bot_data['Type'] = 'Python'
             elif bottype == 'cppwin32':
