@@ -62,6 +62,7 @@ def getbotfile(botid):
                 zip_ref.close()
             else:
                 printout("MD5 hash (" + botmd5 + ") doesent match transferred file (" + hashlib.md5(file_as_bytes(open("/tmp/" + botname + ".zip", 'rb'))).hexdigest() + ")")
+                cleanup()
                 return 0
 
 # Get bot id by name
