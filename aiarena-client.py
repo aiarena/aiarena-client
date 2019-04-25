@@ -11,6 +11,9 @@ import time
 import shutil
 
 count = 0
+temppath = "/tmp/aiarena/"
+if not os.path.isdir(temppath):
+    os.mkdir(temppath)
 
 # read config file
 with open('/home/aiarena/aiarena-client/aiarena-client.json') as config_file:  
@@ -52,16 +55,16 @@ def getbotfile(botid):
             botmd5 = i['bot_zip_md5hash']
             r = requests.get(boturl)
             printout("Downloading bot " + botname)
-            with open("/tmp/" + botname + ".zip", 'wb') as f:
+            with open(temppath + botname + ".zip", 'wb') as f:
                 f.write(r.content)
-            if botmd5 == hashlib.md5(file_as_bytes(open("/tmp/" + botname + ".zip", 'rb'))).hexdigest():
+            if botmd5 == hashlib.md5(file_as_bytes(open(temppath + botname + ".zip", 'rb'))).hexdigest():
                 printout("MD5 hash matches transferred file...")
                 printout("Extracting bot " + botname + " to bots/" + botname)
-                zip_ref = zipfile.ZipFile("/tmp/" + botname + ".zip", 'r')
+                zip_ref = zipfile.ZipFile(temppath + botname + ".zip", 'r')
                 zip_ref.extractall("bots/" + botname)
                 zip_ref.close()
             else:
-                printout("MD5 hash (" + botmd5 + ") doesent match transferred file (" + hashlib.md5(file_as_bytes(open("/tmp/" + botname + ".zip", 'rb'))).hexdigest() + ")")
+                printout("MD5 hash (" + botmd5 + ") doesent match transferred file (" + hashlib.md5(file_as_bytes(open(temppath + botname + ".zip", 'rb'))).hexdigest() + ")")
                 cleanup()
                 return 0
 
@@ -196,6 +199,9 @@ def cleanup():
 
     for file in os.listdir("/home/aiarena/aiarena-client/replays"):
         os.remove("/home/aiarena/aiarena-client/replays/" + file)
+
+    for file in os.listdir(temppath):
+        os.remove(temppath + file)
 
     for dir in os.listdir("/home/aiarena/aiarena-client/bots"):
         shutil.rmtree("/home/aiarena/aiarena-client/bots/" + dir)
