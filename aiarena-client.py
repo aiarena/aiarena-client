@@ -199,6 +199,6 @@ while count <= config['rounds']:
     count = count + 1
     getnextmatch()
 
-if config['shutdown'] == true:
+if config['shutdown'] == "true":
     printout("Stopping system")
     os.system('sudo shutdown -h now')
