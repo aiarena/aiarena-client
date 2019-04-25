@@ -184,10 +184,14 @@ def postresult(matchid):
     cleanup()
 
 def cleanup():
-    os.remove("matchuplist")
-    os.remove("LadderBots.json")
-    os.remove("playerids")
-    os.remove("results.json")
+    if os.path.isfile("/home/aiarena/aiarena-client/matchuplist"):
+        os.remove("/home/aiarena/aiarena-client/matchuplist")
+    if os.path.isfile("/home/aiarena/aiarena-client/LadderBots.json"):
+        os.remove("/home/aiarena/aiarena-client/LadderBots.json")
+    if os.path.isfile("/home/aiarena/aiarena-client/playerids"):
+        os.remove("/home/aiarena/aiarena-client/playerids")
+    if os.path.isfile("/home/aiarena/aiarena-client/results.json"):
+        os.remove("/home/aiarena/aiarena-client/results.json")
 
     for file in os.listdir("/home/aiarena/aiarena-client/replays"):
         os.remove("/home/aiarena/aiarena-client/replays/" + file)
