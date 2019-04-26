@@ -1,3 +1,4 @@
+#!/home/aiarena/venv/bin/python
 import requests
 import json
 import datetime
