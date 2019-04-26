@@ -10,6 +10,7 @@ import os
 import time
 import shutil
 
+global count
 count = 0
 temppath = "/tmp/aiarena/"
 if not os.path.isdir(temppath):
@@ -127,6 +128,7 @@ def getbotdata(botid):
             return(botname, bot_data)
 
 def getnextmatch():
+    global count
     nextmatchresponse = requests.get('https://ai-arena.net/api/matches/next/', headers={'Authorization': "Token " + config['token']})
     nextmatchdata = json.loads(nextmatchresponse.text)
 
@@ -142,10 +144,12 @@ def getnextmatch():
     bot_0 = participantdata[0]['bot']
     if not getbotfile(bot_0):
         cleanup()
+        count = count - 1
         return
     bot_1 = participantdata[1]['bot']
     if not getbotfile(bot_1):
         cleanup()
+        count = count - 1
         return    
 
     (bot_0_name, bot_0_data) = getbotdata(bot_0)
