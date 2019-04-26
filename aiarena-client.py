@@ -15,6 +15,8 @@ temppath = "/tmp/aiarena/"
 if not os.path.isdir(temppath):
     os.mkdir(temppath)
 
+os.chdir("/home/aiarena/aiarena-client")
+
 # read config file
 with open('/home/aiarena/aiarena-client/aiarena-client.json') as config_file:  
     config = json.load(config_file)
