@@ -66,6 +66,7 @@ def getbotfile(botid):
                 zip_ref = zipfile.ZipFile(temppath + botname + ".zip", 'r')
                 zip_ref.extractall("bots/" + botname)
                 zip_ref.close()
+                return 1
             else:
                 printout("MD5 hash (" + botmd5 + ") doesent match transferred file (" + hashlib.md5(file_as_bytes(open(temppath + botname + ".zip", 'rb'))).hexdigest() + ")")
                 cleanup()
@@ -137,9 +138,13 @@ def getnextmatch():
     participantdata = json.loads(participantresponse.text)
 
     bot_0 = participantdata[0]['bot']
-    getbotfile(bot_0)
+    if not getbotfile(bot_0):
+        cleanup()
+        return
     bot_1 = participantdata[1]['bot']
-    getbotfile(bot_1)
+    if not getbotfile(bot_1):
+        cleanup()
+        return    
 
     (bot_0_name, bot_0_data) = getbotdata(bot_0)
     (bot_1_name, bot_1_data) = getbotdata(bot_1)
