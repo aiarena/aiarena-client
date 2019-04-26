@@ -183,6 +183,7 @@ def runmatch():
     subprocess.Popen(["/home/aiarena/aiarena-client/Sc2LadderServer","-e","/home/aiarena/StarCraftII/Versions/Base70154/SC2_x64"], stdout=DEVNULL, stderr=DEVNULL)
 
 def postresult(matchid):
+    global count
     # Parse results.json
     with open('/home/aiarena/aiarena-client/results.json') as results_json_file:  
         resultdata = json.load(results_json_file)
