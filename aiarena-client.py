@@ -196,7 +196,7 @@ def postresult(matchid):
             replayfile = file
 
     replay_file = {'replay_file': open("/home/aiarena/aiarena-client/replays/" + replayfile, 'rb')}
-    payload = {'type': result, 'match': int(matchid), 'winner': getbotid(winner), 'gametime': gametime}
+    payload = {'type': result, 'match': int(matchid), 'winner': getbotid(winner), 'duration': gametime}
     post = requests.post("https://ai-arena.net/api/results/", files=replay_file, data=payload, headers={'Authorization': "Token " + config['token']})
 
     cleanup()
