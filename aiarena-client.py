@@ -193,7 +193,12 @@ def postresult(matchid):
             result = p['Result']
             gametime = p['GameTime']
 
-    if result == 'Error':
+    if result == 'InitializationError':
+        cleanup()
+        count = count - 1
+        return
+
+    if winner == 'Error':
         cleanup()
         count = count - 1
         return
