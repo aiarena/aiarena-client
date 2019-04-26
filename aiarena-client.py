@@ -222,4 +222,6 @@ while count <= config['rounds']:
 
 if config['shutdown'] == "true":
     printout("Stopping system")
-    os.system('sudo shutdown -h now')
+    f = open("/home/aiarena/aiarena-client/.shutdown","w")
+    f.write("Shutdown")
+    f.close()
