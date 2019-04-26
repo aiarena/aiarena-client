@@ -19,11 +19,14 @@ if not os.path.isdir(temppath):
 with open('/home/aiarena/aiarena-client/aiarena-client.json') as config_file:  
     config = json.load(config_file)
 
-# print to console
+# print to console and log
 def printout(text):
     now = datetime.datetime.now()
-    print(colored(config['id'], 'red') + " " + colored(now.strftime("%Y-%m-%d %H:%M:%S"), 'yellow') + " " + colored(text, 'green'))
-
+    print(colored(now.strftime("%b %d %H:%M:%S"), 'yellow') + " " + colored(config['id'], 'red') + " " + colored(text, 'green'))
+    f = open("/home/aiarena/aiarena-client/aiarena-client.log","a+")
+    f.write(now.strftime("%b %d %H:%M:%S") + " " + config['id'] + " " + text + "\n")
+    f.close()
+    
 # Get map file from api by map id
 def getmapfile(mapid):
     mapresponse = requests.get('https://ai-arena.net/api/maps/', headers={'Authorization': "Token " + config['token']})
