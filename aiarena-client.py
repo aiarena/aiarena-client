@@ -191,6 +191,11 @@ def postresult(matchid):
             result = p['Result']
             gametime = p['GameTime']
 
+    if result == 'Error':
+        cleanup()
+        count = count - 1
+        return
+
     # Collect the replayfile
     for file in os.listdir("/home/aiarena/aiarena-client/replays"):
         if file.endswith(".SC2Replay"):
