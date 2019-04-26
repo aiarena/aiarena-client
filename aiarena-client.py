@@ -189,6 +189,7 @@ def postresult(matchid):
         for p in resultdata['Results']:
             winner = p['Winner']
             result = p['Result']
+            gametime = p['GameTime']
 
     # Collect the replayfile
     for file in os.listdir("/home/aiarena/aiarena-client/replays"):
