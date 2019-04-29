@@ -20,7 +20,7 @@ if not os.path.isdir(temppath):
 os.chdir("/home/aiarena/aiarena-client")
 
 # read config file
-with open('/home/aiarena/aiarena-client/aiarena-client.json') as config_file:  
+with open('/home/aiarena/aiarena-client/aiarena-client.json') as config_file:
     config = json.load(config_file)
 
 # print to console and log
@@ -30,19 +30,19 @@ def printout(text):
     f = open("/home/aiarena/aiarena-client/aiarena-client.log","a+")
     f.write(now.strftime("%b %d %H:%M:%S") + " " + config['id'] + " " + text + "\n")
     f.close()
-    
+
 # Get map file from api by map id
 def getmapfile(mapid):
     mapresponse = requests.get('https://ai-arena.net/api/maps/', headers={'Authorization': "Token " + config['token']})
     mapdata = json.loads(mapresponse.text)
 
-    for i in mapdata:
+    for i in mapdata['results']:
         if i['id'] == mapid:
             mapname = i['name']
             mapurl = i['file']
             r = requests.get(mapurl)
             printout("Downloading map " + mapname)
-            with open("/home/aiarena/StarCraftII/maps/" + mapname + ".SC2Map", 'wb') as f:  
+            with open("/home/aiarena/StarCraftII/maps/" + mapname + ".SC2Map", 'wb') as f:
                 f.write(r.content)
             return mapname
 
@@ -55,7 +55,7 @@ def file_as_bytes(file):
 def getbotfile(botid):
     botresponse = requests.get('https://ai-arena.net/api/bots/', headers={'Authorization': "Token " + config['token']})
     botdata = json.loads(botresponse.text)
-    for i in botdata:
+    for i in botdata['results']:
         if i['id'] == botid:
             botname = i['name']
             boturl = i['bot_zip']
@@ -80,7 +80,7 @@ def getbotfile(botid):
 def getbotid(botname):
     botresponse = requests.get('https://ai-arena.net/api/bots/', headers={'Authorization': "Token " + config['token']})
     botdata = json.loads(botresponse.text)
-    for i in botdata:
+    for i in botdata['results']:
         if i['name'] == botname:
             return i['id']
 
@@ -88,7 +88,7 @@ def getbotid(botname):
 def getbotdata(botid):
     botresponse = requests.get('https://ai-arena.net/api/bots/', headers={'Authorization': "Token " + config['token']})
     botdata = json.loads(botresponse.text)
-    for i in botdata:
+    for i in botdata['results']:
         if i['id'] == botid:
             botname = i['name']
             botrace = i['plays_race']
@@ -142,16 +142,16 @@ def getnextmatch():
     participantresponse = requests.get("https://ai-arena.net/api/participants/?match=" + str(nextmatchid), headers={'Authorization': "Token " + config['token']})
     participantdata = json.loads(participantresponse.text)
 
-    bot_0 = participantdata[0]['bot']
+    bot_0 = participantdata['results'][0]['bot']
     if not getbotfile(bot_0):
         cleanup()
         count = count - 1
         return
-    bot_1 = participantdata[1]['bot']
+    bot_1 = participantdata['results'][1]['bot']
     if not getbotfile(bot_1):
         cleanup()
         count = count - 1
-        return    
+        return
 
     (bot_0_name, bot_0_data) = getbotdata(bot_0)
     (bot_1_name, bot_1_data) = getbotdata(bot_1)
@@ -186,7 +186,7 @@ def runmatch():
 def postresult(matchid):
     global count
     # Parse results.json
-    with open('/home/aiarena/aiarena-client/results.json') as results_json_file:  
+    with open('/home/aiarena/aiarena-client/results.json') as results_json_file:
         resultdata = json.load(results_json_file)
         for p in resultdata['Results']:
             winner = p['Winner']
