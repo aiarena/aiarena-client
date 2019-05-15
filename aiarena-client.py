@@ -42,10 +42,10 @@ def getbotfile(bot):
     botname = bot['name']
     boturl = bot['bot_zip']
     botmd5 = bot['bot_zip_md5hash']
+    printout("Downloading bot " + botname)
     botdataurl = bot['bot_data']
     botdatamd5 = bot['bot_data_md5hash']
     r = requests.get(boturl)
-    printout("Downloading bot " + botname)
     with open(temppath + botname + ".zip", 'wb') as f:
         f.write(r.content)
     if botmd5 == hashlib.md5(file_as_bytes(open(temppath + botname + ".zip", 'rb'))).hexdigest():
@@ -65,10 +65,13 @@ def getbotfile(bot):
 # Get bot data
 def getbotdatafile(bot):
     botname = bot['name']
+    if bot['bot_data'] == None:
+        return 1
+
     botdataurl = bot['bot_data']
     botdatamd5 = bot['bot_data_md5hash']
-    r = requests.get(botdataurl)
     printout("Downloading bot data for " + botname)
+    r = requests.get(botdataurl)
     with open(temppath + botname + "-data.zip", 'wb') as f:
         f.write(r.content)
     if botdatamd5 == hashlib.md5(file_as_bytes(open(temppath + botname + "-data.zip", 'rb'))).hexdigest():
