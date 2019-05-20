@@ -259,3 +259,4 @@ if config['shutdown'] == "true":
     f = open("/home/aiarena/aiarena-client/.shutdown","w")
     f.write("Shutdown")
     f.close()
+    
