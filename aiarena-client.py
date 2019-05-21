@@ -56,7 +56,7 @@ def getbotfile(bot):
     with open(bot_download_path, "wb") as f:
         f.write(r.content)
     # Load bot from .zip to calculate md5
-    with open(bot_download_path) as f:
+    with open(bot_download_path, "rb") as f:
         calculated_md5 = hashlib.md5(file_as_bytes(f)).hexdigest()
     if botmd5 == calculated_md5:
         printout("MD5 hash matches transferred file...")
@@ -88,7 +88,7 @@ def getbotdatafile(bot):
     bot_data_path = os.path.join(temppath, botname + "-data.zip")
     with open(bot_data_path, "wb") as f:
         f.write(r.content)
-    with open(bot_data_path) as f:
+    with open(bot_data_path, "rb") as f:
         calculated_md5 = hashlib.md5(file_as_bytes(f)).hexdigest()
     if botdatamd5 == calculated_md5:
         printout("MD5 hash matches transferred file...")
