@@ -107,6 +107,7 @@ def getbotdata(bot):
     botname = bot["name"]
     botrace = bot["plays_race"]
     bottype = bot["type"]
+    botid = bot["game_display_id"]
 
     race_map = {"P": "Protoss", "T": "Terran", "Z": "Zerg", "R": "Random"}
     bot_type_map = {
@@ -123,6 +124,7 @@ def getbotdata(bot):
         "RootPath": f"/home/aiarena/aiarena-client/bots/{botname}",
         "FileName": bot_type_map[bottype][0],
         "Type": bot_type_map[bottype][1],
+        "botID": botid,
     }
     return botname, bot_data
 
@@ -175,9 +177,16 @@ def getnextmatch():
     # Write LadderBots.json file
     ladderbots = {"Bots": {bot_0_name: bot_0_data, bot_1_name: bot_1_data}}
     ladderbots_json = json.dumps(ladderbots, indent=4, sort_keys=True)
+    bot_0_game_display_id = bot_0_data['botID']
+    bot_1_game_display_id = bot_1_data['botID']
+    game_display_id = {bot_0_name: bot_0_game_display_id, bot_1_name: bot_1_game_display_id}
+    game_display_id_json = json.dumps(game_display_id, indent=4, sort_keys=True)
 
     with open("LadderBots.json", "w") as f:
         f.write(ladderbots_json)
+
+    with open("playerids", "w") as f:
+        f.write(game_display_id_json)
 
     runmatch()
 
