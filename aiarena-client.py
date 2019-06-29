@@ -226,6 +226,7 @@ def postresult(match):
             replayfile = file
             break
     replay_file_path = os.path.join(replay_folder, replayfile)
+    os.system("perl /home/aiarena/aiarena-client/replaycheck.pl " + replay_file_path)
 
     bot_1_name = match["bot1"]["name"]
     bot_2_name = match["bot2"]["name"]
