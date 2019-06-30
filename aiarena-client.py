@@ -268,6 +268,7 @@ def cleanup():
         "/home/aiarena/aiarena-client/LadderBots.json",
         "/home/aiarena/aiarena-client/playerids",
         "/home/aiarena/aiarena-client/results.json",
+        "/home/aiarena/aiarena-client/replay.json",
     ]
 
     for file in files:
