@@ -11,9 +11,10 @@ import os
 import time
 import shutil
 from pathlib import Path
+import zipfile
 
 global count
-count = 1
+count = 0
 
 this_folder = os.path.dirname(__file__)
 temppath = "/tmp/aiarena/"
@@ -245,6 +246,14 @@ def postresult(match):
     else:
         Path(temppath + bot_2_name + "-error.log").touch()
 
+    zip_file = zipfile.ZipFile(temppath + bot_1_name + "-error.zip", 'w')
+    zip_file.write(temppath + bot_1_name + "-error.log", compress_type=zipfile.ZIP_DEFLATED)
+    zip_file.close()
+
+    zip_file = zipfile.ZipFile(temppath + bot_2_name + "-error.zip", 'w')
+    zip_file.write(temppath + bot_2_name + "-error.log", compress_type=zipfile.ZIP_DEFLATED)
+    zip_file.close()
+
     # Create downloable data archives
     if not os.path.isdir(bot1_data_folder):
         os.mkdir(bot1_data_folder)
@@ -271,8 +280,8 @@ def postresult(match):
         printout(result + " - Result transferred")
     else:
         file_list = {
-            "bot1_log": open(temppath + match["bot1"]["name"] + "-error.log", "rb"),
-            "bot2_log": open(temppath + match["bot2"]["name"] + "-error.log", "rb"),
+            "bot1_log": open(temppath + match["bot1"]["name"] + "-error.zip", "rb"),
+            "bot2_log": open(temppath + match["bot2"]["name"] + "-error.zip", "rb"),
         }
         payload = {"type": result, "match": int(match["id"]), "duration": gametime}
         post = requests.post(results_website, files=file_list, data=payload, headers={"Authorization": "Token " + config["token"]})
