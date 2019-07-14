@@ -270,8 +270,8 @@ def postresult(match):
             "replay_file": open(replay_file_path, "rb"),
             "bot1_data": open(temppath + match["bot1"]["name"] + "-data.zip", "rb"),
             "bot2_data": open(temppath + match["bot2"]["name"] + "-data.zip", "rb"),
-            "bot1_log": open(temppath + match["bot1"]["name"] + "-error.log", "rb"),
-            "bot2_log": open(temppath + match["bot2"]["name"] + "-error.log", "rb"),
+            "bot1_log": open(temppath + match["bot1"]["name"] + "-error.zip", "rb"),
+            "bot2_log": open(temppath + match["bot2"]["name"] + "-error.zip", "rb"),
         }
         payload = {"type": result, "match": int(match["id"]), "duration": gametime}
         post = requests.post(
