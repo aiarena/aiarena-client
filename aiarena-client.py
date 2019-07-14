@@ -10,9 +10,10 @@ from subprocess import DEVNULL
 import os
 import time
 import shutil
+from pathlib import Path
 
 global count
-count = 0
+count = 1
 
 this_folder = os.path.dirname(__file__)
 temppath = "/tmp/aiarena/"
@@ -233,6 +234,17 @@ def postresult(match):
     bot1_data_folder = f"/home/aiarena/aiarena-client/bots/{bot_1_name}/data"
     bot2_data_folder = f"/home/aiarena/aiarena-client/bots/{bot_2_name}/data"
 
+    # Move the error log to temp
+    if os.path.isfile("/home/aiarena/aiarena-client/bots/" + bot_1_name + "/data/stderr.log"):
+        shutil.move("/home/aiarena/aiarena-client/bots/" + bot_1_name + "/data/stderr.log", temppath + bot_1_name + "-error.log")
+    else:
+        Path(temppath + bot_1_name + "-error.log").touch()
+
+    if os.path.isfile("/home/aiarena/aiarena-client/bots/" + bot_2_name + "/data/stderr.log"):
+        shutil.move("/home/aiarena/aiarena-client/bots/" + bot_2_name + "/data/stderr.log", temppath + bot_2_name + "-error.log")
+    else:
+        Path(temppath + bot_2_name + "-error.log").touch()
+
     # Create downloable data archives
     if not os.path.isdir(bot1_data_folder):
         os.mkdir(bot1_data_folder)
@@ -249,6 +261,8 @@ def postresult(match):
             "replay_file": open(replay_file_path, "rb"),
             "bot1_data": open(temppath + match["bot1"]["name"] + "-data.zip", "rb"),
             "bot2_data": open(temppath + match["bot2"]["name"] + "-data.zip", "rb"),
+            "bot1_log": open(temppath + match["bot1"]["name"] + "-error.log", "rb"),
+            "bot2_log": open(temppath + match["bot2"]["name"] + "-error.log", "rb"),
         }
         payload = {"type": result, "match": int(match["id"]), "duration": gametime}
         post = requests.post(
@@ -256,8 +270,12 @@ def postresult(match):
         )
         printout(result + " - Result transferred")
     else:
+        file_list = {
+            "bot1_log": open(temppath + match["bot1"]["name"] + "-error.log", "rb"),
+            "bot2_log": open(temppath + match["bot2"]["name"] + "-error.log", "rb"),
+        }
         payload = {"type": result, "match": int(match["id"]), "duration": gametime}
-        post = requests.post(results_website, data=payload, headers={"Authorization": "Token " + config["token"]})
+        post = requests.post(results_website, files=file_list, data=payload, headers={"Authorization": "Token " + config["token"]})
         printout(result + " - Result transferred")
 
 
