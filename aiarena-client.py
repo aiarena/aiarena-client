@@ -218,6 +218,9 @@ def postresult(match):
     for p in resultdata["Results"]:
         result = p["Result"]
         gametime = p["GameTime"]
+        realtime_duration = p['realtime_duration']
+        bot1_avg_step_time = p['bot1_avg_step_time']
+        bot2_avg_step_time = p['bot2_avg_step_time']
 
     replay_folder = "/home/aiarena/aiarena-client/replays"
 
@@ -273,7 +276,7 @@ def postresult(match):
             "bot1_log": open(temppath + match["bot1"]["name"] + "-error.zip", "rb"),
             "bot2_log": open(temppath + match["bot2"]["name"] + "-error.zip", "rb"),
         }
-        payload = {"type": result, "match": int(match["id"]), "duration": gametime}
+        payload = {"type": result, "match": int(match["id"]), "game_steps": gametime, "realtime_duration": realtime_duration, "bot1_avg_step_time": bot1_avg_step_time, "bot2_avg_step_time": bot2_avg_step_time }
         post = requests.post(
             results_website, files=file_list, data=payload, headers={"Authorization": "Token " + config["token"]}
         )
@@ -283,7 +286,8 @@ def postresult(match):
             "bot1_log": open(temppath + match["bot1"]["name"] + "-error.zip", "rb"),
             "bot2_log": open(temppath + match["bot2"]["name"] + "-error.zip", "rb"),
         }
-        payload = {"type": result, "match": int(match["id"]), "duration": gametime}
+        payload = {"type": result, "match": int(match["id"]), "game_steps": gametime, "realtime_duration": realtime_duration, "bot1_avg_step_time": bot1_avg_step_time, "bot2_avg_step_time": bot2_avg_step_time }
+        
         post = requests.post(results_website, files=file_list, data=payload, headers={"Authorization": "Token " + config["token"]})
         printout(result + " - Result transferred")
 
