@@ -218,9 +218,9 @@ def postresult(match):
     for p in resultdata["Results"]:
         result = p["Result"]
         gametime = p["GameTime"]
-        realtime_duration = p['realtime_duration']
-        bot1_avg_step_time = p['bot1_avg_step_time']
-        bot2_avg_step_time = p['bot2_avg_step_time']
+        realtime_duration = p['TimeStamp']
+        bot1_avg_step_time = p['Bot1AvgFrame']
+        bot2_avg_step_time = p['Bot2AvgFrame']
 
     replay_folder = "/home/aiarena/aiarena-client/replays"
 
