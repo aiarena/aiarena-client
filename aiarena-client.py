@@ -22,10 +22,6 @@ except ImportError as e:
     else:
         raise
 
-global count
-count = 0
-
-
 # Print to console and log
 def printout(text):
     now = datetime.datetime.now()
@@ -130,8 +126,7 @@ def getbotdata(bot):
     return botname, bot_data
 
 
-def getnextmatch():
-    global count
+def getnextmatch(count):
     try:
         nextmatchresponse = requests.post(
             config.API_MATCHES_URL, headers={"Authorization": "Token " + config.API_TOKEN}
@@ -139,25 +134,19 @@ def getnextmatch():
     except ConnectionError as ce:
         printout(f"ERROR: Failed to retrieve game. Connection to website failed. Sleeping.")
         time.sleep(30)
-        cleanup()
-        count -= 1
-        return
+        return False
 
     if nextmatchresponse.status_code >= 400:
         printout(f"ERROR: Failed to retrieve game. Status code: {nextmatchresponse.status_code}. Sleeping.")
         time.sleep(30)
-        cleanup()
-        count -= 1
-        return
+        return False
 
     nextmatchdata = json.loads(nextmatchresponse.text)
 
     if "id" not in nextmatchdata:
         printout("No games available - sleeping")
         time.sleep(30)
-        cleanup()
-        count -= 1
-        return
+        return False
 
     nextmatchid = nextmatchdata["id"]
     printout(f"Next match: {nextmatchid}")
@@ -171,9 +160,7 @@ def getnextmatch():
         r = requests.get(mapurl)
     except:
         printout(f"ERROR: Failed to download map {mapname} at URL {mapurl}.")
-        count -= 1
-        cleanup()
-        return
+        return False
 
     map_path = os.path.join(config.SC2_HOME, f"maps/{mapname}.SC2Map")
     with open(map_path, "wb") as f:
@@ -181,14 +168,10 @@ def getnextmatch():
 
     bot_0 = nextmatchdata["bot1"]
     if not getbotfile(bot_0):
-        count -= 1
-        cleanup()
-        return
+        return False
     bot_1 = nextmatchdata["bot2"]
     if not getbotfile(bot_1):
-        count -= 1
-        cleanup()
-        return
+        return False
 
     bot_0_name, bot_0_data = getbotdata(bot_0)
     bot_1_name, bot_1_data = getbotdata(bot_1)
@@ -213,7 +196,7 @@ def getnextmatch():
     with open("playerids", "w") as f:
         f.write(game_display_id_json)
 
-    runmatch()
+    runmatch(count)
 
     # Wait for result.json
     while not os.path.exists(config.SC2LADDERSERVER_RESULTS_FILE):
@@ -223,8 +206,10 @@ def getnextmatch():
         printout("Game finished")
         postresult(nextmatchdata)
 
+    return True  # success!
 
-def runmatch():
+
+def runmatch(count):
     printout(f"Starting Game - Round {count}")
     subprocess.Popen(
         [config.SC2LADDERSERVER_BINARY, "-e", config.SC2_BINARY],
@@ -363,12 +348,19 @@ try:
 
     os.chdir(config.WORKING_DIRECTORY)
 
+    count = 0
     while count <= config.ROUNDS_PER_RUN:
-        count += 1
         cleanup()
-        getnextmatch()
+        if getnextmatch(count):
+            count += 1
+
 except Exception as e:
     printout(f"arena-client encountered an uncaught exception: {e} Exiting...")
+finally:
+    try:
+        cleanup()  # be polite and try to cleanup
+    except:
+        pass
 
 try:
     if config.SHUT_DOWN_AFTER_RUN:
