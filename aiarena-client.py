@@ -268,6 +268,26 @@ def postresult(match):
     zip_file.write(config.TEMP_PATH + bot_2_name + "-error.log", compress_type=zipfile.ZIP_DEFLATED)
     zip_file.close()
 
+    # sc2ladderserver logs
+    sc2ladderserver_stdout_log_tmp = os.path.join(config.TEMP_PATH, "sc2ladderserver_stdout.log")
+    sc2ladderserver_stderr_log_tmp = os.path.join(config.TEMP_PATH, "sc2ladderserver_stderr.log")
+    sc2ladderserver_log_zip = os.path.join(config.TEMP_PATH, "sc2ladderserver_log.zip")
+
+    if os.path.isfile(config.SC2LADDERSERVER_STDOUT_FILE):
+        shutil.move(config.SC2LADDERSERVER_STDOUT_FILE, sc2ladderserver_stdout_log_tmp)
+    else:
+        Path(sc2ladderserver_stdout_log_tmp).touch()
+
+    if os.path.isfile(config.SC2LADDERSERVER_STDERR_FILE):
+        shutil.move(config.SC2LADDERSERVER_STDERR_FILE, sc2ladderserver_stderr_log_tmp)
+    else:
+        Path(sc2ladderserver_stderr_log_tmp).touch()
+
+    zip_file = zipfile.ZipFile(sc2ladderserver_log_zip, 'w')
+    zip_file.write(sc2ladderserver_stdout_log_tmp, compress_type=zipfile.ZIP_DEFLATED)
+    zip_file.write(sc2ladderserver_stderr_log_tmp, compress_type=zipfile.ZIP_DEFLATED)
+    zip_file.close()
+
     # Create downloable data archives
     if not os.path.isdir(bot1_data_folder):
         os.mkdir(bot1_data_folder)
@@ -287,6 +307,7 @@ def postresult(match):
                 "bot2_data": open(os.path.join(config.TEMP_PATH, f"{bot_2_name}-data.zip"), "rb"),
                 "bot1_log": open(os.path.join(config.TEMP_PATH, f"{bot_1_name}-error.zip"), "rb"),
                 "bot2_log": open(os.path.join(config.TEMP_PATH, f"{bot_2_name}-error.zip"), "rb"),
+                "arenaclient_log": open(sc2ladderserver_log_zip, "rb"),
             }
             payload = {"type": result, "match": int(match["id"]), "game_steps": gametime,
                        "bot1_avg_step_time": bot1_avg_step_time, "bot2_avg_step_time": bot2_avg_step_time}
