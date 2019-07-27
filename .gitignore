@@ -1,7 +1,14 @@
 Sc2LadderServer
+Sc2LadderServer.exe
 LadderBots.json
 LadderManager.json
 aiarena-client.json
+matchuplist
+playerids
+sc2ladderserver_stderr.log
+sc2ladderserver_stdout.log
+aiarena-client.log
+
 bots/
 replays/
 
