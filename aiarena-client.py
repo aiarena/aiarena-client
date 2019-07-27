@@ -211,11 +211,12 @@ def getnextmatch(count):
 
 def runmatch(count):
     printout(f"Starting Game - Round {count}")
-    subprocess.Popen(
-        [config.SC2LADDERSERVER_BINARY, "-e", config.SC2_BINARY],
-        stdout=DEVNULL,
-        stderr=DEVNULL,
-    )
+    with open(config.SC2LADDERSERVER_STDOUT_FILE,"wb") as stdout, open(config.SC2LADDERSERVER_STDERR_FILE,"wb") as stderr:
+        subprocess.Popen(
+            [config.SC2LADDERSERVER_BINARY, "-e", config.SC2_BINARY],
+            stdout=stdout,
+            stderr=stderr,
+        )
 
 
 def postresult(match):
@@ -320,6 +321,8 @@ def cleanup():
         config.SC2LADDERSERVER_LADDERBOTS_FILE,
         config.SC2LADDERSERVER_PLAYERIDS_FILE,
         config.SC2LADDERSERVER_RESULTS_FILE,
+        config.SC2LADDERSERVER_STDOUT_FILE,
+        config.SC2LADDERSERVER_STDERR_FILE,
         config.REPLAY_CHECK_JSON_FILE,
     ]
 
