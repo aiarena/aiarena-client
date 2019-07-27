@@ -118,7 +118,7 @@ def getbotdata(bot):
 
     bot_data = {
         "Race": race_map[botrace],
-        "RootPath": os.path.join(config.WORKING_DIRECTORY, f"bots/{botname}"),
+        "RootPath": os.path.join(config.WORKING_DIRECTORY, f"bots", "{botname}"),
         "FileName": bot_type_map[bottype][0],
         "Type": bot_type_map[bottype][1],
         "botID": botid,
