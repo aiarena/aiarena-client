@@ -1,41 +1,40 @@
 #!/home/aiarena/venv/bin/python
-import requests
-import json
 import datetime
-from termcolor import colored
-import zipfile
 import hashlib
-import subprocess
-from subprocess import DEVNULL
+import json
 import os
-import time
 import shutil
-from pathlib import Path
+import subprocess
+import time
 import zipfile
+from pathlib import Path
+from subprocess import DEVNULL
+
+import requests
+from requests.exceptions import ConnectionError
+from termcolor import colored
+
+try:
+    import config
+except ImportError as e:
+    if e.name == 'config':
+        raise Exception('ERROR: No config.py file found.')
+    else:
+        raise
 
 global count
 count = 0
 
-this_folder = os.path.dirname(__file__)
-temppath = "/tmp/aiarena/"
-# Make temporary subfolder
-os.makedirs(temppath, exist_ok=True)
-
-os.chdir("/home/aiarena/aiarena-client")
-
-# Read config file
-with open("/home/aiarena/aiarena-client/aiarena-client.json") as config_file:
-    config = json.load(config_file)
 
 # Print to console and log
 def printout(text):
     now = datetime.datetime.now()
-    infos = [now.strftime("%b %d %H:%M:%S"), config["id"], text]
+    infos = [now.strftime("%b %d %H:%M:%S"), config.ARENA_CLIENT_ID, text]
     # Maps yellow to the first info, red to the second, green for the text
     colors = ["yellow", "red", "green"]
     colored_infos = " ".join(colored(info, color) for info, color in zip(infos, colors))
     print(colored_infos)
-    with open("/home/aiarena/aiarena-client/aiarena-client.log", "a+") as f:
+    with open(config.LOG_FILE, "a+") as f:
         line = " ".join(infos) + "\n"
         f.write(line)
 
@@ -53,8 +52,8 @@ def getbotfile(bot):
     botmd5 = bot["bot_zip_md5hash"]
     printout(f"Downloading bot {botname}")
     # Download bot and save to .zip
-    r = requests.get(boturl, headers={"Authorization": "Token " + config["token"]})
-    bot_download_path = os.path.join(temppath, botname + ".zip")
+    r = requests.get(boturl, headers={"Authorization": "Token " + config.API_TOKEN})
+    bot_download_path = os.path.join(config.TEMP_PATH, botname + ".zip")
     with open(bot_download_path, "wb") as f:
         f.write(r.content)
     # Load bot from .zip to calculate md5
@@ -86,8 +85,8 @@ def getbotdatafile(bot):
     botdatamd5 = bot["bot_data_md5hash"]
     printout(f"Downloading bot data for {botname}")
     # Download bot data and save to .zip
-    r = requests.get(botdataurl, headers={"Authorization": "Token " + config["token"]})
-    bot_data_path = os.path.join(temppath, botname + "-data.zip")
+    r = requests.get(botdataurl, headers={"Authorization": "Token " + config.API_TOKEN})
+    bot_data_path = os.path.join(config.TEMP_PATH, botname + "-data.zip")
     with open(bot_data_path, "wb") as f:
         f.write(r.content)
     with open(bot_data_path, "rb") as f:
@@ -123,7 +122,7 @@ def getbotdata(bot):
 
     bot_data = {
         "Race": race_map[botrace],
-        "RootPath": f"/home/aiarena/aiarena-client/bots/{botname}",
+        "RootPath": os.path.join(config.WORKING_DIRECTORY, f"bots/{botname}"),
         "FileName": bot_type_map[bottype][0],
         "Type": bot_type_map[bottype][1],
         "botID": botid,
@@ -133,9 +132,24 @@ def getbotdata(bot):
 
 def getnextmatch():
     global count
-    nextmatchresponse = requests.post(
-        "https://ai-arena.net/api/arenaclient/matches/", headers={"Authorization": "Token " + config["token"]}
-    )
+    try:
+        nextmatchresponse = requests.post(
+            config.API_MATCHES_URL, headers={"Authorization": "Token " + config.API_TOKEN}
+        )
+    except ConnectionError as ce:
+        printout(f"ERROR: Failed to retrieve game. Connection to website failed. Sleeping.")
+        time.sleep(30)
+        cleanup()
+        count -= 1
+        return
+
+    if nextmatchresponse.status_code >= 400:
+        printout(f"ERROR: Failed to retrieve game. Status code: {nextmatchresponse.status_code}. Sleeping.")
+        time.sleep(30)
+        cleanup()
+        count -= 1
+        return
+
     nextmatchdata = json.loads(nextmatchresponse.text)
 
     if "id" not in nextmatchdata:
@@ -148,11 +162,20 @@ def getnextmatch():
     nextmatchid = nextmatchdata["id"]
     printout(f"Next match: {nextmatchid}")
 
+    # Download map
     mapname = nextmatchdata["map"]["name"]
     mapurl = nextmatchdata["map"]["file"]
-    r = requests.get(mapurl)
     printout(f"Downloading map {mapname}")
-    map_path = f"/home/aiarena/StarCraftII/maps/{mapname}.SC2Map"
+
+    try:
+        r = requests.get(mapurl)
+    except:
+        printout(f"ERROR: Failed to download map {mapname} at URL {mapurl}.")
+        count -= 1
+        cleanup()
+        return
+
+    map_path = os.path.join(config.SC2_HOME, f"maps/{mapname}.SC2Map")
     with open(map_path, "wb") as f:
         f.write(r.content)
 
@@ -193,10 +216,10 @@ def getnextmatch():
     runmatch()
 
     # Wait for result.json
-    while not os.path.exists("/home/aiarena/aiarena-client/results.json"):
+    while not os.path.exists(config.SC2LADDERSERVER_RESULTS_FILE):
         time.sleep(1)
 
-    if os.path.isfile("/home/aiarena/aiarena-client/results.json"):
+    if os.path.isfile(config.SC2LADDERSERVER_RESULTS_FILE):
         printout("Game finished")
         postresult(nextmatchdata)
 
@@ -204,7 +227,7 @@ def getnextmatch():
 def runmatch():
     printout(f"Starting Game - Round {count}")
     subprocess.Popen(
-        ["/home/aiarena/aiarena-client/Sc2LadderServer", "-e", "/home/aiarena/StarCraftII/Versions/Base70154/SC2_x64"],
+        [config.SC2LADDERSERVER_BINARY, "-e", config.SC2_BINARY],
         stdout=DEVNULL,
         stderr=DEVNULL,
     )
@@ -213,7 +236,7 @@ def runmatch():
 def postresult(match):
     global count
     # Parse results.json
-    with open("/home/aiarena/aiarena-client/results.json") as results_json_file:
+    with open(config.REPLAY_CHECK_JSON_FILE) as results_json_file:
         resultdata = json.load(results_json_file)
     for p in resultdata["Results"]:
         result = p["Result"]
@@ -221,84 +244,98 @@ def postresult(match):
         bot1_avg_step_time = p['Bot1AvgFrame']
         bot2_avg_step_time = p['Bot2AvgFrame']
 
-    replay_folder = "/home/aiarena/aiarena-client/replays"
-
     # Collect the replayfile
     replayfile = ""
-    for file in os.listdir(replay_folder):
+    for file in os.listdir(config.REPLAYS_DIRECTORY):
         if file.endswith(".SC2Replay"):
             replayfile = file
             break
-    replay_file_path = os.path.join(replay_folder, replayfile)
-    os.system("perl /home/aiarena/aiarena-client/replaycheck.pl " + replay_file_path)
+    replay_file_path = os.path.join(config.REPLAYS_DIRECTORY, replayfile)
+    if config.RUN_REPLAY_CHECK:
+        os.system("perl " + os.path.join(config.LOCAL_PATH, "replaycheck.pl") + " " + replay_file_path)
 
     bot_1_name = match["bot1"]["name"]
     bot_2_name = match["bot2"]["name"]
-    bot1_data_folder = f"/home/aiarena/aiarena-client/bots/{bot_1_name}/data"
-    bot2_data_folder = f"/home/aiarena/aiarena-client/bots/{bot_2_name}/data"
+    bot1_data_folder = os.path.join(config.WORKING_DIRECTORY, f"bots/{bot_1_name}/data")
+    bot2_data_folder = os.path.join(config.WORKING_DIRECTORY, f"bots/{bot_2_name}/data")
 
     # Move the error log to temp
-    if os.path.isfile("/home/aiarena/aiarena-client/bots/" + bot_1_name + "/data/stderr.log"):
-        shutil.move("/home/aiarena/aiarena-client/bots/" + bot_1_name + "/data/stderr.log", temppath + bot_1_name + "-error.log")
+    bot1_error_log = os.path.join(bot1_data_folder, "stderr.log")
+    bot1_error_log_tmp = os.path.join(config.TEMP_PATH, bot_1_name + "-error.log")
+    if os.path.isfile(bot1_error_log):
+        shutil.move(bot1_error_log, bot1_error_log_tmp)
     else:
-        Path(temppath + bot_1_name + "-error.log").touch()
+        Path(bot1_error_log_tmp).touch()
 
-    if os.path.isfile("/home/aiarena/aiarena-client/bots/" + bot_2_name + "/data/stderr.log"):
-        shutil.move("/home/aiarena/aiarena-client/bots/" + bot_2_name + "/data/stderr.log", temppath + bot_2_name + "-error.log")
+    bot2_error_log = os.path.join(bot2_data_folder, "stderr.log")
+    bot2_error_log_tmp = os.path.join(config.TEMP_PATH, bot_2_name + "-error.log")
+    if os.path.isfile(bot2_error_log):
+        shutil.move(bot2_error_log, bot2_error_log_tmp)
     else:
-        Path(temppath + bot_2_name + "-error.log").touch()
+        Path(bot2_error_log_tmp).touch()
 
-    zip_file = zipfile.ZipFile(temppath + bot_1_name + "-error.zip", 'w')
-    zip_file.write(temppath + bot_1_name + "-error.log", compress_type=zipfile.ZIP_DEFLATED)
+    zip_file = zipfile.ZipFile(os.path.join(config.TEMP_PATH, bot_1_name + "-error.zip"), 'w')
+    zip_file.write(config.TEMP_PATH + bot_1_name + "-error.log", compress_type=zipfile.ZIP_DEFLATED)
     zip_file.close()
 
-    zip_file = zipfile.ZipFile(temppath + bot_2_name + "-error.zip", 'w')
-    zip_file.write(temppath + bot_2_name + "-error.log", compress_type=zipfile.ZIP_DEFLATED)
+    zip_file = zipfile.ZipFile(os.path.join(config.TEMP_PATH, bot_2_name + "-error.zip"), 'w')
+    zip_file.write(config.TEMP_PATH + bot_2_name + "-error.log", compress_type=zipfile.ZIP_DEFLATED)
     zip_file.close()
 
     # Create downloable data archives
     if not os.path.isdir(bot1_data_folder):
         os.mkdir(bot1_data_folder)
-    shutil.make_archive(temppath + match["bot1"]["name"] + "-data", "zip", bot1_data_folder)
+    shutil.make_archive(config.TEMP_PATH + bot_1_name + "-data", "zip", bot1_data_folder)
     if not os.path.isdir(bot2_data_folder):
         os.mkdir(bot2_data_folder)
-    shutil.make_archive(temppath + match["bot2"]["name"] + "-data", "zip", bot2_data_folder)
+    shutil.make_archive(config.TEMP_PATH + bot_2_name + "-data", "zip", bot2_data_folder)
 
-    results_website = "https://ai-arena.net/api/arenaclient/results/"
+    try:  # Upload replay file and bot data archives
 
-    # Upload replay file and bot data archives
-    if os.path.isfile(replay_file_path):
-        file_list = {
-            "replay_file": open(replay_file_path, "rb"),
-            "bot1_data": open(temppath + match["bot1"]["name"] + "-data.zip", "rb"),
-            "bot2_data": open(temppath + match["bot2"]["name"] + "-data.zip", "rb"),
-            "bot1_log": open(temppath + match["bot1"]["name"] + "-error.zip", "rb"),
-            "bot2_log": open(temppath + match["bot2"]["name"] + "-error.zip", "rb"),
-        }
-        payload = {"type": result, "match": int(match["id"]), "game_steps": gametime, "bot1_avg_step_time": bot1_avg_step_time, "bot2_avg_step_time": bot2_avg_step_time }
-        post = requests.post(
-            results_website, files=file_list, data=payload, headers={"Authorization": "Token " + config["token"]}
-        )
-        printout(result + " - Result transferred")
-    else:
-        file_list = {
-            "bot1_log": open(temppath + match["bot1"]["name"] + "-error.zip", "rb"),
-            "bot2_log": open(temppath + match["bot2"]["name"] + "-error.zip", "rb"),
-        }
-        payload = {"type": result, "match": int(match["id"]), "game_steps": gametime, "bot1_avg_step_time": bot1_avg_step_time, "bot2_avg_step_time": bot2_avg_step_time }
-        
-        post = requests.post(results_website, files=file_list, data=payload, headers={"Authorization": "Token " + config["token"]})
-        printout(result + " - Result transferred")
+        post = None
+
+        if os.path.isfile(replay_file_path):
+            file_list = {
+                "replay_file": open(replay_file_path, "rb"),
+                "bot1_data": open(os.path.join(config.TEMP_PATH, f"{bot_1_name}-data.zip"), "rb"),
+                "bot2_data": open(os.path.join(config.TEMP_PATH, f"{bot_2_name}-data.zip"), "rb"),
+                "bot1_log": open(os.path.join(config.TEMP_PATH, f"{bot_1_name}-error.zip"), "rb"),
+                "bot2_log": open(os.path.join(config.TEMP_PATH, f"{bot_2_name}-error.zip"), "rb"),
+            }
+            payload = {"type": result, "match": int(match["id"]), "game_steps": gametime,
+                       "bot1_avg_step_time": bot1_avg_step_time, "bot2_avg_step_time": bot2_avg_step_time}
+            post = requests.post(config.API_RESULTS_URL, files=file_list, data=payload,
+                                 headers={"Authorization": "Token " + config.API_TOKEN}
+                                 )
+        else:
+            file_list = {
+                "bot1_log": open(config.TEMP_PATH + match["bot1"]["name"] + "-error.zip", "rb"),
+                "bot2_log": open(config.TEMP_PATH + match["bot2"]["name"] + "-error.zip", "rb"),
+            }
+            payload = {"type": result, "match": int(match["id"]), "game_steps": gametime,
+                       "bot1_avg_step_time": bot1_avg_step_time, "bot2_avg_step_time": bot2_avg_step_time}
+
+            post = requests.post(config.API_RESULTS_URL, files=file_list, data=payload,
+                                 headers={"Authorization": "Token " + config.API_TOKEN})
+
+        if post is None:
+            printout("ERROR: Result submission failed. 'post' was None.")
+        elif post.status_code >= 400:  # todo: retry
+            printout(f"ERROR: Result submission failed. Status code: {post.status_code}.")
+        else:
+            printout(result + " - Result transferred")
+    except ConnectionError as ce:
+        printout(f"ERROR: Result submission failed. Connection to website failed.")
 
 
 def cleanup():
     # Files to remove
     files = [
-        "/home/aiarena/aiarena-client/matchuplist",
-        "/home/aiarena/aiarena-client/LadderBots.json",
-        "/home/aiarena/aiarena-client/playerids",
-        "/home/aiarena/aiarena-client/results.json",
-        "/home/aiarena/aiarena-client/replay.json",
+        config.SC2LADDERSERVER_MATCHUP_LIST_FILE,
+        config.SC2LADDERSERVER_LADDERBOTS_FILE,
+        config.SC2LADDERSERVER_PLAYERIDS_FILE,
+        config.SC2LADDERSERVER_RESULTS_FILE,
+        config.REPLAY_CHECK_JSON_FILE,
     ]
 
     for file in files:
@@ -306,23 +343,37 @@ def cleanup():
             os.remove(file)
 
     # Files to remove inside these folders
-    folders = ["/home/aiarena/aiarena-client/replays", temppath]
+    folders = [config.REPLAYS_DIRECTORY, config.TEMP_PATH]
     for folder in folders:
         for file in os.listdir(folder):
             file_path = os.path.join(folder, file)
             os.remove(file_path)
 
     # Remove entire subfolders
-    for dir in os.listdir("/home/aiarena/aiarena-client/bots"):
-        shutil.rmtree("/home/aiarena/aiarena-client/bots/" + dir)
+    bots_dir = os.path.join(config.WORKING_DIRECTORY, "bots")
+    for dir in os.listdir(bots_dir):
+        shutil.rmtree(os.path.join(bots_dir, dir))
 
 
-while count <= config["rounds"]:
-    count += 1
-    cleanup()
-    getnextmatch()
+try:
+    # create directories if they don't exist
+    os.makedirs(config.REPLAYS_DIRECTORY, exist_ok=True)
+    os.makedirs(config.TEMP_PATH, exist_ok=True)
+    os.makedirs(os.path.join(config.WORKING_DIRECTORY, "bots"), exist_ok=True)
 
-if config["shutdown"] == "true":
-    printout("Stopping system")
-    with open("/home/aiarena/aiarena-client/.shutdown", "w") as f:
-        f.write("Shutdown")
+    os.chdir(config.WORKING_DIRECTORY)
+
+    while count <= config.ROUNDS_PER_RUN:
+        count += 1
+        cleanup()
+        getnextmatch()
+except Exception as e:
+    printout(f"arena-client encountered an uncaught exception: {e} Exiting...")
+
+try:
+    if config.SHUT_DOWN_AFTER_RUN:
+        printout("Stopping system")
+        with open(os.path.join(config.LOCAL_PATH, ".shutdown"), "w") as f:
+            f.write("Shutdown")
+except:
+    printout("ERROR: Failed to shutdown.")
