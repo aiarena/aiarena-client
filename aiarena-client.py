@@ -118,7 +118,7 @@ def getbotdata(bot):
 
     bot_data = {
         "Race": race_map[botrace],
-        "RootPath": os.path.join(config.WORKING_DIRECTORY, f"bots", "{botname}"),
+        "RootPath": os.path.join(config.WORKING_DIRECTORY, f"bots", botname),
         "FileName": bot_type_map[bottype][0],
         "Type": bot_type_map[bottype][1],
         "botID": botid,
@@ -162,7 +162,7 @@ def getnextmatch(count):
         printout(f"ERROR: Failed to download map {mapname} at URL {mapurl}.")
         return False
 
-    map_path = os.path.join(config.SC2_HOME, f"maps/{mapname}.SC2Map")
+    map_path = os.path.join(config.SC2_HOME, "maps", f"{mapname}.SC2Map")
     with open(map_path, "wb") as f:
         f.write(r.content)
 
@@ -242,8 +242,8 @@ def postresult(match):
 
     bot_1_name = match["bot1"]["name"]
     bot_2_name = match["bot2"]["name"]
-    bot1_data_folder = os.path.join(config.WORKING_DIRECTORY, f"bots/{bot_1_name}/data")
-    bot2_data_folder = os.path.join(config.WORKING_DIRECTORY, f"bots/{bot_2_name}/data")
+    bot1_data_folder = os.path.join(config.WORKING_DIRECTORY, "bots", bot_1_name, "data")
+    bot2_data_folder = os.path.join(config.WORKING_DIRECTORY, "bots", bot_2_name, "data")
 
     # Move the error log to temp
     bot1_error_log = os.path.join(bot1_data_folder, "stderr.log")
