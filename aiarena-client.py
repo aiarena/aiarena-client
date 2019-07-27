@@ -160,6 +160,7 @@ def getnextmatch(count):
         r = requests.get(mapurl)
     except:
         printout(f"ERROR: Failed to download map {mapname} at URL {mapurl}.")
+        time.sleep(30)
         return False
 
     map_path = os.path.join(config.SC2_HOME, "maps", f"{mapname}.SC2Map")
@@ -168,9 +169,11 @@ def getnextmatch(count):
 
     bot_0 = nextmatchdata["bot1"]
     if not getbotfile(bot_0):
+        time.sleep(30)
         return False
     bot_1 = nextmatchdata["bot2"]
     if not getbotfile(bot_1):
+        time.sleep(30)
         return False
 
     bot_0_name, bot_0_data = getbotdata(bot_0)
