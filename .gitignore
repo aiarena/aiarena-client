@@ -6,3 +6,5 @@ bots/
 replays/
 
 .idea/
+
+config.py
