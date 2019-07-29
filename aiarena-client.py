@@ -263,11 +263,11 @@ def postresult(match):
         Path(bot2_error_log_tmp).touch()
 
     zip_file = zipfile.ZipFile(os.path.join(config.TEMP_PATH, bot_1_name + "-error.zip"), 'w')
-    zip_file.write(config.TEMP_PATH + bot_1_name + "-error.log", compress_type=zipfile.ZIP_DEFLATED)
+    zip_file.write(os.path.join(config.TEMP_PATH, bot_1_name + "-error.log"), compress_type=zipfile.ZIP_DEFLATED)
     zip_file.close()
 
     zip_file = zipfile.ZipFile(os.path.join(config.TEMP_PATH, bot_2_name + "-error.zip"), 'w')
-    zip_file.write(config.TEMP_PATH + bot_2_name + "-error.log", compress_type=zipfile.ZIP_DEFLATED)
+    zip_file.write(os.path.join(config.TEMP_PATH, bot_2_name + "-error.log"), compress_type=zipfile.ZIP_DEFLATED)
     zip_file.close()
 
     # sc2ladderserver logs
@@ -293,10 +293,10 @@ def postresult(match):
     # Create downloable data archives
     if not os.path.isdir(bot1_data_folder):
         os.mkdir(bot1_data_folder)
-    shutil.make_archive(config.TEMP_PATH + bot_1_name + "-data", "zip", bot1_data_folder)
+    shutil.make_archive(os.path.join(config.TEMP_PATH, bot_1_name + "-data"), "zip", bot1_data_folder)
     if not os.path.isdir(bot2_data_folder):
         os.mkdir(bot2_data_folder)
-    shutil.make_archive(config.TEMP_PATH + bot_2_name + "-data", "zip", bot2_data_folder)
+    shutil.make_archive(os.path.join(config.TEMP_PATH, bot_2_name + "-data"), "zip", bot2_data_folder)
 
     try:  # Upload replay file and bot data archives
         file_list = {
