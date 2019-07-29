@@ -224,7 +224,7 @@ def runmatch(count):
 
 def postresult(match):
     # Parse results.json
-    with open(config.RESULT_CHECK_JSON_FILE) as results_json_file:
+    with open(config.SC2LADDERSERVER_RESULTS_FILE) as results_json_file:
         resultdata = json.load(results_json_file)
     for p in resultdata["Results"]:
         result = p["Result"]
@@ -338,7 +338,6 @@ def cleanup():
         config.SC2LADDERSERVER_RESULTS_FILE,
         config.SC2LADDERSERVER_STDOUT_FILE,
         config.SC2LADDERSERVER_STDERR_FILE,
-        config.RESULT_CHECK_JSON_FILE,
     ]
 
     for file in files:

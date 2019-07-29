@@ -16,7 +16,6 @@ LOCAL_PATH = os.path.dirname(__file__)
 WORKING_DIRECTORY = LOCAL_PATH  # same for now
 LOG_FILE = os.path.join(WORKING_DIRECTORY, "aiarena-client.log")
 REPLAYS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "replays")
-RESULT_CHECK_JSON_FILE = os.path.join(LOCAL_PATH, "results.json")
 
 # WEBSITE
 BASE_WEBSITE_URL = "https://ai-arena.net"
