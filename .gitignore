@@ -17,3 +17,5 @@ replays/
 .idea/
 
 config.py
+
+tmp/
