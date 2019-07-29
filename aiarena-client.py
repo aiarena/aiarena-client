@@ -223,7 +223,6 @@ def runmatch(count):
 
 
 def postresult(match):
-    global count
     # Parse results.json
     with open(config.RESULT_CHECK_JSON_FILE) as results_json_file:
         resultdata = json.load(results_json_file)
