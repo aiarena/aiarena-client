@@ -8,6 +8,8 @@ playerids
 sc2ladderserver_stderr.log
 sc2ladderserver_stdout.log
 aiarena-client.log
+errorlist
+results.json
 
 bots/
 replays/
