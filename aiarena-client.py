@@ -300,34 +300,27 @@ def postresult(match):
     shutil.make_archive(config.TEMP_PATH + bot_2_name + "-data", "zip", bot2_data_folder)
 
     try:  # Upload replay file and bot data archives
-
-        post = None
+        file_list = {
+            "replay_file": open(replay_file_path, "rb"),
+            "bot1_data": open(os.path.join(config.TEMP_PATH, f"{bot_1_name}-data.zip"), "rb"),
+            "bot2_data": open(os.path.join(config.TEMP_PATH, f"{bot_2_name}-data.zip"), "rb"),
+            "bot1_log": open(os.path.join(config.TEMP_PATH, f"{bot_1_name}-error.zip"), "rb"),
+            "bot2_log": open(os.path.join(config.TEMP_PATH, f"{bot_2_name}-error.zip"), "rb"),
+            "arenaclient_log": open(sc2ladderserver_log_zip, "rb"),
+        }
 
         if os.path.isfile(replay_file_path):
-            file_list = {
-                "replay_file": open(replay_file_path, "rb"),
-                "bot1_data": open(os.path.join(config.TEMP_PATH, f"{bot_1_name}-data.zip"), "rb"),
-                "bot2_data": open(os.path.join(config.TEMP_PATH, f"{bot_2_name}-data.zip"), "rb"),
-                "bot1_log": open(os.path.join(config.TEMP_PATH, f"{bot_1_name}-error.zip"), "rb"),
-                "bot2_log": open(os.path.join(config.TEMP_PATH, f"{bot_2_name}-error.zip"), "rb"),
-                "arenaclient_log": open(sc2ladderserver_log_zip, "rb"),
-            }
-            payload = {"type": result, "match": int(match["id"]), "game_steps": gametime,
-                       "bot1_avg_step_time": bot1_avg_step_time, "bot2_avg_step_time": bot2_avg_step_time}
-            post = requests.post(config.API_RESULTS_URL, files=file_list, data=payload,
-                                 headers={"Authorization": "Token " + config.API_TOKEN}
-                                 )
-        else:
-            file_list = {
-                "bot1_log": open(config.TEMP_PATH + match["bot1"]["name"] + "-error.zip", "rb"),
-                "bot2_log": open(config.TEMP_PATH + match["bot2"]["name"] + "-error.zip", "rb"),
-            }
-            payload = {"type": result, "match": int(match["id"]), "game_steps": gametime,
-                       "bot1_avg_step_time": bot1_avg_step_time, "bot2_avg_step_time": bot2_avg_step_time}
+            file_list["replay_file"] = open(replay_file_path, "rb")
 
-            post = requests.post(config.API_RESULTS_URL, files=file_list, data=payload,
-                                 headers={"Authorization": "Token " + config.API_TOKEN})
+        payload = {"type": result, "match": int(match["id"]), "game_steps": gametime}
 
+        if bot1_avg_step_time is not None:
+            payload["bot1_avg_step_time"]
+        if bot2_avg_step_time is not None:
+            payload["bot2_avg_step_time"]
+
+        post = requests.post(config.API_RESULTS_URL, files=file_list, data=payload,
+                             headers={"Authorization": "Token " + config.API_TOKEN})
         if post is None:
             printout("ERROR: Result submission failed. 'post' was None.")
         elif post.status_code >= 400:  # todo: retry
