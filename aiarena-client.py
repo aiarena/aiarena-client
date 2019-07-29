@@ -301,7 +301,6 @@ def postresult(match):
 
     try:  # Upload replay file and bot data archives
         file_list = {
-            "replay_file": open(replay_file_path, "rb"),
             "bot1_data": open(os.path.join(config.TEMP_PATH, f"{bot_1_name}-data.zip"), "rb"),
             "bot2_data": open(os.path.join(config.TEMP_PATH, f"{bot_2_name}-data.zip"), "rb"),
             "bot1_log": open(os.path.join(config.TEMP_PATH, f"{bot_1_name}-error.zip"), "rb"),
