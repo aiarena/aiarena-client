@@ -315,9 +315,9 @@ def postresult(match):
         payload = {"type": result, "match": int(match["id"]), "game_steps": gametime}
 
         if bot1_avg_step_time is not None:
-            payload["bot1_avg_step_time"]
+            payload["bot1_avg_step_time"] = bot1_avg_step_time
         if bot2_avg_step_time is not None:
-            payload["bot2_avg_step_time"]
+            payload["bot2_avg_step_time"] = bot2_avg_step_time
 
         post = requests.post(config.API_RESULTS_URL, files=file_list, data=payload,
                              headers={"Authorization": "Token " + config.API_TOKEN})
