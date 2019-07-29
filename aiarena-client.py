@@ -229,8 +229,8 @@ def postresult(match):
     for p in resultdata["Results"]:
         result = p["Result"]
         gametime = p["GameTime"]
-        bot1_avg_step_time = p['Bot1AvgFrame']
-        bot2_avg_step_time = p['Bot2AvgFrame']
+        bot1_avg_step_time = p['Bot1AvgFrame'] if 'Bot1AvgFrame' in p else None
+        bot2_avg_step_time = p['Bot2AvgFrame'] if 'Bot2AvgFrame' in p else None
 
     # Collect the replayfile
     replayfile = ""
