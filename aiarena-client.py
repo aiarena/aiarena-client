@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import shutil
+import stat
 import subprocess
 import time
 import zipfile
@@ -61,6 +62,11 @@ def getbotfile(bot):
         # Extract to bot folder
         with zipfile.ZipFile(bot_download_path, "r") as zip_ref:
             zip_ref.extractall(f"bots/{botname}")
+
+        # if it's a linux bot, we need to add execute permissions
+        if bot['type'] == 'cpplinux':
+            os.chmod(bot.file, stat.S_IXUSR)
+
         if getbotdatafile(bot):
             return True
         else:
