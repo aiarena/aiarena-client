@@ -9,7 +9,6 @@ import subprocess
 import time
 import zipfile
 from pathlib import Path
-from subprocess import DEVNULL
 
 import requests
 from requests.exceptions import ConnectionError
@@ -22,6 +21,13 @@ except ImportError as e:
         raise Exception('ERROR: No config.py file found.')
     else:
         raise
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
 # Print to console and log
 def printout(text):
@@ -318,9 +324,9 @@ def postresult(match):
 
         payload = {"type": result, "match": int(match["id"]), "game_steps": gametime}
 
-        if bot1_avg_step_time is not None:
+        if bot1_avg_step_time is not None and is_number(bot1_avg_step_time):
             payload["bot1_avg_step_time"] = bot1_avg_step_time
-        if bot2_avg_step_time is not None:
+        if bot2_avg_step_time is not None and is_number(bot2_avg_step_time):
             payload["bot2_avg_step_time"] = bot2_avg_step_time
 
         post = requests.post(config.API_RESULTS_URL, files=file_list, data=payload,
