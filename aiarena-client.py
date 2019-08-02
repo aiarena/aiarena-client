@@ -187,6 +187,16 @@ def getnextmatch(count):
 
     runmatch(count)
 
+    # wait for pid file
+    pid_wait_time = 0
+    while not os.path.exists(config.SC2LADDERSERVER_PID_FILE):
+        time.sleep(1)  # wait for PID file to be created
+        pid_wait_time += 1
+        if pid_wait_time > config.SC2LADDERSERVER_PID_FILE_CREATION_TIMEOUT:
+            printout(f"ERROR: Timeout of {config.SC2LADDERSERVER_PID_FILE_CREATION_TIMEOUT} "
+                     f"exceeded whilst awaiting creation of pid file.")
+            return False  # Fail here.
+
     # Wait for Sc2LadderServer to finish.
     if os.path.exists(config.SC2LADDERSERVER_PID_FILE):
         pid = load_pid_from_file(config.SC2LADDERSERVER_PID_FILE)
@@ -333,6 +343,7 @@ def postresult(match):
 def cleanup():
     # Files to remove
     files = [
+        config.SC2LADDERSERVER_PID_FILE,
         config.SC2LADDERSERVER_MATCHUP_LIST_FILE,
         config.SC2LADDERSERVER_LADDERBOTS_FILE,
         config.SC2LADDERSERVER_PLAYERIDS_FILE,
