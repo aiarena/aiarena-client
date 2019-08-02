@@ -1,8 +1,6 @@
 #!/home/aiarena/venv/bin/python
-import datetime
 import hashlib
 import json
-import os
 import shutil
 import stat
 import subprocess
@@ -12,7 +10,8 @@ from pathlib import Path
 
 import requests
 from requests.exceptions import ConnectionError
-from termcolor import colored
+
+from utl import *
 
 try:
     import config
@@ -21,31 +20,6 @@ except ImportError as e:
         raise Exception('ERROR: No config.py file found.')
     else:
         raise
-
-def is_number(s):
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
-
-# Print to console and log
-def printout(text):
-    now = datetime.datetime.now()
-    infos = [now.strftime("%b %d %H:%M:%S"), config.ARENA_CLIENT_ID, text]
-    # Maps yellow to the first info, red to the second, green for the text
-    colors = ["yellow", "red", "green"]
-    colored_infos = " ".join(colored(info, color) for info, color in zip(infos, colors))
-    print(colored_infos)
-    with open(config.LOG_FILE, "a+") as f:
-        line = " ".join(infos) + "\n"
-        f.write(line)
-
-
-# Needed for hashlib md5 function
-def file_as_bytes(file):
-    with file:
-        return file.read()
 
 
 # Get bot file from api by bot id
@@ -213,20 +187,35 @@ def getnextmatch(count):
 
     runmatch(count)
 
-    # Wait for result.json
-    while not os.path.exists(config.SC2LADDERSERVER_RESULTS_FILE):
-        time.sleep(1)
+    # Wait for Sc2LadderServer to finish.
+    if os.path.exists(config.SC2LADDERSERVER_PID_FILE):
+        pid = load_pid_from_file(config.SC2LADDERSERVER_PID_FILE)
 
+        if pid is not None:
+            while is_pid_running(pid):
+                time.sleep(1)  # wait for run to finish.
+        else:
+            return False  # intolerant of errors: fail here.
+
+    else:
+        printout(f"ERROR: Unable to locate Sc2LadderServer PID file at {config.SC2LADDERSERVER_PID_FILE}")
+        return False  # intolerant of errors: fail here.
+
+    # The results file should have been created by now
     if os.path.isfile(config.SC2LADDERSERVER_RESULTS_FILE):
         printout("Game finished")
         postresult(nextmatchdata)
+    else:
+        printout(f"ERROR: Unable to locate Sc2LadderServer results file at {config.SC2LADDERSERVER_RESULTS_FILE}")
+        return False  # intolerant of errors: fail here.
 
     return True  # success!
 
 
 def runmatch(count):
     printout(f"Starting Game - Round {count}")
-    with open(config.SC2LADDERSERVER_STDOUT_FILE,"wb") as stdout, open(config.SC2LADDERSERVER_STDERR_FILE,"wb") as stderr:
+    with open(config.SC2LADDERSERVER_STDOUT_FILE, "wb") as stdout, open(config.SC2LADDERSERVER_STDERR_FILE,
+                                                                        "wb") as stderr:
         subprocess.Popen(
             [config.SC2LADDERSERVER_BINARY, "-e", config.SC2_BINARY],
             stdout=stdout,

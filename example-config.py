@@ -27,6 +27,8 @@ SC2_HOME = "/home/aiarena/StarCraftII/"
 SC2_BINARY = os.path.join(SC2_HOME, "Versions/Base70154/SC2_x64")
 
 # SC2LADDERSERVER
+SC2LADDERSERVER_PID_FILE = os.path.join(LOCAL_PATH, "laddermanager.pid")
+SC2LADDERSERVER_MATCH_END_MAX_WAIT_TIME_SECONDS = 30
 SC2LADDERSERVER_STDOUT_FILE = os.path.join(LOCAL_PATH, "sc2ladderserver_stdout.log")
 SC2LADDERSERVER_STDERR_FILE = os.path.join(LOCAL_PATH, "sc2ladderserver_stderr.log")
 SC2LADDERSERVER_BINARY = os.path.join(LOCAL_PATH, "Sc2LadderServer")
