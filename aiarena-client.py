@@ -1,6 +1,7 @@
 #!/home/aiarena/venv/bin/python
 import hashlib
 import json
+import os
 import shutil
 import stat
 import subprocess
@@ -187,6 +188,8 @@ def getnextmatch(count):
 
     runmatch(count)
 
+    sc2ladderserver_start_time = time.time()
+
     # wait for pid file
     pid_wait_time = 0
     while not os.path.exists(config.SC2LADDERSERVER_PID_FILE):
@@ -208,6 +211,8 @@ def getnextmatch(count):
     else:
         printout(f"pid was None.")
         return False  # intolerant of errors: fail here.
+
+    printout(f"Sc2LadderServer exited after {round(time.time() - sc2ladderserver_start_time, 2)} seconds")
 
     # The results file should have been created by now
     if os.path.isfile(config.SC2LADDERSERVER_RESULTS_FILE):
