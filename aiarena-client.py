@@ -194,21 +194,19 @@ def getnextmatch(count):
         pid_wait_time += 1
         if pid_wait_time > config.SC2LADDERSERVER_PID_FILE_CREATION_TIMEOUT:
             printout(f"ERROR: Timeout of {config.SC2LADDERSERVER_PID_FILE_CREATION_TIMEOUT} "
-                     f"exceeded whilst awaiting creation of pid file.")
+                     f"exceeded whilst awaiting creation of pid file at {config.SC2LADDERSERVER_PID_FILE}.")
             return False  # Fail here.
 
+    printout("pid file located.")
+
     # Wait for Sc2LadderServer to finish.
-    if os.path.exists(config.SC2LADDERSERVER_PID_FILE):
-        pid = load_pid_from_file(config.SC2LADDERSERVER_PID_FILE)
+    pid = load_pid_from_file(config.SC2LADDERSERVER_PID_FILE)
 
-        if pid is not None:
-            while is_pid_running(pid):
-                time.sleep(1)  # wait for run to finish.
-        else:
-            return False  # intolerant of errors: fail here.
-
+    if pid is not None:
+        while is_pid_running(pid):
+            time.sleep(1)  # wait for run to finish.
     else:
-        printout(f"ERROR: Unable to locate Sc2LadderServer PID file at {config.SC2LADDERSERVER_PID_FILE}")
+        printout(f"pid was None.")
         return False  # intolerant of errors: fail here.
 
     # The results file should have been created by now
