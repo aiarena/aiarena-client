@@ -187,32 +187,39 @@ def getnextmatch(count):
         f.write(game_display_id_json)
 
     runmatch(count)
-
     sc2ladderserver_start_time = time.time()
 
-    # wait for pid file
-    pid_wait_time = 0
-    while not os.path.exists(config.SC2LADDERSERVER_PID_FILE):
-        time.sleep(1)  # wait for PID file to be created
-        pid_wait_time += 1
-        if pid_wait_time > config.SC2LADDERSERVER_PID_FILE_CREATION_TIMEOUT:
-            printout(f"ERROR: Timeout of {config.SC2LADDERSERVER_PID_FILE_CREATION_TIMEOUT} "
-                     f"exceeded whilst awaiting creation of pid file at {config.SC2LADDERSERVER_PID_FILE}.")
-            return False  # Fail here.
+    if config.USE_PID_CHECK:
 
-    printout("pid file located.")
+        # wait for pid file
+        pid_wait_time = 0
+        while not os.path.exists(config.SC2LADDERSERVER_PID_FILE):
+            time.sleep(1)  # wait for PID file to be created
+            pid_wait_time += 1
+            if pid_wait_time > config.SC2LADDERSERVER_PID_FILE_CREATION_TIMEOUT:
+                printout(f"ERROR: Timeout of {config.SC2LADDERSERVER_PID_FILE_CREATION_TIMEOUT} "
+                         f"exceeded whilst awaiting creation of pid file at {config.SC2LADDERSERVER_PID_FILE}.")
+                return False  # Fail here.
 
-    # Wait for Sc2LadderServer to finish.
-    pid = load_pid_from_file(config.SC2LADDERSERVER_PID_FILE)
+        printout("pid file located.")
 
-    if pid is not None:
-        while is_pid_running(pid):
-            time.sleep(1)  # wait for run to finish.
+        # Wait for Sc2LadderServer to finish.
+        pid = load_pid_from_file(config.SC2LADDERSERVER_PID_FILE)
+
+        if pid is not None:
+            while is_pid_running(pid):
+                time.sleep(1)  # wait for run to finish.
+        else:
+            printout(f"pid was None.")
+            return False  # intolerant of errors: fail here.
+
+        printout(f"Sc2LadderServer exited after {round(time.time() - sc2ladderserver_start_time, 2)} seconds")
     else:
-        printout(f"pid was None.")
-        return False  # intolerant of errors: fail here.
+        # Wait for result.json
+        while not os.path.exists(config.SC2LADDERSERVER_RESULTS_FILE):
+            time.sleep(1)
 
-    printout(f"Sc2LadderServer exited after {round(time.time() - sc2ladderserver_start_time, 2)} seconds")
+        printout(f"Result detected after {round(time.time() - sc2ladderserver_start_time, 2)} seconds")
 
     # The results file should have been created by now
     if os.path.isfile(config.SC2LADDERSERVER_RESULTS_FILE):
