@@ -46,7 +46,8 @@ def getbotfile(bot):
 
         # if it's a linux bot, we need to add execute permissions
         if bot['type'] == 'cpplinux':
-            os.chmod(f'bots/{botname}/{botname}', stat.S_IXUSR)
+            # Chmod 744: rwxr--r--
+            os.chmod(f'bots/{botname}/{botname}', stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
 
         if getbotdatafile(bot):
             return True
