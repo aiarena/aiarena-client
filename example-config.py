@@ -25,7 +25,7 @@ API_RESULTS_URL = parse.urljoin(BASE_WEBSITE_URL, "/api/arenaclient/results/")
 
 # STARCRAFT
 SC2_HOME = "/home/aiarena/StarCraftII/"
-SC2_BINARY = os.path.join(SC2_HOME, "Versions/Base70154/SC2_x64")
+SC2_BINARY = os.path.join(SC2_HOME, "Versions/Base75689/SC2_x64")
 
 # SC2LADDERSERVER
 SC2LADDERSERVER_PID_FILE = os.path.join(LOCAL_PATH, "laddermanager.pid")
