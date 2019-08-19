@@ -43,7 +43,7 @@ SC2LADDERSERVER_RESULTS_FILE = os.path.join(LOCAL_PATH, "results.json")
 
 # Override values with environment specific config
 try:
-    import config
+    from config import *
 except ImportError as e:
     if e.name == 'config':
         pass
