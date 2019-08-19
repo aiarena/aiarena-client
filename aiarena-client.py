@@ -13,14 +13,7 @@ import requests
 from requests.exceptions import ConnectionError
 
 from utl import *
-
-try:
-    import config
-except ImportError as e:
-    if e.name == 'config':
-        raise Exception('ERROR: No config.py file found.')
-    else:
-        raise
+import default_config as config  # the default config will also import custom config values
 
 
 # Get bot file from api by bot id

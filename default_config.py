@@ -1,4 +1,5 @@
-# EXAMPLE CONFIG - COPY THIS TO config.py
+# DEFAULT CONFIG
+# CREATE A config.py FILE TO OVERRIDE SPECIFIC CONFIG VALUES
 
 import os
 from urllib import parse
@@ -37,3 +38,13 @@ SC2LADDERSERVER_MATCHUP_LIST_FILE = os.path.join(LOCAL_PATH, "matchuplist")
 SC2LADDERSERVER_LADDERBOTS_FILE = os.path.join(LOCAL_PATH, "LadderBots.json")
 SC2LADDERSERVER_PLAYERIDS_FILE = os.path.join(LOCAL_PATH, "playerids")
 SC2LADDERSERVER_RESULTS_FILE = os.path.join(LOCAL_PATH, "results.json")
+
+
+# Override values with environment specific config
+try:
+    import config
+except ImportError as e:
+    if e.name == 'config':
+        pass
+    else:
+        raise
