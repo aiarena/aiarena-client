@@ -332,6 +332,9 @@ def postresult(match):
         if bot2_avg_step_time is not None and is_number(bot2_avg_step_time):
             payload["bot2_avg_step_time"] = bot2_avg_step_time
 
+        if config.DEBUG_MODE:
+            printout(json.dumps(payload))
+
         post = requests.post(config.API_RESULTS_URL, files=file_list, data=payload,
                              headers={"Authorization": "Token " + config.API_TOKEN})
         if post is None:
