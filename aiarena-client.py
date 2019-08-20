@@ -339,7 +339,7 @@ def postresult(match):
                              headers={"Authorization": "Token " + config.API_TOKEN})
         if post is None:
             printout("ERROR: Result submission failed. 'post' was None.")
-        elif post.status_code >= 400:  # todo: retry
+        elif post.status_code >= 400:  # todo: retry?
             printout(f"ERROR: Result submission failed. Status code: {post.status_code}.")
         else:
             printout(result + " - Result transferred")
