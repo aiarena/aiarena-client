@@ -1,4 +1,5 @@
 import datetime
+import math
 
 import psutil
 from termcolor import colored
@@ -6,10 +7,10 @@ from termcolor import colored
 import config
 
 
-def is_number(s):
+def is_valid_avg_step_time(num):
     try:
-        float(s)
-        return True
+        number = float(num)  # test float conversion
+        return not math.isnan(number) and not math.isinf(number)  # reject nan and inf values
     except ValueError:
         return False
 

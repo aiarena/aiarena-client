@@ -327,9 +327,9 @@ def postresult(match):
 
         payload = {"type": result, "match": int(match["id"]), "game_steps": gametime}
 
-        if bot1_avg_step_time is not None and is_number(bot1_avg_step_time):
+        if bot1_avg_step_time is not None and is_valid_avg_step_time(bot1_avg_step_time):
             payload["bot1_avg_step_time"] = bot1_avg_step_time
-        if bot2_avg_step_time is not None and is_number(bot2_avg_step_time):
+        if bot2_avg_step_time is not None and is_valid_avg_step_time(bot2_avg_step_time):
             payload["bot2_avg_step_time"] = bot2_avg_step_time
 
         if config.DEBUG_MODE:
