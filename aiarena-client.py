@@ -175,6 +175,9 @@ def getnextmatch(count):
     game_display_id = {bot_0_name: bot_0_game_display_id, bot_1_name: bot_1_game_display_id}
     game_display_id_json = json.dumps(game_display_id, indent=4, sort_keys=True)
 
+    with open(config.SC2LADDERSERVER_CONFIG_FILE, "w") as f:
+        f.write(config.SC2LADDERSERVER_CONFIG_JSON)
+
     with open("LadderBots.json", "w") as f:
         f.write(ladderbots_json)
 

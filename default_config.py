@@ -39,7 +39,23 @@ SC2LADDERSERVER_MATCHUP_LIST_FILE = os.path.join(LOCAL_PATH, "matchuplist")
 SC2LADDERSERVER_LADDERBOTS_FILE = os.path.join(LOCAL_PATH, "LadderBots.json")
 SC2LADDERSERVER_PLAYERIDS_FILE = os.path.join(LOCAL_PATH, "playerids")
 SC2LADDERSERVER_RESULTS_FILE = os.path.join(LOCAL_PATH, "results.json")
-
+SC2LADDERSERVER_CONFIG_FILE = os.path.join(LOCAL_PATH, "LadderManager.json")
+# todo: download relevant settings from the API
+SC2LADDERSERVER_CONFIG_JSON = '{' \
+                              '    "LocalReplayDirectory": "./replays/",' \
+                              '    "MaxGameTime": 60480,' \
+                              '    "MatchupGenerator": "File",' \
+                              '    "MatchupListFile": "./matchuplist",' \
+                              '    "ErrorListFile": "./errorlist",' \
+                              '    "BotConfigFile": "./LadderBots.json",' \
+                              '    "EnableReplayUpload": "False",' \
+                              '    "ResultsLogFile": "./results.json",' \
+                              '    "PlayerIdFile": "./playerids",' \
+                              '    "PythonBinary": "/home/aiarena/venv/bin/python",' \
+                              '    "RealTimeMode": false,' \
+                              '    "Maps": [],' \
+                              '    "MaxFrameTime": 20000' \
+                              '}'
 
 # Override values with environment specific config
 try:
