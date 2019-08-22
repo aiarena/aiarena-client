@@ -164,7 +164,7 @@ def getnextmatch(count):
     # Write matchuplist file, line should match something like
     # "m1ndbot"vs"m2ndbot" AutomatonLE.SC2Map
     match_line = f'"{bot_0_name}"vs"{bot_1_name}" {mapname}.SC2Map'
-    with open("matchuplist", "w") as f:
+    with open(config.SC2LADDERSERVER_MATCHUP_LIST_FILE, "w") as f:
         f.write(match_line)
 
     # Write LadderBots.json file
@@ -178,10 +178,10 @@ def getnextmatch(count):
     with open(config.SC2LADDERSERVER_CONFIG_FILE, "w") as f:
         f.write(config.SC2LADDERSERVER_CONFIG_JSON)
 
-    with open("LadderBots.json", "w") as f:
+    with open(config.SC2LADDERSERVER_LADDERBOTS_FILE, "w") as f:
         f.write(ladderbots_json)
 
-    with open("playerids", "w") as f:
+    with open(config.SC2LADDERSERVER_PLAYERIDS_FILE, "w") as f:
         f.write(game_display_id_json)
 
     runmatch(count)
