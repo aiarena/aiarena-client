@@ -108,6 +108,7 @@ def getbotdata(bot):
 
 
 def getnextmatch(count):
+    printout(f'New match started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
     try:
         nextmatchresponse = requests.post(
             config.API_MATCHES_URL, headers={"Authorization": "Token " + config.API_TOKEN}
@@ -182,6 +183,7 @@ def getnextmatch(count):
 
     runmatch(count)
     sc2ladderserver_start_time = time.time()
+    printout(f"Sc2LadderServer started at {time.strftime('%H:%M:%S', time.gmtime(sc2ladderserver_start_time))}")
 
     if config.USE_PID_CHECK:
 
@@ -207,13 +209,15 @@ def getnextmatch(count):
             printout(f"pid was None.")
             return False  # intolerant of errors: fail here.
 
-        printout(f"Sc2LadderServer exited after {round(time.time() - sc2ladderserver_start_time, 2)} seconds")
+        current_time = time.time()
+        printout(f"Sc2LadderServer exited at {time.strftime('%H:%M:%S', time.gmtime(current_time))} after {round(current_time - sc2ladderserver_start_time, 2)} seconds")
     else:
         # Wait for result.json
         while not os.path.exists(config.SC2LADDERSERVER_RESULTS_FILE):
             time.sleep(1)
 
-        printout(f"Result detected after {round(time.time() - sc2ladderserver_start_time, 2)} seconds")
+        current_time = time.time()
+        printout(f"Result detected at {time.strftime('%H:%M:%S', time.gmtime(current_time))} after {round(time.time() - sc2ladderserver_start_time, 2)} seconds")
 
     # The results file should have been created by now
     if os.path.isfile(config.SC2LADDERSERVER_RESULTS_FILE):
@@ -377,6 +381,8 @@ def cleanup():
 
 
 try:
+    printout(f'Arena Client started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
+
     # create directories if they don't exist
     os.makedirs(config.REPLAYS_DIRECTORY, exist_ok=True)
     os.makedirs(config.TEMP_PATH, exist_ok=True)
