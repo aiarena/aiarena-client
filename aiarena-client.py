@@ -714,7 +714,7 @@ try:
         if not RUN_LOCAL:
             cleanup()
         if getnextmatch(count):
-            count = 1
+            count += 1
 
         if RUN_LOCAL:
             with open('matchupList','r+') as ml:  
