@@ -1,22 +1,78 @@
-#!/home/aiarena/venv/bin/python
-import hashlib
-import json
-import os
-import shutil
+import traceback
 import stat
+import aiohttp
+import asyncio
+import json
 import subprocess
+import os
+import signal
+import traceback
+import stat
+import platform
+import datetime
 import time
-import zipfile
-from pathlib import Path
+import sys
+import psutil
+from termcolor import colored
+import socket
+RUN_LOCAL = False
+    
+if not RUN_LOCAL:
 
-import requests
-from requests.exceptions import ConnectionError
+    import hashlib
+   
+    import zipfile
+    from pathlib import Path
+    import shutil
+    import requests
+    from requests.exceptions import ConnectionError
+    import socket
+    
+    from utl import *
+    # the default config will also import custom config values
+    import default_config as config
 
-from utl import *
-import default_config as config  # the default config will also import custom config values
+SYSTEM = platform.system()
+HOST = os.getenv('HOST', '127.0.0.1')
+PORT = int(os.getenv('PORT', 8765))
+if RUN_LOCAL:
+    WORKING_DIRECTORY = os.getcwd()
+    REPLAY_DIRECTORY = os.path.join(WORKING_DIRECTORY, "Replays/")
+    # Try to import config settings
+    with open('LadderManager.json', 'r') as lm:
+        j_object = json.load(lm)
+        PYTHON = j_object['PythonBinary']
+        DISABLE_DEBUG = j_object['DisableDebug']
+        RESULTS_LOG_FILE = j_object['ResultsLogFile']
+        MAX_GAME_TIME = j_object['MaxGameTime']
+        REALTIME_MODE =j_object['RealTimeMode']
+        BOTS_DIRECTORY = j_object['BaseBotDirectory']
 
+else:
+    PYTHON = config.PYTHON
+    REPLAY_DIRECTORY = config.REPLAYS_DIRECTORY
+    WORKING_DIRECTORY = config.WORKING_DIRECTORY
+    MAX_GAME_TIME = 60486
+if RUN_LOCAL:
+    def printout(text):
+        now = datetime.datetime.now()
+        infos = [now.strftime("%b %d %H:%M:%S"), text]
+        # Maps yellow to the first info, red to the second, green for the text
+        colors = ["yellow", "red", "green"]
+        colored_infos = " ".join(colored(info, color) for info, color in zip(infos, colors))
+        print(colored_infos)
+        with open('ladder_manager.stdout', "a+") as f:
+            line = " ".join(infos) + "\n"
+            f.write(line)
 
-# Get bot file from api by bot id
+def check_pid(pid):
+    try:
+        os.kill(pid,0)
+    except OSError:
+        return False
+    else:
+        return True
+
 def getbotfile(bot):
     botname = bot["name"]
     boturl = bot["bot_zip"]
@@ -51,7 +107,6 @@ def getbotfile(bot):
         cleanup()
         return False
 
-
 # Get bot data
 def getbotdatafile(bot):
     botname = bot["name"]
@@ -79,246 +134,251 @@ def getbotdatafile(bot):
         cleanup()
         return False
 
+def getbotdata(bot=None):
+	if not bot:
+		botname = "OverReactBot"
+		botrace = "T"
+		bottype = "python"
+		botid = "123"
+	else:    
+		botname=bot["name"]
+		botrace=bot["plays_race"]
+		bottype=bot["type"]
+		botid=bot["game_display_id"]
 
-# Get bot file
-def getbotdata(bot):
-    botname = bot["name"]
-    botrace = bot["plays_race"]
-    bottype = bot["type"]
-    botid = bot["game_display_id"]
+	race_map = {"P": "Protoss", "T": "Terran", "Z": "Zerg", "R": "Random"}
+	bot_type_map = {
+		"python": ["run.py", "Python"],
+		"cppwin32": [f"{botname}.exe", "Wine"],
+		"cpplinux": [f"{botname}", "BinaryCpp"],
+		"dotnetcore": [f"{botname}.dll", "DotNetCore"],
+		"java": [f"{botname}.jar", "Java"],
+		"nodejs": ["main.jar", "NodeJS"],
+	}
 
-    race_map = {"P": "Protoss", "T": "Terran", "Z": "Zerg", "R": "Random"}
-    bot_type_map = {
-        "python": ["run.py", "Python"],
-        "cppwin32": [f"{botname}.exe", "Wine"],
-        "cpplinux": [f"{botname}", "BinaryCpp"],
-        "dotnetcore": [f"{botname}.dll", "DotNetCore"],
-        "java": [f"{botname}.jar", "Java"],
-        "nodejs": ["main.jar", "NodeJS"],
-    }
+	bot_data = {
+		"Race": race_map[botrace],
+		"RootPath": os.path.join(WORKING_DIRECTORY, f"bots", botname),
+		"FileName": bot_type_map[bottype][0],
+		"Type": bot_type_map[bottype][1],
+		"botID": botid,
+	}
+	return botname, bot_data
 
-    bot_data = {
-        "Race": race_map[botrace],
-        "RootPath": os.path.join(config.WORKING_DIRECTORY, f"bots", botname),
-        "FileName": bot_type_map[bottype][0],
-        "Type": bot_type_map[bottype][1],
-        "botID": botid,
-    }
-    return botname, bot_data
-
+def get_ladder_bots_data(bot):
+    bot_directory = os.path.join(BOTS_DIRECTORY,bot,'ladderbots.json')
+    with open(bot_directory,'r') as f:
+        j_object = json.load(f)
+    return bot, j_object
 
 def getnextmatch(count):
     printout(f'New match started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
-    try:
-        nextmatchresponse = requests.post(
-            config.API_MATCHES_URL, headers={"Authorization": "Token " + config.API_TOKEN}
-        )
-    except ConnectionError as ce:
-        printout(f"ERROR: Failed to retrieve game. Connection to website failed. Sleeping.")
-        time.sleep(30)
-        return False
+    if not RUN_LOCAL:
+        try:
+            nextmatchresponse = requests.post(
+                config.API_MATCHES_URL, headers={"Authorization": "Token " + config.API_TOKEN}
+            )
+        except ConnectionError as ce:
+            printout(f"ERROR: Failed to retrieve game. Connection to website failed. Sleeping.")
+            time.sleep(30)
+            return False
 
-    if nextmatchresponse.status_code >= 400:
-        printout(f"ERROR: Failed to retrieve game. Status code: {nextmatchresponse.status_code}. Sleeping.")
-        time.sleep(30)
-        return False
+        if nextmatchresponse.status_code >= 400:
+            printout(f"ERROR: Failed to retrieve game. Status code: {nextmatchresponse.status_code}. Sleeping.")
+            time.sleep(30)
+            return False
 
-    nextmatchdata = json.loads(nextmatchresponse.text)
+        nextmatchdata = json.loads(nextmatchresponse.text)
 
-    if "id" not in nextmatchdata:
-        printout("No games available - sleeping")
-        time.sleep(30)
-        return False
+        if "id" not in nextmatchdata:
+            printout("No games available - sleeping")
+            time.sleep(30)
+            return False
 
-    nextmatchid = nextmatchdata["id"]
-    printout(f"Next match: {nextmatchid}")
+        nextmatchid = nextmatchdata["id"]
+        printout(f"Next match: {nextmatchid}")
 
-    # Download map
-    mapname = nextmatchdata["map"]["name"]
-    mapurl = nextmatchdata["map"]["file"]
-    printout(f"Downloading map {mapname}")
+        # Download map
+        mapname = nextmatchdata["map"]["name"]
+        mapurl = nextmatchdata["map"]["file"]
+        printout(f"Downloading map {mapname}")
 
-    try:
-        r = requests.get(mapurl)
-    except:
-        printout(f"ERROR: Failed to download map {mapname} at URL {mapurl}.")
-        time.sleep(30)
-        return False
+        try:
+            r = requests.get(mapurl)
+        except:
+            printout(f"ERROR: Failed to download map {mapname} at URL {mapurl}.")
+            time.sleep(30)
+            return False
 
-    map_path = os.path.join(config.SC2_HOME, "maps", f"{mapname}.SC2Map")
-    with open(map_path, "wb") as f:
-        f.write(r.content)
+        map_path = os.path.join(config.SC2_HOME, "maps", f"{mapname}.SC2Map")
+        with open(map_path, "wb") as f:
+            f.write(r.content)
 
-    bot_0 = nextmatchdata["bot1"]
-    if not getbotfile(bot_0):
-        time.sleep(30)
-        return False
-    bot_1 = nextmatchdata["bot2"]
-    if not getbotfile(bot_1):
-        time.sleep(30)
-        return False
+        bot_0 = nextmatchdata["bot1"]
+        if not getbotfile(bot_0):
+            time.sleep(30)
+            return False
+        bot_1 = nextmatchdata["bot2"]
+        if not getbotfile(bot_1):
+            time.sleep(30)
+            return False
 
-    bot_0_name, bot_0_data = getbotdata(bot_0)
-    bot_1_name, bot_1_data = getbotdata(bot_1)
-
-    # Write matchuplist file, line should match something like
-    # "m1ndbot"vs"m2ndbot" AutomatonLE.SC2Map
-    match_line = f'"{bot_0_name}"vs"{bot_1_name}" {mapname}.SC2Map'
-    with open(config.SC2LADDERSERVER_MATCHUP_LIST_FILE, "w") as f:
-        f.write(match_line)
-
-    # Write LadderBots.json file
-    ladderbots = {"Bots": {bot_0_name: bot_0_data, bot_1_name: bot_1_data}}
-    ladderbots_json = json.dumps(ladderbots, indent=4, sort_keys=True)
-    bot_0_game_display_id = bot_0_data['botID']
-    bot_1_game_display_id = bot_1_data['botID']
-    game_display_id = {bot_0_name: bot_0_game_display_id, bot_1_name: bot_1_game_display_id}
-    game_display_id_json = json.dumps(game_display_id, indent=4, sort_keys=True)
-
-    with open(config.SC2LADDERSERVER_CONFIG_FILE, "w") as f:
-        f.write(config.SC2LADDERSERVER_CONFIG_JSON)
-
-    with open(config.SC2LADDERSERVER_LADDERBOTS_FILE, "w") as f:
-        f.write(ladderbots_json)
-
-    with open(config.SC2LADDERSERVER_PLAYERIDS_FILE, "w") as f:
-        f.write(game_display_id_json)
-
-    runmatch(count)
-    sc2ladderserver_start_time = time.time()
-    printout(f"Sc2LadderServer started at {time.strftime('%H:%M:%S', time.gmtime(sc2ladderserver_start_time))}")
-
-    if config.USE_PID_CHECK:
-
-        # wait for pid file
-        pid_wait_time = 0
-        while not os.path.exists(config.SC2LADDERSERVER_PID_FILE):
-            time.sleep(1)  # wait for PID file to be created
-            pid_wait_time += 1
-            if pid_wait_time > config.SC2LADDERSERVER_PID_FILE_CREATION_TIMEOUT:
-                printout(f"ERROR: Timeout of {config.SC2LADDERSERVER_PID_FILE_CREATION_TIMEOUT} "
-                         f"exceeded whilst awaiting creation of pid file at {config.SC2LADDERSERVER_PID_FILE}.")
-                return False  # Fail here.
-
-        printout("pid file located.")
-
-        # Wait for Sc2LadderServer to finish.
-        pid = load_pid_from_file(config.SC2LADDERSERVER_PID_FILE)
-
-        if pid is not None:
-            while is_pid_running(pid):
-                time.sleep(1)  # wait for run to finish.
-        else:
-            printout(f"pid was None.")
-            return False  # intolerant of errors: fail here.
-
-        current_time = time.time()
-        printout(f"Sc2LadderServer exited at {time.strftime('%H:%M:%S', time.gmtime(current_time))} after {round(current_time - sc2ladderserver_start_time, 2)} seconds")
+        bot_0_name, bot_0_data = getbotdata(bot_0)
+        bot_1_name, bot_1_data = getbotdata(bot_1)
+        bot_0_game_display_id = bot_0_data['botID']
+        bot_1_game_display_id = bot_1_data['botID']
+    
+        result = runmatch(count, mapname, bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatchid)
+        # printout(result)
+        postresult(nextmatchdata, result,bot_0_name,bot_1_name)
+        return True
+    
     else:
-        # Wait for result.json
-        while not os.path.exists(config.SC2LADDERSERVER_RESULTS_FILE):
-            time.sleep(1)
+        with open('matchupList','r') as ml:
+            for i,line in enumerate(ml):
+                nextmatchid = i
+                Line = line 
+                break
+        printout(f"Next match: {nextmatchid}")
+        mapname = Line.split(" ")[1].replace('\n','').replace('.SC2Map','')
+        bot_0 = Line.split('vs')[0].replace("\"","")
+        bot_1 = Line.split('vs')[1].split(' ')[0].replace("\"","")
+        bot_0_name, bot_0_data = get_ladder_bots_data(bot_0)
+        bot_1_name, bot_1_data = get_ladder_bots_data(bot_1)
+        # bot_0_game_display_id = bot_0_data['botID']#TODO: Enable opponent_id
+        # bot_1_game_display_id = bot_1_data['botID']
+        result = runmatch(count, mapname, bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatchid)
+        post_local_result(bot_0,bot_1,result)
+        return True
 
-        current_time = time.time()
-        printout(f"Result detected at {time.strftime('%H:%M:%S', time.gmtime(current_time))} after {round(time.time() - sc2ladderserver_start_time, 2)} seconds")
+def postresult(match, lm_result,bot_1_name,bot_2_name):
+    if isinstance(lm_result,list):
+        for x in lm_result:
+            if x.get('Result',None):
+                temp_results = x['Result']
+                bot_1_name = next((item[0] for item in temp_results.items()))
+                bot_2_name = next((item[0] for item in temp_results.items()))
+                if temp_results[bot_1_name] == 'Result.Victory':
+                    result='Player1Win'
+                    # result_json['Winner']=bot_1_name
+                
+                elif temp_results[bot_1_name] == 'Result.Defeat':
+                    result = 'Player2Win'
+                    # result_json['Winner']=bot_1
+                
+                elif temp_results[bot_1_name] == 'Result.Crashed':
+                    result = 'Player1Crash'
+                    # result_json['Winner']=bot_1
+                
+                elif temp_results[bot_2_name] == 'Result.Crashed':
+                    result = 'Player2Crash'
+                    # result_json['Winner']=bot_0
+                
+                elif temp_results[bot_1_name] =='Result.Tie':
+                    result = 'Tie'
+                    # result_json['Winner']='Tie'
+                
+                else:
+                    result = 'InitializationError'
 
-    # The results file should have been created by now
-    if os.path.isfile(config.SC2LADDERSERVER_RESULTS_FILE):
-        printout("Game finished")
-        postresult(nextmatchdata)
+                # result_json['Result'] = result
+            
+            if x.get('GameTime',None):
+                gametime = x['GameTime']
+                gametime_formatted = x['GameTimeFormatted']
+            
+            if x.get('AverageFrameTime',None):
+                bot1_avg_step_time = (next(iter(x['AverageFrameTime']))).get(bot_1_name,0)
+                bot2_avg_step_time = (next(iter(x['AverageFrameTime']))).get(bot_2_name,0)
+            
+            if x.get('TimeStamp',None):
+                time_stamp = x['TimeStamp']
+    
     else:
-        printout(f"ERROR: Unable to locate Sc2LadderServer results file at {config.SC2LADDERSERVER_RESULTS_FILE}")
-        return False  # intolerant of errors: fail here.
+        result = lm_result
+        gametime = 0
+        bot1_avg_step_time =0
+        bot2_avg_step_time=0
 
-    return True  # success!
-
-
-def runmatch(count):
-    printout(f"Starting Game - Round {count}")
-    with open(config.SC2LADDERSERVER_STDOUT_FILE, "wb") as stdout, open(config.SC2LADDERSERVER_STDERR_FILE,
-                                                                        "wb") as stderr:
-        subprocess.Popen(
-            [config.SC2LADDERSERVER_BINARY, "-e", config.SC2_BINARY],
-            stdout=stdout,
-            stderr=stderr,
-        )
-
-
-def postresult(match):
-    # Parse results.json
-    with open(config.SC2LADDERSERVER_RESULTS_FILE) as results_json_file:
-        resultdata = json.load(results_json_file)
-    for p in resultdata["Results"]:
-        result = p["Result"]
-        gametime = p["GameTime"]
-        bot1_avg_step_time = p['Bot1AvgFrame'] if 'Bot1AvgFrame' in p else None
-        bot2_avg_step_time = p['Bot2AvgFrame'] if 'Bot2AvgFrame' in p else None
-
-    # Collect the replayfile
     replayfile = ""
-    for file in os.listdir(config.REPLAYS_DIRECTORY):
+    for file in os.listdir(REPLAY_DIRECTORY):
         if file.endswith(".SC2Replay"):
             replayfile = file
             break
-    replay_file_path = os.path.join(config.REPLAYS_DIRECTORY, replayfile)
+    replay_file_path = os.path.join(REPLAY_DIRECTORY, replayfile)
     if config.RUN_REPLAY_CHECK:
-        os.system("perl " + os.path.join(config.LOCAL_PATH, "replaycheck.pl") + " " + replay_file_path)
+        os.system("perl " + os.path.join(config.LOCAL_PATH,
+                                         "replaycheck.pl") + " " + replay_file_path)
 
-    bot_1_name = match["bot1"]["name"]
-    bot_2_name = match["bot2"]["name"]
-    bot1_data_folder = os.path.join(config.WORKING_DIRECTORY, "bots", bot_1_name, "data")
-    bot2_data_folder = os.path.join(config.WORKING_DIRECTORY, "bots", bot_2_name, "data")
-
-    # Move the error log to temp
+    bot1_data_folder = os.path.join(
+        config.WORKING_DIRECTORY, "bots", bot_1_name, "data")
+    bot2_data_folder = os.path.join(
+        config.WORKING_DIRECTORY, "bots", bot_2_name, "data")
     bot1_error_log = os.path.join(bot1_data_folder, "stderr.log")
-    bot1_error_log_tmp = os.path.join(config.TEMP_PATH, bot_1_name + "-error.log")
+    bot1_error_log_tmp = os.path.join(
+        config.TEMP_PATH, bot_1_name + "-error.log")
     if os.path.isfile(bot1_error_log):
         shutil.move(bot1_error_log, bot1_error_log_tmp)
     else:
         Path(bot1_error_log_tmp).touch()
 
     bot2_error_log = os.path.join(bot2_data_folder, "stderr.log")
-    bot2_error_log_tmp = os.path.join(config.TEMP_PATH, bot_2_name + "-error.log")
+    bot2_error_log_tmp = os.path.join(
+        config.TEMP_PATH, bot_2_name + "-error.log")
     if os.path.isfile(bot2_error_log):
         shutil.move(bot2_error_log, bot2_error_log_tmp)
     else:
         Path(bot2_error_log_tmp).touch()
 
-    zip_file = zipfile.ZipFile(os.path.join(config.TEMP_PATH, bot_1_name + "-error.zip"), 'w')
-    zip_file.write(os.path.join(config.TEMP_PATH, bot_1_name + "-error.log"), compress_type=zipfile.ZIP_DEFLATED)
+    zip_file = zipfile.ZipFile(os.path.join(
+        config.TEMP_PATH, bot_1_name + "-error.zip"), 'w')
+    zip_file.write(os.path.join(config.TEMP_PATH, bot_1_name +
+                                "-error.log"), compress_type=zipfile.ZIP_DEFLATED)
     zip_file.close()
 
-    zip_file = zipfile.ZipFile(os.path.join(config.TEMP_PATH, bot_2_name + "-error.zip"), 'w')
-    zip_file.write(os.path.join(config.TEMP_PATH, bot_2_name + "-error.log"), compress_type=zipfile.ZIP_DEFLATED)
+    zip_file = zipfile.ZipFile(os.path.join(
+        config.TEMP_PATH, bot_2_name + "-error.zip"), 'w')
+    zip_file.write(os.path.join(config.TEMP_PATH, bot_2_name +
+                                "-error.log"), compress_type=zipfile.ZIP_DEFLATED)
     zip_file.close()
+
 
     # sc2ladderserver logs
-    sc2ladderserver_stdout_log_tmp = os.path.join(config.TEMP_PATH, "sc2ladderserver_stdout.log")
-    sc2ladderserver_stderr_log_tmp = os.path.join(config.TEMP_PATH, "sc2ladderserver_stderr.log")
-    sc2ladderserver_log_zip = os.path.join(config.TEMP_PATH, "sc2ladderserver_log.zip")
+    sc2ladderserver_stdout_log_tmp = os.path.join(
+        config.TEMP_PATH, "sc2ladderserver_stdout.log")
+    sc2ladderserver_stderr_log_tmp = os.path.join(
+        config.TEMP_PATH, "sc2ladderserver_stderr.log")
+    sc2ladderserver_log_zip = os.path.join(
+        config.TEMP_PATH, "sc2ladderserver_log.zip")
 
     if os.path.isfile(config.SC2LADDERSERVER_STDOUT_FILE):
-        shutil.move(config.SC2LADDERSERVER_STDOUT_FILE, sc2ladderserver_stdout_log_tmp)
+        shutil.move(config.SC2LADDERSERVER_STDOUT_FILE,
+                    sc2ladderserver_stdout_log_tmp)
     else:
         Path(sc2ladderserver_stdout_log_tmp).touch()
 
     if os.path.isfile(config.SC2LADDERSERVER_STDERR_FILE):
-        shutil.move(config.SC2LADDERSERVER_STDERR_FILE, sc2ladderserver_stderr_log_tmp)
+        shutil.move(config.SC2LADDERSERVER_STDERR_FILE,
+                    sc2ladderserver_stderr_log_tmp)
     else:
         Path(sc2ladderserver_stderr_log_tmp).touch()
 
     zip_file = zipfile.ZipFile(sc2ladderserver_log_zip, 'w')
-    zip_file.write(sc2ladderserver_stdout_log_tmp, compress_type=zipfile.ZIP_DEFLATED)
-    zip_file.write(sc2ladderserver_stderr_log_tmp, compress_type=zipfile.ZIP_DEFLATED)
+    zip_file.write(sc2ladderserver_stdout_log_tmp,
+                   compress_type=zipfile.ZIP_DEFLATED)
+    zip_file.write(sc2ladderserver_stderr_log_tmp,
+                   compress_type=zipfile.ZIP_DEFLATED)
     zip_file.close()
 
     # Create downloable data archives
     if not os.path.isdir(bot1_data_folder):
         os.mkdir(bot1_data_folder)
-    shutil.make_archive(os.path.join(config.TEMP_PATH, bot_1_name + "-data"), "zip", bot1_data_folder)
+    shutil.make_archive(os.path.join(
+        config.TEMP_PATH, bot_1_name + "-data"), "zip", bot1_data_folder)
     if not os.path.isdir(bot2_data_folder):
         os.mkdir(bot2_data_folder)
-    shutil.make_archive(os.path.join(config.TEMP_PATH, bot_2_name + "-data"), "zip", bot2_data_folder)
+    shutil.make_archive(os.path.join(
+        config.TEMP_PATH, bot_2_name + "-data"), "zip", bot2_data_folder)
 
     try:  # Upload replay file and bot data archives
         file_list = {
@@ -332,11 +392,12 @@ def postresult(match):
         if os.path.isfile(replay_file_path):
             file_list["replay_file"] = open(replay_file_path, "rb")
 
-        payload = {"type": result, "match": int(match["id"]), "game_steps": gametime}
+        payload = {"type": result, "match": int(
+            match["id"]), "game_steps": gametime}
 
-        if bot1_avg_step_time is not None and is_valid_avg_step_time(bot1_avg_step_time):
+        if bot1_avg_step_time is not None:
             payload["bot1_avg_step_time"] = bot1_avg_step_time
-        if bot2_avg_step_time is not None and is_valid_avg_step_time(bot2_avg_step_time):
+        if bot2_avg_step_time is not None:
             payload["bot2_avg_step_time"] = bot2_avg_step_time
 
         if config.DEBUG_MODE:
@@ -347,12 +408,84 @@ def postresult(match):
         if post is None:
             printout("ERROR: Result submission failed. 'post' was None.")
         elif post.status_code >= 400:  # todo: retry?
-            printout(f"ERROR: Result submission failed. Status code: {post.status_code}.")
+            printout(
+                f"ERROR: Result submission failed. Status code: {post.status_code}.")
         else:
             printout(result + " - Result transferred")
     except ConnectionError as ce:
         printout(f"ERROR: Result submission failed. Connection to website failed.")
 
+def post_local_result(bot_0,bot_1,lm_result):
+    result_json = {
+        "Bot1":bot_0,
+        "Bot2":bot_1,
+        "Winner":None,
+        "Map":None,
+        "Result":None,
+        "GameTime":None,
+        "GameTimeFormatted":None,
+        "TimeStamp":None,
+        "Bot1AvgFrame": 0,
+        "Bot2AvgFrame": 0
+        }
+    for x in lm_result:
+        if x.get('Result',None):
+            temp_results = x['Result']
+            if temp_results[bot_0] == 'Result.Victory':
+                result='Player1Win'
+                result_json['Winner']=bot_0
+            
+            elif temp_results[bot_0] == 'Result.Defeat':
+                result = 'Player2Win'
+                result_json['Winner']=bot_1
+            
+            elif temp_results[bot_0] == 'Result.Crashed':
+                result = 'Player1Crash'
+                result_json['Winner']=bot_1
+            
+            elif temp_results[bot_1] == 'Result.Crashed':
+                result = 'Player2Crash'
+                result_json['Winner']=bot_0
+            
+            elif temp_results[bot_0] =='Result.Tie':
+                result = 'Tie'
+                result_json['Winner']='Tie'
+            
+            else:
+                result = 'InitializationError'
+
+            result_json['Result'] = result
+        
+        if x.get('GameTime',None):
+            result_json['GameTime'] = x['GameTime']
+            result_json['GameTimeFormatted'] = x['GameTimeFormatted']
+        
+        if x.get('AverageFrameTime',None):
+            result_json['Bot1AvgFrame'] = (next(iter(x['AverageFrameTime']))).get(bot_0,0) *1000#Convert to ms
+            result_json['Bot2AvgFrame'] = (next(iter(x['AverageFrameTime']))).get(bot_1,0)*1000#Convert to ms
+        
+        if x.get('TimeStamp',None):
+            result_json['TimeStamp'] = x['TimeStamp']
+
+    # if os.path.isfile(RESULTS_LOG_FILE):#TODO: Fix the appending of results
+    #     f=open(RESULTS_LOG_FILE, 'r')
+    #     if len(f.readlines()) > 0:
+    #         f.close()
+    #         with open(RESULTS_LOG_FILE, 'w+') as results_log:
+    #             j_object = json.load(results_log) 
+    #             if j_object.get('Results',None):
+    #                 print('append')
+    #                 j_object['Results'].append(result_json)
+                
+    #             else:
+    #                 print('Overwrite')
+    #                 j_object['Results'] =[result_json]
+                
+    #             results_log.write(json.dumps(j_object, indent=4))
+    # else:
+        with open(RESULTS_LOG_FILE,'w') as results_log:
+            j_object = dict({'Results':[result_json]})
+            results_log.write(json.dumps(j_object, indent=4))
 
 def cleanup():
     # Files to remove
@@ -371,7 +504,7 @@ def cleanup():
             os.remove(file)
 
     # Files to remove inside these folders
-    folders = [config.REPLAYS_DIRECTORY, config.TEMP_PATH]
+    folders = [REPLAY_DIRECTORY, config.TEMP_PATH]
     for folder in folders:
         for file in os.listdir(folder):
             file_path = os.path.join(folder, file)
@@ -381,36 +514,230 @@ def cleanup():
     bots_dir = os.path.join(config.WORKING_DIRECTORY, "bots")
     for dir in os.listdir(bots_dir):
         shutil.rmtree(os.path.join(bots_dir, dir))
+    print(f'Killing current server')
+    kill_current_server()
 
+def start_bot(bot_data, opponent_id):
+    print(bot_data)
+    bot_data = bot_data['Bots'] if RUN_LOCAL else bot_data
+    bot_name = next(iter(bot_data))
+    bot_data = bot_data[bot_name] if RUN_LOCAL else bot_data
+    bot_path = os.path.join(BOTS_DIRECTORY,bot_name) if RUN_LOCAL else bot_data['RootPath']#hotfix
+    bot_file = bot_data['FileName']
+    bot_type = bot_data['Type']
+    cmd_line = [bot_file, "--GamePort", str(PORT), "--StartPort", str(
+        PORT), "--LadderServer", HOST, "--OpponentId", str(opponent_id)]
+    if bot_type.lower() == "python":
+        cmd_line.insert(0, PYTHON)
+    elif bot_type.lower() == "wine":
+        cmd_line.insert(0, "wine")
+    elif bot_type.lower() == "mono":
+        cmd_line.insert(0, "mono")
+    elif bot_type.lower() == "dotnetcore":
+        cmd_line.insert(0, "dotnet")
+        print(str(cmd_line))
+    elif bot_type.lower() == "commandcenter":
+        raise
+    elif bot_type.lower() == "binarycpp":
+        cmd_line.insert(0, os.path.join(bot_path, bot_file))
+    elif bot_type.lower() == "java":
+        cmd_line.insert(0, "java")
+        cmd_line.insert(1, "-jar")
+    elif bot_type.lower() == "nodejs":
+        raise
+    
+    try:
+        os.stat(os.path.join(bot_path, "data"))
+    except:
+        os.mkdir(os.path.join(bot_path, "data"))
+    try:
+        os.stat(REPLAY_DIRECTORY)
+    except:
+        os.mkdir(REPLAY_DIRECTORY)
+    try:
+        with open(os.path.join(bot_path, "data", "stdout.log"), "w+") as out, open(os.path.join(bot_path, "data", "stderr.log"), "w+") as err:
+            process = subprocess.Popen(
+                cmd_line,
+                stdout=out,
+                stderr=err,
+                # creationflags=subprocess.CREATE_NEW_CONSOLE,
+                cwd=(str(bot_path))
+
+            )
+        if process.errors:
+            print("Error")
+        return process
+    except Exception as e:
+        printout(e)
+        sys.exit(0)
+
+def pid_cleanup(pids):
+    for pid in pids:
+        print("Killing", pid)
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except Exception as e:
+            print("Already closed: ", pid,)
+
+async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_data,nextmatchid):
+    result = []
+    session = aiohttp.ClientSession()
+    ws = await session.ws_connect(f'http://{HOST}:{str(PORT)}/sc2api', headers=dict({'Supervisor': 'true'}))
+    json_config = {"Config":{'Map': mapname, 'MaxGameTime': max_game_time,
+                   'Player1': bot_0_name, 'Player2': bot_1_name, 'ReplayPath': REPLAY_DIRECTORY, "MatchID": nextmatchid, 'DisableDebug': "False"}}
+
+    await ws.send_str(json.dumps(json_config))
+    
+    while True:
+        msg = await ws.receive()
+        if msg.type == aiohttp.WSMsgType.CLOSED:
+            result.append({'Results':{bot_0_name:'InitializationError'}})
+            await session.close()
+            break
+        msg = msg.json()
+        if msg.get("Status", None) == "Connected":
+            print("Starting bots...")
+            bot1_process = start_bot(bot_0_data, opponent_id=123)
+            await asyncio.sleep(0.1)
+            bot2_process = start_bot(bot_1_data, opponent_id=321)
+            await asyncio.sleep(3)
+            print(f'checking if bot is okay')
+
+            if bot1_process.poll():
+                print(f"Bot1 crash")
+                await session.close()
+                result.append({'Results':{bot_0_name:'InitializationError'}})
+            else:
+                await ws.send_str(json.dumps({'Bot1':True}))
+            
+            if bot2_process.poll():
+                print(f"Bot2 crash")
+                await session.close()
+                result.append({'Results':{bot_1_name:'InitializationError'}})
+            else:
+                await ws.send_str(json.dumps({'Bot2':True}))
+
+        if msg.get("PID", None):
+            pid_cleanup([bot1_process.pid, bot2_process.pid])  # Terminate bots first
+            pid_cleanup(msg['PID'])  # Terminate SC2 processes
+
+        if msg.get("Result", None):
+            result.append(msg)
+
+        if msg.get("GameTime", None):
+            result.append(msg)
+
+        if msg.get('AverageFrameTime', None):
+            result.append(msg)
+
+        if msg.get("Error", None):
+            await session.close()
+            break
+
+        if msg.get("StillAlive",None):
+            if bot1_process.poll():
+                printout("Bot1 Init Error")
+                await session.close()
+            # if not check_pid(bot1_process.pid) and not len(result) >0:
+                result.append({'Results':{bot_0_name:'InitializationError'}})
+            if bot2_process.poll():
+                printout("Bot2 Init Error")
+                await session.close()
+            # if not check_pid(bot2_process.pid) and not len(result) >0:
+                result.append({'Results':{bot_1_name:'InitializationError'}})
+
+        if msg.get("Status", None) == "Complete":
+            result.append(dict({'TimeStamp':datetime.datetime.utcnow().strftime("%d-%m-%Y %H-%M-%SUTC")}))
+            await session.close()
+            break
+
+    return result
+
+def kill_current_server():
+    try:
+        for proc in psutil.process_iter():
+            for conns in proc.connections(kind='inet'):
+                if conns.laddr.port == PORT:
+                    proc.send_signal(signal.SIGTERM)
+            if proc.name() == 'SC2_x64.exe':
+                proc.send_signal(signal.SIGTERM)
+
+	       
+    except:
+        pass
+def runmatch(count,mapname,bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatchid):
+    printout(f"Starting game - Round {count}")
+    kill_current_server()
+    proxy = subprocess.Popen([PYTHON, 'Proxy.py'],
+                             cwd=WORKING_DIRECTORY, shell=False)
+
+    
+    while True:
+        time.sleep(1)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = sock.connect_ex((HOST,PORT))
+        if result == 0:
+            break
+
+    loop = asyncio.get_event_loop()
+    
+
+    result = loop.run_until_complete(asyncio.wait_for(main(mapname,bot_0_name,MAX_GAME_TIME, bot_1_name,bot_0_data,bot_1_data,nextmatchid),5400))
+
+    try:
+        os.kill(proxy.pid, signal.SIGTERM)
+    except Exception as e:
+        print(e)
+    return result
 
 try:
     printout(f'Arena Client started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
-
-    # create directories if they don't exist
-    os.makedirs(config.REPLAYS_DIRECTORY, exist_ok=True)
-    os.makedirs(config.TEMP_PATH, exist_ok=True)
-    os.makedirs(os.path.join(config.WORKING_DIRECTORY, "bots"), exist_ok=True)
-
-    os.chdir(config.WORKING_DIRECTORY)
-
+    os.makedirs(REPLAY_DIRECTORY, exist_ok=True)
+    if not RUN_LOCAL:
+        os.makedirs(config.TEMP_PATH, exist_ok=True)
+        os.makedirs(os.path.join(config.WORKING_DIRECTORY, "bots"), exist_ok=True)
+    
+    os.chdir(WORKING_DIRECTORY)
     count = 0
-    while count <= config.ROUNDS_PER_RUN:
-        cleanup()
+    if RUN_LOCAL:
+        try:
+            with open('matchupList','r') as ml:
+                ROUNDS_PER_RUN = len(ml.readlines())
+        except FileNotFoundError:
+            f= open('matchupList','w+')
+            ROUNDS_PER_RUN=0
+            f.close()
+    else:
+        ROUNDS_PER_RUN = config.ROUNDS_PER_RUN
+
+    while count < ROUNDS_PER_RUN:
+        if not RUN_LOCAL:
+            cleanup()
         if getnextmatch(count):
-            count += 1
+            count = 1
+
+        if RUN_LOCAL:
+            with open('matchupList','r+') as ml:  
+                head, tail = ml.read().split('\n', 1)
+                ml.write(tail)
 
 except Exception as e:
     printout(f"arena-client encountered an uncaught exception: {e} Exiting...")
+    if not RUN_LOCAL:
+        with open(os.path.join(config.LOCAL_PATH, ".shutdown"), "w") as f:
+                f.write("Shutdown")
+    traceback.print_exc()
 finally:
     try:
-        cleanup()  # be polite and try to cleanup
+        kill_current_server()
+        pass#cleanup()  # be polite and try to cleanup
     except:
         pass
-
-try:
-    if config.SHUT_DOWN_AFTER_RUN:
-        printout("Stopping system")
-        with open(os.path.join(config.LOCAL_PATH, ".shutdown"), "w") as f:
-            f.write("Shutdown")
-except:
-    printout("ERROR: Failed to shutdown.")
+if not RUN_LOCAL:
+    try:
+        if config.SHUT_DOWN_AFTER_RUN:
+            printout("Stopping system")
+            with open(os.path.join(config.LOCAL_PATH, ".shutdown"), "w") as f:
+                f.write("Shutdown")
+    except:
+        printout("ERROR: Failed to shutdown.")

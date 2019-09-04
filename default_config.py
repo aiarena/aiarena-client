@@ -12,6 +12,7 @@ SHUT_DOWN_AFTER_RUN = True
 RUN_REPLAY_CHECK = True
 USE_PID_CHECK = False
 DEBUG_MODE = True
+PYTHON = "python3"
 
 # PATHS AND FILES
 TEMP_PATH = "/tmp/aiarena/"
