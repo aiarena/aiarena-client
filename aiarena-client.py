@@ -518,7 +518,6 @@ def cleanup():
     kill_current_server()
 
 def start_bot(bot_data, opponent_id):
-    print(bot_data)
     bot_data = bot_data['Bots'] if RUN_LOCAL else bot_data
     bot_name = next(iter(bot_data))
     bot_data = bot_data[bot_name] if RUN_LOCAL else bot_data
@@ -579,6 +578,19 @@ def pid_cleanup(pids):
         except Exception as e:
             print("Already closed: ", pid,)
 
+def move_pid(pid):
+    if pid !=0:
+        return
+    else:
+        for i in range(0,5):
+            try:
+                os.setpgid(pid, 0)
+                return
+            except OSError:
+                if os.getpgid(pid) == 0:
+                    return
+                time.sleep(0.25) # sleep for retry
+
 async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_data,nextmatchid):
     result = []
     session = aiohttp.ClientSession()
@@ -596,11 +608,15 @@ async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_d
             break
         msg = msg.json()
         if msg.get("Status", None) == "Connected":
-            print("Starting bots...")
+            print(f"Starting bots...")
             bot1_process = start_bot(bot_0_data, opponent_id=123)
             await asyncio.sleep(0.1)
             bot2_process = start_bot(bot_1_data, opponent_id=321)
             await asyncio.sleep(3)
+            print(f'Changing PGID')
+            for x in [bot1_process.pid,bot2_process.pid]:
+                move_pid(x)
+
             print(f'checking if bot is okay')
 
             if bot1_process.poll():
