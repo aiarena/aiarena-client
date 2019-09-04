@@ -1,3 +1,4 @@
+#!/home/aiarena/venv/bin/python
 import traceback
 import stat
 import aiohttp
