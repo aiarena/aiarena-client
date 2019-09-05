@@ -1,3 +1,4 @@
+#!/home/aiarena/venv/bin/python
 import signal
 # import aiohttp_debugtoolbar
 import asyncio
