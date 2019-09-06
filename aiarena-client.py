@@ -573,11 +573,11 @@ def start_bot(bot_data, opponent_id):
 
 def pid_cleanup(pids):
     for pid in pids:
-        logger.debug("Killing: "+ pid)
+        logger.debug("Killing: "+ str(pid))
         try:
             os.kill(pid, signal.SIGTERM)
         except Exception as e:
-            logger.debug("Already closed: ", pid,)
+            logger.debug("Already closed: "+ str(pid))
 
 def move_pid(pid):
     if pid !=0:
