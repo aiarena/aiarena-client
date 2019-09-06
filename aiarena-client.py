@@ -15,13 +15,12 @@ import sys
 import psutil
 from termcolor import colored
 import socket
+import logging
 RUN_LOCAL = False
-    
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.FileHandler('supervisor.log', 'a+'))
+logger.setLevel(10)
 if not RUN_LOCAL:
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.addHandler(logging.FileHandler('supervisor.log', 'a+'))
-    logger.setLevel(10)
     import hashlib
    
     import zipfile
@@ -687,7 +686,7 @@ def runmatch(count,mapname,bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatc
     printout(f"Starting game - Round {count}")
     kill_current_server()
     proxy = subprocess.Popen([PYTHON, 'Proxy.py'],
-                             cwd=WORKING_DIRECTORY, shell=False)
+                            cwd=WORKING_DIRECTORY, shell=False)
 
     
     while True:
@@ -734,10 +733,10 @@ try:
         if getnextmatch(count):
             count += 1
 
-        if RUN_LOCAL:
-            with open('matchupList','r+') as ml:  
-                head, tail = ml.read().split('\n', 1)
-                ml.write(tail)
+        # if RUN_LOCAL:
+        #     with open('matchupList','r+') as ml:  
+        #         head, tail = ml.read().split('\n', 1)
+        #         ml.write(tail)
 
 except Exception as e:
     printout(f"arena-client encountered an uncaught exception: {e} Exiting...")
