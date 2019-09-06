@@ -18,7 +18,10 @@ import socket
 RUN_LOCAL = False
     
 if not RUN_LOCAL:
-
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.addHandler(logging.FileHandler('supervisor.log', 'a+'))
+    logger.setLevel(10)
     import hashlib
    
     import zipfile
@@ -474,11 +477,11 @@ def post_local_result(bot_0,bot_1,lm_result):
     #         with open(RESULTS_LOG_FILE, 'w+') as results_log:
     #             j_object = json.load(results_log) 
     #             if j_object.get('Results',None):
-    #                 print('append')
+    #                 logger.debug('append')
     #                 j_object['Results'].append(result_json)
                 
     #             else:
-    #                 print('Overwrite')
+    #                 logger.debug('Overwrite')
     #                 j_object['Results'] =[result_json]
                 
     #             results_log.write(json.dumps(j_object, indent=4))
@@ -514,7 +517,7 @@ def cleanup():
     bots_dir = os.path.join(config.WORKING_DIRECTORY, "bots")
     for dir in os.listdir(bots_dir):
         shutil.rmtree(os.path.join(bots_dir, dir))
-    print(f'Killing current server')
+    logger.debug(f'Killing current server')
     kill_current_server()
 
 def start_bot(bot_data, opponent_id):
@@ -534,7 +537,6 @@ def start_bot(bot_data, opponent_id):
         cmd_line.insert(0, "mono")
     elif bot_type.lower() == "dotnetcore":
         cmd_line.insert(0, "dotnet")
-        print(str(cmd_line))
     elif bot_type.lower() == "commandcenter":
         raise
     elif bot_type.lower() == "binarycpp":
@@ -564,7 +566,7 @@ def start_bot(bot_data, opponent_id):
 
             )
         if process.errors:
-            print("Error")
+            logger.debug("Error: "+process.errors)
         return process
     except Exception as e:
         printout(e)
@@ -572,11 +574,11 @@ def start_bot(bot_data, opponent_id):
 
 def pid_cleanup(pids):
     for pid in pids:
-        print("Killing", pid)
+        logger.debug("Killing: "+ pid)
         try:
             os.kill(pid, signal.SIGTERM)
         except Exception as e:
-            print("Already closed: ", pid,)
+            logger.debug("Already closed: ", pid,)
 
 def move_pid(pid):
     if pid !=0:
@@ -608,26 +610,26 @@ async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_d
             break
         msg = msg.json()
         if msg.get("Status", None) == "Connected":
-            print(f"Starting bots...")
+            logger.debug(f"Starting bots...")
             bot1_process = start_bot(bot_0_data, opponent_id=123)
             await asyncio.sleep(0.1)
             bot2_process = start_bot(bot_1_data, opponent_id=321)
             await asyncio.sleep(3)
-            print(f'Changing PGID')
+            logger.debug(f'Changing PGID')
             for x in [bot1_process.pid,bot2_process.pid]:
                 move_pid(x)
 
-            print(f'checking if bot is okay')
+            logger.debug(f'checking if bot is okay')
 
             if bot1_process.poll():
-                print(f"Bot1 crash")
+                logger.debug(f"Bot1 crash")
                 await session.close()
                 result.append({'Results':{bot_0_name:'InitializationError'}})
             else:
                 await ws.send_str(json.dumps({'Bot1':True}))
             
             if bot2_process.poll():
-                print(f"Bot2 crash")
+                logger.debug(f"Bot2 crash")
                 await session.close()
                 result.append({'Results':{bot_1_name:'InitializationError'}})
             else:
@@ -703,7 +705,7 @@ def runmatch(count,mapname,bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatc
     try:
         os.kill(proxy.pid, signal.SIGTERM)
     except Exception as e:
-        print(e)
+        logger.debug(str(e))
     return result
 
 try:
@@ -746,7 +748,7 @@ except Exception as e:
 finally:
     try:
         kill_current_server()
-        pass#cleanup()  # be polite and try to cleanup
+        cleanup()  # be polite and try to cleanup
     except:
         pass
 if not RUN_LOCAL:

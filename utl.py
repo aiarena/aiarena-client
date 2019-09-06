@@ -10,7 +10,8 @@ import config
 def is_valid_avg_step_time(num):
     try:
         number = float(num)  # test float conversion
-        return not math.isnan(number) and not math.isinf(number)  # reject nan and inf values
+        # reject nan and inf values
+        return not math.isnan(number) and not math.isinf(number)
     except ValueError:
         return False
 
@@ -18,10 +19,11 @@ def is_valid_avg_step_time(num):
 # Print to console and log
 def printout(text):
     now = datetime.datetime.now()
-    infos = [now.strftime("%b %d %H:%M:%S"), config.ARENA_CLIENT_ID, text]
+    infos = [now.strftime("%b %d %H:%M:%S"), config.ARENA_CLIENT_ID, str(text)]
     # Maps yellow to the first info, red to the second, green for the text
     colors = ["yellow", "red", "green"]
-    colored_infos = " ".join(colored(info, color) for info, color in zip(infos, colors))
+    colored_infos = " ".join(colored(info, color)
+                             for info, color in zip(infos, colors))
     print(colored_infos)
     with open(config.LOG_FILE, "a+") as f:
         line = " ".join(infos) + "\n"
@@ -40,7 +42,8 @@ def load_pid_from_file(pid_file):
             try:
                 return int(file.read())
             except ValueError:
-                printout(f"ERROR: Failed to convert contents of PID file to integer.")
+                printout(
+                    f"ERROR: Failed to convert contents of PID file to integer.")
                 return None
     except Exception as e:
         printout(f"ERROR: Failed to read PID file: {e}")

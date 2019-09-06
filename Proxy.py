@@ -29,6 +29,7 @@ HOST = os.getenv('HOST', '127.0.0.1')
 PORT = int(os.getenv('PORT', 8765))
 
 logger = logging.getLogger(__name__)
+logger.addHandler(logging.FileHandler('proxy.log', 'a+'))
 logger.setLevel(10)
 warnings.simplefilter("ignore",ResourceWarning)
 
@@ -98,9 +99,9 @@ class Controller(Protocol):
             p.type = player.type.value
             p.player_name = player.name
 
-        logger.info("Creating new game")
-        logger.info(f"Map:     {game_map.name}")
-        logger.info(f"Players: {', '.join(str(p) for p in players)}")
+        logger.debug("Creating new game")
+        logger.debug(f"Map:     {game_map.name}")
+        logger.debug(f"Players: {', '.join(str(p) for p in players)}")
         result = await self._execute(create_game=req)
         
         return result
@@ -181,11 +182,11 @@ class Proxy:
         return response
 
     async def create_game(self, server, players, map_name):
-        logger.info('Creating game...')
+        logger.debug('Creating game...')
         map_name = map_name.replace(".SC2Replay", "").replace(" ", "")
         response = await server.create_game(maps.get(map_name),
                                             players, realtime=False)  # TODO: Accept map and realtime as parameters
-        logger.info("Game created")
+        logger.debug("Game created")
         return response
 
     def _launch(self, host, port=None, fullscreen=False):
@@ -223,7 +224,7 @@ class Proxy:
         result = await self._execute(ws=ws, save_replay=sc_pb.RequestSaveReplay())
         with open(self.replay_name, "wb") as f:
             f.write(result.save_replay.data)
-        logger.info(f"Saved replay as " + str(self.replay_name))
+        logger.debug(f"Saved replay as " + str(self.replay_name))
         return True
 
     async def process_request(self, msg, ws, ws_c,process):
@@ -295,9 +296,6 @@ class Proxy:
         response = sc_pb.Response()
         response.ParseFromString(msg)
         
-        # if 'observation' in str(response):
-
-            # print(response.observation.observation.game_loop)
 
     async def websocket_handler(self, request, portconfig):
         logger.debug("Starting client session")
@@ -359,10 +357,10 @@ class Proxy:
                                 await ws_c2p.send_bytes(data_p2s)
                                 start_time = time.monotonic()
                         else:
-                            logger.info(
+                            logger.debug(
                                 "------------------------------------------------------------")
-                            logger.info("Websocket connection closed")
-                            logger.info(
+                            logger.debug("Websocket connection closed")
+                            logger.debug(
                                 "------------------------------------------------------------")
                 except Exception as e:
                     logger.debug(e)
@@ -382,11 +380,11 @@ class Proxy:
                         self.supervisor.result = dict({self.player_name: self._result})
                     
                     for pid in self.supervisor.pids:
-                        print("Killing", pid)
+                        logger.debug("Killing", pid)
                         try:
                             os.kill(pid, signal.SIGTERM)
                         except Exception as e:
-                            print("Already closed: ", pid)
+                            logger.debug("Already closed: ", pid)
                     await ws_c2p.close()
                     logger.debug('Disconnected')
                     return ws_p2s
@@ -589,7 +587,7 @@ class Supervisor:
                     await ws.send_str(json.dumps(json_error))
                     await ws.close()
                 except Exception as e:
-                    logger.info(e)
+                    logger.debug(e)
             counter=0
             while not self._result:
                 counter+=1
