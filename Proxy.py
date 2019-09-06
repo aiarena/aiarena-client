@@ -230,7 +230,7 @@ class Proxy:
         async with aiohttp.ClientSession() as session:
             player = None
             logger.debug('Websocket client connection starting')
-            ws_c2p = web.WebSocketResponse()
+            ws_c2p = web.WebSocketResponse(receive_timeout=2)
 
             await ws_c2p.prepare(request)
             request.app['websockets'].add(ws_c2p)
@@ -257,7 +257,7 @@ class Proxy:
                     break
             logger.debug("Connecting to SC2")
             # Connects to SC2 instance
-            async with session.ws_connect(url,) as ws_p2s:
+            async with session.ws_connect(url) as ws_p2s:
                 c = Controller(ws_p2s, process)
                 if not self.created_game:
                     await self.create_game(c, players, self.map_name)
@@ -271,6 +271,8 @@ class Proxy:
                 logger.debug(r"Connecting proxy")
                 try:
                     async for msg in ws_c2p:
+                        if msg.data is None:
+                            raise
                         self.average_time.append(time.monotonic()-start_time)
                         if not self.killed:
                             if msg.type == aiohttp.WSMsgType.BINARY:
@@ -296,6 +298,7 @@ class Proxy:
                 finally:
                     #bot crashed, leave instead.
                     if self._result is None:
+                        logger.debug("Bot crashed")
                         self._result = 'Result.Crashed'
 
                     if await self.save_replay(ws_p2s):
@@ -305,7 +308,8 @@ class Proxy:
                             self.supervisor.average_frame_time = {self.player_name:sum(self.average_time)/len(self.average_time)}
                     except ZeroDivisionError:
                         self.supervisor.average_frame_time = {self.player_name:0}
-                        self.supervisor.result = dict({self.player_name: self._result})
+                    
+                    self.supervisor.result = dict({self.player_name: self._result})
                     
                     for pid in self.supervisor.pids:
                         logger.debug("Killing "+ str(pid))
@@ -531,9 +535,9 @@ class Supervisor:
             counter=0
             while not self._result:
                 counter+=1
-                if counter%5==0:
+                if counter%100==0:
                     await ws.send_str(json.dumps({"StillAlive":"True"}))
-                await asyncio.sleep(5)
+                await asyncio.sleep(0.1)
 
             final_result = {self.player1: next((str(item.get(
                 self.player1, None)) for item in self._result if item.get(
