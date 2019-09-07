@@ -677,7 +677,11 @@ async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_d
     return result
 
 def kill_current_server():
+
     try:
+        if SYSTEM =="linux":
+            printout("Killing SC2")
+            os.system('pkill SC2_x64')
         for proc in psutil.process_iter():
             for conns in proc.connections(kind='inet'):
                 if conns.laddr.port == PORT:
