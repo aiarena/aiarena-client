@@ -19,6 +19,9 @@ import socket
 
 # the default config will also import custom config values
 import default_config as config
+from utl import utl
+
+utl = utl(config)
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -34,8 +37,6 @@ if not config.RUN_LOCAL:
     import requests
     from requests.exceptions import ConnectionError
     import socket
-    
-    from utl import *
 
 # todo: move to config?
 SYSTEM = platform.system()
@@ -61,18 +62,6 @@ else:
     WORKING_DIRECTORY = config.WORKING_DIRECTORY
     MAX_GAME_TIME = 60486
 
-if config.RUN_LOCAL:
-    def printout(text):
-        now = datetime.datetime.now()
-        infos = [now.strftime("%b %d %H:%M:%S"), text]
-        # Maps yellow to the first info, red to the second, green for the text
-        colors = ["yellow", "red", "green"]
-        colored_infos = " ".join(colored(info, color) for info, color in zip(infos, colors))
-        print(colored_infos)
-        with open('ladder_manager.stdout', "a+") as f:
-            line = " ".join(infos) + "\n"
-            f.write(line)
-
 def check_pid(pid):
     try:
         os.kill(pid,0)
@@ -85,7 +74,7 @@ def getbotfile(bot):
     botname = bot["name"]
     boturl = bot["bot_zip"]
     botmd5 = bot["bot_zip_md5hash"]
-    printout(f"Downloading bot {botname}")
+    utl.printout(f"Downloading bot {botname}")
     # Download bot and save to .zip
     r = requests.get(boturl, headers={"Authorization": "Token " + config.API_TOKEN})
     bot_download_path = os.path.join(config.TEMP_PATH, botname + ".zip")
@@ -93,10 +82,10 @@ def getbotfile(bot):
         f.write(r.content)
     # Load bot from .zip to calculate md5
     with open(bot_download_path, "rb") as f:
-        calculated_md5 = hashlib.md5(file_as_bytes(f)).hexdigest()
+        calculated_md5 = hashlib.md5(utl.file_as_bytes(f)).hexdigest()
     if botmd5 == calculated_md5:
-        printout("MD5 hash matches transferred file...")
-        printout(f"Extracting bot {botname} to bots/{botname}")
+        utl.printout("MD5 hash matches transferred file...")
+        utl.printout(f"Extracting bot {botname} to bots/{botname}")
         # Extract to bot folder
         with zipfile.ZipFile(bot_download_path, "r") as zip_ref:
             zip_ref.extractall(f"bots/{botname}")
@@ -111,7 +100,7 @@ def getbotfile(bot):
         else:
             return False
     else:
-        printout(f"MD5 hash ({botmd5}) does not match transferred file ({calculated_md5})")
+        utl.printout(f"MD5 hash ({botmd5}) does not match transferred file ({calculated_md5})")
         cleanup()
         return False
 
@@ -123,22 +112,22 @@ def getbotdatafile(bot):
 
     botdataurl = bot["bot_data"]
     botdatamd5 = bot["bot_data_md5hash"]
-    printout(f"Downloading bot data for {botname}")
+    utl.printout(f"Downloading bot data for {botname}")
     # Download bot data and save to .zip
     r = requests.get(botdataurl, headers={"Authorization": "Token " + config.API_TOKEN})
     bot_data_path = os.path.join(config.TEMP_PATH, botname + "-data.zip")
     with open(bot_data_path, "wb") as f:
         f.write(r.content)
     with open(bot_data_path, "rb") as f:
-        calculated_md5 = hashlib.md5(file_as_bytes(f)).hexdigest()
+        calculated_md5 = hashlib.md5(utl.file_as_bytes(f)).hexdigest()
     if botdatamd5 == calculated_md5:
-        printout("MD5 hash matches transferred file...")
-        printout(f"Extracting data for {botname} to bots/{botname}/data")
+        utl.printout("MD5 hash matches transferred file...")
+        utl.printout(f"Extracting data for {botname} to bots/{botname}/data")
         with zipfile.ZipFile(bot_data_path, "r") as zip_ref:
             zip_ref.extractall(f"bots/{botname}/data")
         return True
     else:
-        printout(f"MD5 hash ({botdatamd5}) does not match transferred file ({calculated_md5})")
+        utl.printout(f"MD5 hash ({botdatamd5}) does not match transferred file ({calculated_md5})")
         cleanup()
         return False
 
@@ -180,41 +169,41 @@ def get_ladder_bots_data(bot):
     return bot, j_object
 
 def getnextmatch(count):
-    printout(f'New match started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
+    utl.printout(f'New match started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
     if not config.RUN_LOCAL:
         try:
             nextmatchresponse = requests.post(
                 config.API_MATCHES_URL, headers={"Authorization": "Token " + config.API_TOKEN}
             )
         except ConnectionError as ce:
-            printout(f"ERROR: Failed to retrieve game. Connection to website failed. Sleeping.")
+            utl.printout(f"ERROR: Failed to retrieve game. Connection to website failed. Sleeping.")
             time.sleep(30)
             return False
 
         if nextmatchresponse.status_code >= 400:
-            printout(f"ERROR: Failed to retrieve game. Status code: {nextmatchresponse.status_code}. Sleeping.")
+            utl.printout(f"ERROR: Failed to retrieve game. Status code: {nextmatchresponse.status_code}. Sleeping.")
             time.sleep(30)
             return False
 
         nextmatchdata = json.loads(nextmatchresponse.text)
 
         if "id" not in nextmatchdata:
-            printout("No games available - sleeping")
+            utl.printout("No games available - sleeping")
             time.sleep(30)
             return False
 
         nextmatchid = nextmatchdata["id"]
-        printout(f"Next match: {nextmatchid}")
+        utl.printout(f"Next match: {nextmatchid}")
 
         # Download map
         mapname = nextmatchdata["map"]["name"]
         mapurl = nextmatchdata["map"]["file"]
-        printout(f"Downloading map {mapname}")
+        utl.printout(f"Downloading map {mapname}")
 
         try:
             r = requests.get(mapurl)
         except:
-            printout(f"ERROR: Failed to download map {mapname} at URL {mapurl}.")
+            utl.printout(f"ERROR: Failed to download map {mapname} at URL {mapurl}.")
             time.sleep(30)
             return False
 
@@ -237,7 +226,7 @@ def getnextmatch(count):
         bot_1_game_display_id = bot_1_data['botID']
         
         result = runmatch(count, mapname, bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatchid)
-        # printout(result)
+        # utl.printout(result)
         postresult(nextmatchdata, result,bot_0_name,bot_1_name)
         return True
     
@@ -247,7 +236,7 @@ def getnextmatch(count):
                 nextmatchid = i
                 Line = line 
                 break
-        printout(f"Next match: {nextmatchid}")
+        utl.printout(f"Next match: {nextmatchid}")
         mapname = Line.split(" ")[1].replace('\n','').replace('.SC2Map','')
         bot_0 = Line.split('vs')[0].replace("\"","")
         bot_1 = Line.split('vs')[1].split(' ')[0].replace("\"","")
@@ -412,19 +401,19 @@ def postresult(match, lm_result,bot_1_name,bot_2_name):
             payload["bot2_avg_step_time"] = bot2_avg_step_time
 
         if config.DEBUG_MODE:
-            printout(json.dumps(payload))
+            utl.printout(json.dumps(payload))
 
         post = requests.post(config.API_RESULTS_URL, files=file_list, data=payload,
                              headers={"Authorization": "Token " + config.API_TOKEN})
         if post is None:
-            printout("ERROR: Result submission failed. 'post' was None.")
+            utl.printout("ERROR: Result submission failed. 'post' was None.")
         elif post.status_code >= 400:  # todo: retry?
-            printout(
+            utl.printout(
                 f"ERROR: Result submission failed. Status code: {post.status_code}.")
         else:
-            printout(result + " - Result transferred")
+            utl.printout(result + " - Result transferred")
     except ConnectionError as ce:
-        printout(f"ERROR: Result submission failed. Connection to website failed.")
+        utl.printout(f"ERROR: Result submission failed. Connection to website failed.")
 
 def post_local_result(bot_0,bot_1,lm_result):
     result_json = {
@@ -595,7 +584,7 @@ def start_bot(bot_data, opponent_id):
                 logger.debug("Error: "+process.errors)
             return process
     except Exception as e:
-        printout(e)
+        utl.printout(e)
         sys.exit(0)
 
 def pid_cleanup(pids):
@@ -690,12 +679,12 @@ async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_d
 
         if msg.get("StillAlive",None):
             if bot1_process.poll():
-                printout("Bot1 Init Error")
+                utl.printout("Bot1 Init Error")
                 await session.close()
             # if not check_pid(bot1_process.pid) and not len(result) >0:
                 result.append({'Result':{bot_0_name:'InitializationError'}})
             if bot2_process.poll():
-                printout("Bot2 Init Error")
+                utl.printout("Bot2 Init Error")
                 await session.close()
             # if not check_pid(bot2_process.pid) and not len(result) >0:
                 result.append({'Result':{bot_1_name:'InitializationError'}})
@@ -712,7 +701,7 @@ def kill_current_server():
 
     try:
         if SYSTEM =="Linux":
-            printout("Killing SC2")
+            utl.printout("Killing SC2")
             os.system('pkill -f SC2_x64')
             os.system('lsof -ti tcp:8765 | xargs kill')
         for proc in psutil.process_iter():
@@ -726,7 +715,7 @@ def kill_current_server():
     except:
         pass
 def runmatch(count,mapname,bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatchid):
-    printout(f"Starting game - Round {count}")
+    utl.printout(f"Starting game - Round {count}")
     kill_current_server()
     proxy = subprocess.Popen( PYTHON+ ' Proxy.py',
                             cwd=WORKING_DIRECTORY, shell=True)
@@ -751,7 +740,7 @@ def runmatch(count,mapname,bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatc
     return result
 
 try:
-    printout(f'Arena Client started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
+    utl.printout(f'Arena Client started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
     os.makedirs(REPLAY_DIRECTORY, exist_ok=True)
     if not config.RUN_LOCAL:
         os.makedirs(config.TEMP_PATH, exist_ok=True)
@@ -782,7 +771,7 @@ try:
         #         ml.write(tail)
 
 except Exception as e:
-    printout(f"arena-client encountered an uncaught exception: {e} Exiting...")
+    utl.printout(f"arena-client encountered an uncaught exception: {e} Exiting...")
     if not config.RUN_LOCAL:
         with open(os.path.join(config.LOCAL_PATH, ".shutdown"), "w") as f:
                 f.write("Shutdown")
@@ -796,8 +785,8 @@ finally:
 if not config.RUN_LOCAL:
     try:
         if config.SHUT_DOWN_AFTER_RUN:
-            printout("Stopping system")
+            utl.printout("Stopping system")
             with open(os.path.join(config.LOCAL_PATH, ".shutdown"), "w") as f:
                 f.write("Shutdown")
     except:
-        printout("ERROR: Failed to shutdown.")
+        utl.printout("ERROR: Failed to shutdown.")
