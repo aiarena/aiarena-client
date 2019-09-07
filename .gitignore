@@ -11,6 +11,7 @@ aiarena-client.log
 errorlist
 results.json
 laddermanager.pid
+.shutdown
 
 bots/
 replays/
