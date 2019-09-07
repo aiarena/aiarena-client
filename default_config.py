@@ -2,6 +2,7 @@
 # CREATE A config.py FILE TO OVERRIDE SPECIFIC CONFIG VALUES
 import logging
 import os
+import platform
 from urllib import parse
 
 # GERERAL
@@ -14,6 +15,9 @@ USE_PID_CHECK = False
 DEBUG_MODE = True
 PYTHON = "python3"
 RUN_LOCAL = False
+SYSTEM = platform.system()
+HOST = '127.0.0.1'
+PORT = 8765
 
 # LOGGING
 LOGGING_HANDLER = logging.FileHandler('supervisor.log', 'a+')
