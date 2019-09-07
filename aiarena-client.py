@@ -63,63 +63,57 @@ def check_pid(pid):
         return True
 
 def getbotfile(bot):
-    botname = bot["name"]
-    boturl = bot["bot_zip"]
-    botmd5 = bot["bot_zip_md5hash"]
-    utl.printout(f"Downloading bot {botname}")
+    utl.printout(f"Downloading bot {bot.name}")
     # Download bot and save to .zip
-    r = requests.get(boturl, headers={"Authorization": "Token " + config.API_TOKEN})
-    bot_download_path = os.path.join(config.TEMP_PATH, botname + ".zip")
+    r = requests.get(bot.bot_zip, headers={"Authorization": "Token " + config.API_TOKEN})
+    bot_download_path = os.path.join(config.TEMP_PATH, bot.name + ".zip")
     with open(bot_download_path, "wb") as f:
         f.write(r.content)
     # Load bot from .zip to calculate md5
     with open(bot_download_path, "rb") as f:
         calculated_md5 = hashlib.md5(utl.file_as_bytes(f)).hexdigest()
-    if botmd5 == calculated_md5:
+    if bot.bot_zip_md5hash == calculated_md5:
         utl.printout("MD5 hash matches transferred file...")
-        utl.printout(f"Extracting bot {botname} to bots/{botname}")
+        utl.printout(f"Extracting bot {bot.name} to bots/{bot.name}")
         # Extract to bot folder
         with zipfile.ZipFile(bot_download_path, "r") as zip_ref:
-            zip_ref.extractall(f"bots/{botname}")
+            zip_ref.extractall(f"bots/{bot.name}")
 
         # if it's a linux bot, we need to add execute permissions
-        if bot['type'] == 'cpplinux':
+        if bot.type == 'cpplinux':
             # Chmod 744: rwxr--r--
-            os.chmod(f'bots/{botname}/{botname}', stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
+            os.chmod(f'bots/{bot.name}/{bot.name}', stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
 
         if getbotdatafile(bot):
             return True
         else:
             return False
     else:
-        utl.printout(f"MD5 hash ({botmd5}) does not match transferred file ({calculated_md5})")
+        utl.printout(f"MD5 hash ({bot.bot_zip_md5hash}) does not match transferred file ({calculated_md5})")
         cleanup()
         return False
 
 # Get bot data
 def getbotdatafile(bot):
-    botname = bot["name"]
-    if bot["bot_data"] is None:
+    if bot.bot_data is None:
         return True
 
-    botdataurl = bot["bot_data"]
-    botdatamd5 = bot["bot_data_md5hash"]
-    utl.printout(f"Downloading bot data for {botname}")
+    utl.printout(f"Downloading bot data for {bot.name}")
     # Download bot data and save to .zip
-    r = requests.get(botdataurl, headers={"Authorization": "Token " + config.API_TOKEN})
-    bot_data_path = os.path.join(config.TEMP_PATH, botname + "-data.zip")
+    r = requests.get(bot.bot_data, headers={"Authorization": "Token " + config.API_TOKEN})
+    bot_data_path = os.path.join(config.TEMP_PATH, bot.name + "-data.zip")
     with open(bot_data_path, "wb") as f:
         f.write(r.content)
     with open(bot_data_path, "rb") as f:
         calculated_md5 = hashlib.md5(utl.file_as_bytes(f)).hexdigest()
-    if botdatamd5 == calculated_md5:
+    if bot.bot_data_md5hash == calculated_md5:
         utl.printout("MD5 hash matches transferred file...")
-        utl.printout(f"Extracting data for {botname} to bots/{botname}/data")
+        utl.printout(f"Extracting data for {bot.name} to bots/{bot.name}/data")
         with zipfile.ZipFile(bot_data_path, "r") as zip_ref:
-            zip_ref.extractall(f"bots/{botname}/data")
+            zip_ref.extractall(f"bots/{bot.name}/data")
         return True
     else:
-        utl.printout(f"MD5 hash ({botdatamd5}) does not match transferred file ({calculated_md5})")
+        utl.printout(f"MD5 hash ({bot.bot_data_md5hash}) does not match transferred file ({calculated_md5})")
         cleanup()
         return False
 
@@ -130,10 +124,10 @@ def getbotdata(bot=None):
 		bottype = "python"
 		botid = "123"
 	else:    
-		botname=bot["name"]
-		botrace=bot["plays_race"]
-		bottype=bot["type"]
-		botid=bot["game_display_id"]
+		botname=bot.name
+		botrace=bot.plays_race
+		bottype=bot.type
+		botid=bot.game_display_id
 
 	race_map = {"P": "Protoss", "T": "Terran", "Z": "Zerg", "R": "Random"}
 	bot_type_map = {
@@ -159,6 +153,19 @@ def get_ladder_bots_data(bot):
     with open(bot_directory,'r') as f:
         j_object = json.load(f)
     return bot, j_object
+
+
+class Bot:
+    def __init__(self, data):
+        self.id = data["id"]
+        self.name = data["name"]
+        self.game_display_id = data["game_display_id"]
+        self.bot_zip = data["bot_zip"]
+        self.bot_zip_md5hash = data["bot_zip_md5hash"]
+        self.bot_data = data["bot_data"]
+        self.bot_data_md5hash = data["bot_data_md5hash"]
+        self.plays_race = data['plays_race']
+        self.type = data['type']
 
 def getnextmatch(count):
     utl.printout(f'New match started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
@@ -203,11 +210,12 @@ def getnextmatch(count):
         with open(map_path, "wb") as f:
             f.write(r.content)
 
-        bot_0 = nextmatchdata["bot1"]
+
+        bot_0 = Bot(nextmatchdata["bot1"])
         if not getbotfile(bot_0):
             time.sleep(30)
             return False
-        bot_1 = nextmatchdata["bot2"]
+        bot_1 = Bot(nextmatchdata["bot2"])
         if not getbotfile(bot_1):
             time.sleep(30)
             return False
