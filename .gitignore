@@ -23,3 +23,5 @@ tmp/
 *.log
 *.pyc
 *.stdout
+
+venv/
