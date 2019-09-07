@@ -622,15 +622,20 @@ async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_d
 
             if bot1_process.poll():
                 logger.debug(f"Bot1 crash")
-                await session.close()
                 result.append({'Results':{bot_0_name:'InitializationError'}})
+                await session.close()
+                break
+                
             else:
                 await ws.send_str(json.dumps({'Bot1':True}))
             
             if bot2_process.poll():
                 logger.debug(f"Bot2 crash")
-                await session.close()
                 result.append({'Results':{bot_1_name:'InitializationError'}})
+                await session.close()
+                break
+                
+                
             else:
                 await ws.send_str(json.dumps({'Bot2':True}))
 
@@ -667,7 +672,8 @@ async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_d
             result.append(dict({'TimeStamp':datetime.datetime.utcnow().strftime("%d-%m-%Y %H-%M-%SUTC")}))
             await session.close()
             break
-
+    if not result:
+        result.append({'Results':{'InitializationError'}})
     return result
 
 def kill_current_server():
