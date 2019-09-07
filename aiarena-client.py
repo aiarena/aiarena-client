@@ -604,7 +604,7 @@ async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_d
     while True:
         msg = await ws.receive()
         if msg.type == aiohttp.WSMsgType.CLOSED:
-            result.append({'Results':{bot_0_name:'InitializationError'}})
+            result.append({'Result':{bot_0_name:'InitializationError'}})
             await session.close()
             break
         msg = msg.json()
@@ -622,7 +622,7 @@ async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_d
 
             if bot1_process.poll():
                 logger.debug(f"Bot1 crash")
-                result.append({'Results':{bot_0_name:'InitializationError'}})
+                result.append({'Result':{bot_0_name:'InitializationError'}})
                 await session.close()
                 break
                 
@@ -631,7 +631,7 @@ async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_d
             
             if bot2_process.poll():
                 logger.debug(f"Bot2 crash")
-                result.append({'Results':{bot_1_name:'InitializationError'}})
+                result.append({'Result':{bot_1_name:'InitializationError'}})
                 await session.close()
                 break
                 
@@ -661,19 +661,19 @@ async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_d
                 printout("Bot1 Init Error")
                 await session.close()
             # if not check_pid(bot1_process.pid) and not len(result) >0:
-                result.append({'Results':{bot_0_name:'InitializationError'}})
+                result.append({'Result':{bot_0_name:'InitializationError'}})
             if bot2_process.poll():
                 printout("Bot2 Init Error")
                 await session.close()
             # if not check_pid(bot2_process.pid) and not len(result) >0:
-                result.append({'Results':{bot_1_name:'InitializationError'}})
+                result.append({'Result':{bot_1_name:'InitializationError'}})
 
         if msg.get("Status", None) == "Complete":
             result.append(dict({'TimeStamp':datetime.datetime.utcnow().strftime("%d-%m-%Y %H-%M-%SUTC")}))
             await session.close()
             break
     if not result:
-        result.append({'Results':{'InitializationError'}})
+        result.append({'Result':{'InitializationError'}})
     return result
 
 def kill_current_server():
