@@ -516,8 +516,8 @@ def start_bot(bot_data, opponent_id):
     bot_path = os.path.join(BOTS_DIRECTORY,bot_name) if config.RUN_LOCAL else bot_data['RootPath']#hotfix
     bot_file = bot_data['FileName']
     bot_type = bot_data['Type']
-    cmd_line = [bot_file, "--GamePort", str(config.PORT), "--StartPort", str(
-        config.PORT), "--LadderServer", config.HOST, "--OpponentId", str(opponent_id)]
+    cmd_line = [bot_file, "--GamePort", str(config.SC2_PROXY['PORT']), "--StartPort", str(
+        config.SC2_PROXY['PORT']), "--LadderServer", config.SC2_PROXY['HOST'], "--OpponentId", str(opponent_id)]
     if bot_type.lower() == "python":
         cmd_line.insert(0, PYTHON)
     elif bot_type.lower() == "wine":
@@ -603,7 +603,7 @@ def move_pid(pid):
 async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_data,nextmatchid):
     result = []
     session = aiohttp.ClientSession()
-    ws = await session.ws_connect(f'http://{config.HOST}:{str(config.PORT)}/sc2api', headers=dict({'Supervisor': 'true'}))
+    ws = await session.ws_connect(f"http://{config.SC2_PROXY['HOST']}:{str(config.SC2_PROXY['PORT'])}/sc2api", headers=dict({'Supervisor': 'true'}))
     json_config = {"Config":{'Map': mapname, 'MaxGameTime': max_game_time,
                    'Player1': bot_0_name, 'Player2': bot_1_name, 'ReplayPath': REPLAY_DIRECTORY, "MatchID": nextmatchid, 'DisableDebug': "False"}}
 
@@ -698,7 +698,7 @@ def kill_current_server():
             os.system('lsof -ti tcp:8765 | xargs kill')
         for proc in psutil.process_iter():
             for conns in proc.connections(kind='inet'):
-                if conns.laddr.port == config.PORT:
+                if conns.laddr.port == config.SC2_PROXY['PORT']:
                     proc.send_signal(signal.SIGTERM)
             if proc.name() == 'SC2_x64.exe':
                 proc.send_signal(signal.SIGTERM)
@@ -716,7 +716,7 @@ def runmatch(count,mapname,bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatc
     while True:
         time.sleep(1)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        result = sock.connect_ex((config.HOST,config.PORT))
+        result = sock.connect_ex((config.SC2_PROXY['HOST'], config.SC2_PROXY['PORT']))
         if result == 0:
             break
 
