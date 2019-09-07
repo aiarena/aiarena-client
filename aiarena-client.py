@@ -560,11 +560,12 @@ def start_bot(bot_data, opponent_id):
     try:
         with open(os.path.join(bot_path, "data", "stdout.log"), "w+") as out, open(os.path.join(bot_path, "data", "stderr.log"), "w+") as err:
             process = subprocess.Popen(
-                cmd_line,
+                ' '.join(cmd_line),
                 stdout=out,
                 stderr=err,
                 # creationflags=subprocess.CREATE_NEW_CONSOLE,
                 cwd=(str(bot_path))
+                ,shell=True
 
             )
         if process.errors:
@@ -699,8 +700,8 @@ def kill_current_server():
 def runmatch(count,mapname,bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatchid):
     printout(f"Starting game - Round {count}")
     kill_current_server()
-    proxy = subprocess.Popen([PYTHON, 'Proxy.py'],
-                            cwd=WORKING_DIRECTORY, shell=False)
+    proxy = subprocess.Popen( PYTHON+ ' Proxy.py',
+                            cwd=WORKING_DIRECTORY, shell=True)
 
     
     while True:
