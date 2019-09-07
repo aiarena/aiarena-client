@@ -249,6 +249,12 @@ def getnextmatch(count):
         return True
 
 def postresult(match, lm_result,bot_1_name,bot_2_name):
+    # quick hack to avoid these going uninitialized
+    # todo: remove these and actually fix the issue
+    gametime = 0
+    bot1_avg_step_time = 0
+    bot2_avg_step_time = 0
+
     if isinstance(lm_result,list):
         for x in lm_result:
             if x.get('Result',None):
