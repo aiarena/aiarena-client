@@ -282,6 +282,9 @@ def postresult(match, lm_result,bot_1_name,bot_2_name):
                 
                 else:
                     result = 'InitializationError'
+                    gametime = 0
+                    bot1_avg_step_time =0
+                    bot2_avg_step_time=0
 
                 # result_json['Result'] = result
             
