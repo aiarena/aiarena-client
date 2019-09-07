@@ -1,5 +1,7 @@
-# DEFAULT CONFIG
-# CREATE A config.py FILE TO OVERRIDE SPECIFIC CONFIG VALUES
+##############################################################
+# DEFAULT CONFIG                                             #
+# Create a config.py file to override specific config values #
+##############################################################
 import logging
 import os
 import platform

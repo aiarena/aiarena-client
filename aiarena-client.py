@@ -216,7 +216,7 @@ def getnextmatch(count):
         bot_1_name, bot_1_data = getbotdata(bot_1)
         bot_0_game_display_id = bot_0_data['botID']
         bot_1_game_display_id = bot_1_data['botID']
-        
+
         result = runmatch(count, mapname, bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatchid)
         # utl.printout(result)
         postresult(nextmatchdata, result,bot_0_name,bot_1_name)
@@ -618,11 +618,11 @@ async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_d
         msg = msg.json()
         if msg.get("Status", None) == "Connected":
             logger.debug(f"Starting bots...")
-            bot1_process = start_bot(bot_0_data, opponent_id=bot_1_data.get('botID',123))
+            bot1_process = start_bot(bot_0_data, opponent_id=bot_1_data.get('botID',123))  # todo opponent_id
             while not ((await ws.receive()).json()).get("Bot",None) and bot_counter < 300:
                 bot_counter+=1
                 await asyncio.sleep(0.1)
-            bot2_process = start_bot(bot_1_data, opponent_id=bot_0_data.get('botID',321))
+            bot2_process = start_bot(bot_1_data, opponent_id=bot_0_data.get('botID',321))  # todo opponent_id
             bot_counter =0
             while not ((await ws.receive()).json()).get("Bot",None) and bot_counter < 300:
                 bot_counter+=1
