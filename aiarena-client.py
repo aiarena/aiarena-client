@@ -1,3 +1,4 @@
+import logging
 import traceback
 import stat
 import aiohttp
@@ -15,12 +16,16 @@ import sys
 import psutil
 from termcolor import colored
 import socket
-import logging
-RUN_LOCAL = False
+
+# the default config will also import custom config values
+import default_config as config
+
+# Setup logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.FileHandler('supervisor.log', 'a+'))
-logger.setLevel(10)
-if not RUN_LOCAL:
+logger.addHandler(config.LOGGING_HANDLER)
+logger.setLevel(config.LOGGING_LEVEL)
+
+if not config.RUN_LOCAL:
     import hashlib
    
     import zipfile
@@ -31,13 +36,13 @@ if not RUN_LOCAL:
     import socket
     
     from utl import *
-    # the default config will also import custom config values
-    import default_config as config
 
+# todo: move to config?
 SYSTEM = platform.system()
 HOST = os.getenv('HOST', '127.0.0.1')
 PORT = int(os.getenv('PORT', 8765))
-if RUN_LOCAL:
+
+if config.RUN_LOCAL:
     WORKING_DIRECTORY = os.getcwd()
     REPLAY_DIRECTORY = os.path.join(WORKING_DIRECTORY, "Replays/")
     # Try to import config settings
@@ -55,7 +60,8 @@ else:
     REPLAY_DIRECTORY = config.REPLAYS_DIRECTORY
     WORKING_DIRECTORY = config.WORKING_DIRECTORY
     MAX_GAME_TIME = 60486
-if RUN_LOCAL:
+
+if config.RUN_LOCAL:
     def printout(text):
         now = datetime.datetime.now()
         infos = [now.strftime("%b %d %H:%M:%S"), text]
@@ -175,7 +181,7 @@ def get_ladder_bots_data(bot):
 
 def getnextmatch(count):
     printout(f'New match started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
-    if not RUN_LOCAL:
+    if not config.RUN_LOCAL:
         try:
             nextmatchresponse = requests.post(
                 config.API_MATCHES_URL, headers={"Authorization": "Token " + config.API_TOKEN}
@@ -523,10 +529,10 @@ def cleanup():
     kill_current_server()
 
 def start_bot(bot_data, opponent_id):
-    bot_data = bot_data['Bots'] if RUN_LOCAL else bot_data
+    bot_data = bot_data['Bots'] if config.RUN_LOCAL else bot_data
     bot_name = next(iter(bot_data))
-    bot_data = bot_data[bot_name] if RUN_LOCAL else bot_data
-    bot_path = os.path.join(BOTS_DIRECTORY,bot_name) if RUN_LOCAL else bot_data['RootPath']#hotfix
+    bot_data = bot_data[bot_name] if config.RUN_LOCAL else bot_data
+    bot_path = os.path.join(BOTS_DIRECTORY,bot_name) if config.RUN_LOCAL else bot_data['RootPath']#hotfix
     bot_file = bot_data['FileName']
     bot_type = bot_data['Type']
     cmd_line = [bot_file, "--GamePort", str(PORT), "--StartPort", str(
@@ -747,13 +753,13 @@ def runmatch(count,mapname,bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatc
 try:
     printout(f'Arena Client started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
     os.makedirs(REPLAY_DIRECTORY, exist_ok=True)
-    if not RUN_LOCAL:
+    if not config.RUN_LOCAL:
         os.makedirs(config.TEMP_PATH, exist_ok=True)
         os.makedirs(os.path.join(config.WORKING_DIRECTORY, "bots"), exist_ok=True)
     
     os.chdir(WORKING_DIRECTORY)
     count = 0
-    if RUN_LOCAL:
+    if config.RUN_LOCAL:
         try:
             with open('matchupList','r') as ml:
                 ROUNDS_PER_RUN = len(ml.readlines())
@@ -765,7 +771,7 @@ try:
         ROUNDS_PER_RUN = config.ROUNDS_PER_RUN
 
     while count < ROUNDS_PER_RUN:
-        if not RUN_LOCAL:
+        if not config.RUN_LOCAL:
             cleanup()
         if getnextmatch(count):
             count += 1
@@ -777,7 +783,7 @@ try:
 
 except Exception as e:
     printout(f"arena-client encountered an uncaught exception: {e} Exiting...")
-    if not RUN_LOCAL:
+    if not config.RUN_LOCAL:
         with open(os.path.join(config.LOCAL_PATH, ".shutdown"), "w") as f:
                 f.write("Shutdown")
     traceback.print_exc()
@@ -787,7 +793,7 @@ finally:
         cleanup()  # be polite and try to cleanup
     except:
         pass
-if not RUN_LOCAL:
+if not config.RUN_LOCAL:
     try:
         if config.SHUT_DOWN_AFTER_RUN:
             printout("Stopping system")

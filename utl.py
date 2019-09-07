@@ -4,8 +4,7 @@ import math
 import psutil
 from termcolor import colored
 
-import config
-
+import default_config as config
 
 def is_valid_avg_step_time(num):
     try:

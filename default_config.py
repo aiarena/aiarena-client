@@ -1,6 +1,6 @@
 # DEFAULT CONFIG
 # CREATE A config.py FILE TO OVERRIDE SPECIFIC CONFIG VALUES
-
+import logging
 import os
 from urllib import parse
 
@@ -13,6 +13,11 @@ RUN_REPLAY_CHECK = True
 USE_PID_CHECK = False
 DEBUG_MODE = True
 PYTHON = "python3"
+RUN_LOCAL = False
+
+# LOGGING
+LOGGING_HANDLER = logging.FileHandler('supervisor.log', 'a+')
+LOGGING_LEVEL = 10
 
 # PATHS AND FILES
 TEMP_PATH = "/tmp/aiarena/"
