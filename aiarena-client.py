@@ -558,19 +558,36 @@ def start_bot(bot_data, opponent_id):
     except:
         os.mkdir(REPLAY_DIRECTORY)
     try:
-        with open(os.path.join(bot_path, "data", "stdout.log"), "w+") as out, open(os.path.join(bot_path, "data", "stderr.log"), "w+") as err:
-            process = subprocess.Popen(
-                ' '.join(cmd_line),
-                stdout=out,
-                stderr=err,
-                # creationflags=subprocess.CREATE_NEW_CONSOLE,
-                cwd=(str(bot_path))
-                ,shell=True
+        if SYSTEM == "Linux":
+            with open(os.path.join(bot_path, "data", "stdout.log"), "w+") as out, open(os.path.join(bot_path, "data", "stderr.log"), "w+") as err:
+                process = subprocess.Popen(
+                    ' '.join(cmd_line),
+                    stdout=out,
+                    stderr=err,
+                    # creationflags=subprocess.CREATE_NEW_CONSOLE,
+                    cwd=(str(bot_path))
+                    ,shell=True
+                    ,preexec_fn=os.setpgrp
 
-            )
-        if process.errors:
-            logger.debug("Error: "+process.errors)
-        return process
+                )
+            if process.errors:
+                logger.debug("Error: "+process.errors)
+            return process
+        else:
+            with open(os.path.join(bot_path, "data", "stdout.log"), "w+") as out, open(os.path.join(bot_path, "data", "stderr.log"), "w+") as err:
+                process = subprocess.Popen(
+                    ' '.join(cmd_line),
+                    stdout=out,
+                    stderr=err,
+                    # creationflags=subprocess.CREATE_NEW_CONSOLE,
+                    cwd=(str(bot_path))
+                    ,shell=True
+                    ,creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+
+                )
+            if process.errors:
+                logger.debug("Error: "+process.errors)
+            return process
     except Exception as e:
         printout(e)
         sys.exit(0)
