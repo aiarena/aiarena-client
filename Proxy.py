@@ -351,6 +351,7 @@ class ConnectionHandler:
             if len(request.app['websockets']) == 1:
                 # game_created =False forces first player to create game when both players are connected.
                 logger.debug("First bot connecting")
+                await self.supervisor.send_message({"Bot":"Connected"})
                 proxy1 = Proxy(game_created=False,
                                player_name=self.supervisor.player1,
                                opponent_name=self.supervisor.player2,
@@ -363,6 +364,7 @@ class ConnectionHandler:
 
             elif len(request.app['websockets']) == 2:
                 logger.debug("Second bot connecting")
+                await self.supervisor.send_message({"Bot":"Connected"})
                 proxy2 = Proxy(game_created=True,
                                player_name=self.supervisor.player2,
                                opponent_name=self.supervisor.player1,
@@ -409,6 +411,7 @@ class Supervisor:
         self._game_time_seconds = 0
         self._game_time_formatted = None
         self._disable_debug = True
+        self._ws = None
     
     @property
     def game_time(self):
@@ -494,9 +497,13 @@ class Supervisor:
         if self._result:
             await ws.send_json(dict({"Result": "Error"}))
         await ws.close()
+    
+    async def send_message(self,message):
+        await self._ws.send_json(message)
 
     async def websocket_handler(self, request):
         ws = web.WebSocketResponse()
+        self._ws = ws
         await ws.prepare(request)
         request.app['websockets'].add(ws)
 

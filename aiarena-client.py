@@ -621,7 +621,7 @@ async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_d
                    'Player1': bot_0_name, 'Player2': bot_1_name, 'ReplayPath': REPLAY_DIRECTORY, "MatchID": nextmatchid, 'DisableDebug': "False"}}
 
     await ws.send_str(json.dumps(json_config))
-    
+    bot_counter =0
     while True:
         msg = await ws.receive()
         if msg.type == aiohttp.WSMsgType.CLOSED:
@@ -631,10 +631,15 @@ async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_d
         msg = msg.json()
         if msg.get("Status", None) == "Connected":
             logger.debug(f"Starting bots...")
-            bot1_process = start_bot(bot_0_data, opponent_id=bot_1_data['botID'])
-            await asyncio.sleep(3)
-            bot2_process = start_bot(bot_1_data, opponent_id=bot_0_data['botID'])
-            await asyncio.sleep(3)
+            bot1_process = start_bot(bot_0_data, opponent_id=bot_1_data.get('botID',123))
+            while not ((await ws.receive()).json()).get("Bot",None) and bot_counter < 300:
+                bot_counter+=1
+                await asyncio.sleep(0.1)
+            bot2_process = start_bot(bot_1_data, opponent_id=bot_0_data.get('botID',321))
+            bot_counter =0
+            while not ((await ws.receive()).json()).get("Bot",None) and bot_counter < 300:
+                bot_counter+=1
+                await asyncio.sleep(0.1)
             logger.debug(f'Changing PGID')
             for x in [bot1_process.pid,bot2_process.pid]:
                 move_pid(x)
