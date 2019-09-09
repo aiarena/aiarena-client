@@ -229,7 +229,7 @@ def getnextmatch(count):
         bot_1_name, bot_1_data = getbotdata(bot_1)
         bot_0_game_display_id = bot_0_data['botID']
         bot_1_game_display_id = bot_1_data['botID']
-    
+        
         result = runmatch(count, mapname, bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatchid)
         # printout(result)
         postresult(nextmatchdata, result,bot_0_name,bot_1_name)
@@ -558,18 +558,36 @@ def start_bot(bot_data, opponent_id):
     except:
         os.mkdir(REPLAY_DIRECTORY)
     try:
-        with open(os.path.join(bot_path, "data", "stdout.log"), "w+") as out, open(os.path.join(bot_path, "data", "stderr.log"), "w+") as err:
-            process = subprocess.Popen(
-                cmd_line,
-                stdout=out,
-                stderr=err,
-                # creationflags=subprocess.CREATE_NEW_CONSOLE,
-                cwd=(str(bot_path))
+        if SYSTEM == "Linux":
+            with open(os.path.join(bot_path, "data", "stdout.log"), "w+") as out, open(os.path.join(bot_path, "data", "stderr.log"), "w+") as err:
+                process = subprocess.Popen(
+                    ' '.join(cmd_line),
+                    stdout=out,
+                    stderr=err,
+                    # creationflags=subprocess.CREATE_NEW_CONSOLE,
+                    cwd=(str(bot_path))
+                    ,shell=True
+                    ,preexec_fn=os.setpgrp
 
-            )
-        if process.errors:
-            logger.debug("Error: "+process.errors)
-        return process
+                )
+            if process.errors:
+                logger.debug("Error: "+process.errors)
+            return process
+        else:
+            with open(os.path.join(bot_path, "data", "stdout.log"), "w+") as out, open(os.path.join(bot_path, "data", "stderr.log"), "w+") as err:
+                process = subprocess.Popen(
+                    ' '.join(cmd_line),
+                    stdout=out,
+                    stderr=err,
+                    # creationflags=subprocess.CREATE_NEW_CONSOLE,
+                    cwd=(str(bot_path))
+                    ,shell=True
+                    ,creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+
+                )
+            if process.errors:
+                logger.debug("Error: "+process.errors)
+            return process
     except Exception as e:
         printout(e)
         sys.exit(0)
@@ -613,9 +631,9 @@ async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_d
         msg = msg.json()
         if msg.get("Status", None) == "Connected":
             logger.debug(f"Starting bots...")
-            bot1_process = start_bot(bot_0_data, opponent_id=123)
-            await asyncio.sleep(0.1)
-            bot2_process = start_bot(bot_1_data, opponent_id=321)
+            bot1_process = start_bot(bot_0_data, opponent_id=bot_1_data['botID'])
+            await asyncio.sleep(3)
+            bot2_process = start_bot(bot_1_data, opponent_id=bot_0_data['botID'])
             await asyncio.sleep(3)
             logger.debug(f'Changing PGID')
             for x in [bot1_process.pid,bot2_process.pid]:
@@ -699,8 +717,8 @@ def kill_current_server():
 def runmatch(count,mapname,bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatchid):
     printout(f"Starting game - Round {count}")
     kill_current_server()
-    proxy = subprocess.Popen([PYTHON, 'Proxy.py'],
-                            cwd=WORKING_DIRECTORY, shell=False)
+    proxy = subprocess.Popen( PYTHON+ ' Proxy.py',
+                            cwd=WORKING_DIRECTORY, shell=True)
 
     
     while True:
@@ -713,7 +731,7 @@ def runmatch(count,mapname,bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatc
     loop = asyncio.get_event_loop()
     
 
-    result = loop.run_until_complete(asyncio.wait_for(main(mapname,bot_0_name,MAX_GAME_TIME, bot_1_name,bot_0_data,bot_1_data,nextmatchid),5400))
+    result = loop.run_until_complete(asyncio.wait_for(main(mapname,bot_0_name,MAX_GAME_TIME, bot_1_name,bot_0_data,bot_1_data,nextmatchid),9000))
 
     try:
         os.kill(proxy.pid, signal.SIGTERM)
