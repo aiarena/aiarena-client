@@ -258,8 +258,8 @@ def postresult(match, lm_result,bot_1_name,bot_2_name):
         for x in lm_result:
             if x.get('Result',None):
                 temp_results = x['Result']
-                bot_1_name = next((item[0] for item in temp_results.items()))
-                bot_2_name = next((item[0] for item in temp_results.items()))
+                bot_1_name = list(x['Result'].keys())[0]
+                bot_2_name = list(x['Result'].keys())[1]
                 if temp_results[bot_1_name] == 'Result.Victory':
                     result='Player1Win'
                     # result_json['Winner']=bot_1_name
