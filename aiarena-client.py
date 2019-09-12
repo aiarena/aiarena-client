@@ -559,11 +559,11 @@ def start_bot(bot_data, opponent_id):
         os.mkdir(REPLAY_DIRECTORY)
     try:
         if SYSTEM == "Linux":
-            with open(os.path.join(bot_path, "data", "stdout.log"), "w+") as out, open(os.path.join(bot_path, "data", "stderr.log"), "w+") as err:
+            with open(os.path.join(bot_path, "data", "stderr.log"), "w+") as out:
                 process = subprocess.Popen(
                     ' '.join(cmd_line),
                     stdout=out,
-                    stderr=err,
+                    stderr=subprocess.STDOUT,
                     # creationflags=subprocess.CREATE_NEW_CONSOLE,
                     cwd=(str(bot_path))
                     ,shell=True
@@ -574,11 +574,11 @@ def start_bot(bot_data, opponent_id):
                 logger.debug("Error: "+process.errors)
             return process
         else:
-            with open(os.path.join(bot_path, "data", "stdout.log"), "w+") as out, open(os.path.join(bot_path, "data", "stderr.log"), "w+") as err:
+            with open(os.path.join(bot_path, "data", "stderr.log"), "w+") as out:
                 process = subprocess.Popen(
                     ' '.join(cmd_line),
                     stdout=out,
-                    stderr=err,
+                    stderr=subprocess.STDOUT,
                     # creationflags=subprocess.CREATE_NEW_CONSOLE,
                     cwd=(str(bot_path))
                     ,shell=True
