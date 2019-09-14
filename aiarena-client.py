@@ -559,7 +559,7 @@ def start_bot(bot_data, opponent_id):
     except:
         os.mkdir(REPLAY_DIRECTORY)
     try:
-        if SYSTEM == "Linux":
+        if config.SYSTEM == "Linux":
             with open(os.path.join(bot_path, "data", "stderr.log"), "w+") as out:
                 process = subprocess.Popen(
                     ' '.join(cmd_line),
