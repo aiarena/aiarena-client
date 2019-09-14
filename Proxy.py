@@ -112,7 +112,7 @@ class Proxy:
         logger.debug('Creating game...')
         map_name = map_name.replace(".SC2Replay", "").replace(" ", "")
         response = await server.create_game(maps.get(map_name),
-                                            players, realtime=False)  # TODO: Accept map and realtime as parameters
+                                            players, realtime=False) 
         logger.debug("Game created")
         return response
 
@@ -143,9 +143,6 @@ class Proxy:
             cwd=(str(Paths.CWD) if Paths.CWD else None),
         )
 
-    # def kill(self, process):
-    #     process.kill()
-
     async def save_replay(self, ws):
         logger.debug(f"Requesting replay from server")
         result = await self._execute(ws=ws, save_replay=sc_pb.RequestSaveReplay())
@@ -158,14 +155,11 @@ class Proxy:
         request = sc_pb.Request()
         request.ParseFromString(msg.data)
         try:           
-            if 'join_game' in str(request):
+            if 'join_game' in str(request):#TODO: Don't check every request
                 request.join_game.player_name = self.player_name
-                # r= await self._execute(ws,join_game=request.join_game)
-                # if not r.error:
-                #     self.joined = True
                 return request.SerializeToString()
 
-            if self.disable_debug and 'debug' in str(request) and 'draw'not in str(request):
+            if self.disable_debug and 'debug' in str(request) and 'draw' not in str(request):
                 # response = sc_pb.Response()
                 # response.error.append(f"LadderManager: Debug not allowed. Request: {request}")
                 message = f"{self.player_name} used a debug command. Surrendering..."
@@ -213,9 +207,7 @@ class Proxy:
             if await self.save_replay(ws):
                 if self._surrender:
                     await self._execute(ws,leave_game=sc_pb.RequestLeaveGame())
-                self.killed = True
-                self.supervisor.result = dict(
-                {self.player_name: self._result})
+                self.killed = True                
                 return request.SerializeToString()
         return request.SerializeToString()
     
@@ -237,8 +229,8 @@ class Proxy:
 
             logger.debug("Launching SC2")
 
-            players = [Bot(  # This requires removal of some asserts in the Bot class. TODO: Override Bot class 
-                None, None, name=self.player_name), Bot(None, None, name=self.opponent_name)]  # Name could potentially be used in a game to populate the player's name. Doesn't work yet.
+            players = [Bot(
+                None, None, name=self.player_name), Bot(None, None, name=self.opponent_name)]
 
             # This populates self.port
             process = self._launch('127.0.0.1', False)
@@ -297,12 +289,12 @@ class Proxy:
                     logger.error(e)
                 finally:
                     #bot crashed, leave instead.
-                    if self._result is None:
+                    if not self._result:
                         logger.debug("Bot crashed")
                         self._result = 'Result.Crashed'
 
-                    if await self.save_replay(ws_p2s):
-                        await self._execute(ws_p2s,leave_game=sc_pb.RequestLeaveGame())
+                        if await self.save_replay(ws_p2s):
+                            await self._execute(ws_p2s,leave_game=sc_pb.RequestLeaveGame())
                     try:
                         if {self.player_name:sum(self.average_time)/len(self.average_time)} not in self.supervisor.average_frame_time:
                             self.supervisor.average_frame_time = {self.player_name:sum(self.average_time)/len(self.average_time)}
@@ -540,12 +532,12 @@ class Supervisor:
                 except Exception as e:
                     logger.debug(e)
             counter=0
-            while not self._result:
+            while not self._result or len(self._result) < 2:
                 counter+=1
                 if counter%100==0:
                     await ws.send_str(json.dumps({"StillAlive":"True"}))
                 await asyncio.sleep(0.1)
-
+                
             final_result = {self.player1: next((str(item.get(
                 self.player1, None)) for item in self._result if item.get(
                 self.player1, None)), "Result.Crashed"), self.player2: next((str(item.get(

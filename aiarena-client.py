@@ -225,7 +225,7 @@ def getnextmatch(count):
         bot_0_game_display_id = bot_0_data['botID']
         bot_1_game_display_id = bot_1_data['botID']
 
-        result = runmatch(count, mapname, bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatchid)
+        result = runmatch(count, mapname, bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatchid)        
         # utl.printout(result)
         postresult(nextmatchdata, result,bot_0_name,bot_1_name)
         return True
@@ -245,6 +245,8 @@ def getnextmatch(count):
         # bot_0_game_display_id = bot_0_data['botID']#TODO: Enable opponent_id
         # bot_1_game_display_id = bot_1_data['botID']
         result = runmatch(count, mapname, bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatchid)
+        with open('results','a+') as f:
+            f.write(str(result)+"\n\n")
         post_local_result(bot_0,bot_1,result)
         return True
 
@@ -785,7 +787,8 @@ except Exception as e:
 finally:
     try:
         kill_current_server()
-        cleanup()  # be polite and try to cleanup
+        if not config.RUN_LOCAL:
+            cleanup()  # be polite and try to cleanup
     except:
         pass
 if not config.RUN_LOCAL:

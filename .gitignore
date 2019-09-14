@@ -26,3 +26,4 @@ tmp/
 *.stdout
 
 venv/
+results
