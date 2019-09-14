@@ -303,12 +303,12 @@ class Proxy:
                     
                     self.supervisor.result = dict({self.player_name: self._result})
                     
-                    for pid in self.supervisor.pids:
-                        logger.debug("Killing "+ str(pid))
-                        try:
-                            os.kill(pid, signal.SIGTERM)
-                        except Exception as e:
-                            logger.debug("Already closed: "+ str(pid))
+                    # for pid in self.supervisor.pids:
+                    #     logger.debug("Killing "+ str(pid))
+                    #     try:
+                    #         os.kill(pid, signal.SIGTERM)
+                    #     except Exception as e:
+                    #         logger.debug("Already closed: "+ str(pid))
                     await ws_c2p.close()
                     logger.debug('Disconnected')
                     return ws_p2s
