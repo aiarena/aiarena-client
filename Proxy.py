@@ -230,7 +230,7 @@ class Proxy:
         async with aiohttp.ClientSession() as session:
             player = None
             logger.debug('Websocket client connection starting')
-            ws_c2p = web.WebSocketResponse(receive_timeout=40)
+            ws_c2p = web.WebSocketResponse(receive_timeout=30)
 
             await ws_c2p.prepare(request)
             request.app['websockets'].add(ws_c2p)

@@ -258,8 +258,8 @@ def postresult(match, lm_result,bot_1_name,bot_2_name):
         for x in lm_result:
             if x.get('Result',None):
                 temp_results = x['Result']
-                bot_1_name = next((item[0] for item in temp_results.items()))
-                bot_2_name = next((item[0] for item in temp_results.items()))
+                bot_1_name = list(x['Result'].keys())[0]
+                bot_2_name = list(x['Result'].keys())[1]
                 if temp_results[bot_1_name] == 'Result.Victory':
                     result='Player1Win'
                     # result_json['Winner']=bot_1_name
@@ -559,11 +559,11 @@ def start_bot(bot_data, opponent_id):
         os.mkdir(REPLAY_DIRECTORY)
     try:
         if SYSTEM == "Linux":
-            with open(os.path.join(bot_path, "data", "stdout.log"), "w+") as out, open(os.path.join(bot_path, "data", "stderr.log"), "w+") as err:
+            with open(os.path.join(bot_path, "data", "stderr.log"), "w+") as out:
                 process = subprocess.Popen(
                     ' '.join(cmd_line),
                     stdout=out,
-                    stderr=err,
+                    stderr=subprocess.STDOUT,
                     # creationflags=subprocess.CREATE_NEW_CONSOLE,
                     cwd=(str(bot_path))
                     ,shell=True
@@ -574,11 +574,11 @@ def start_bot(bot_data, opponent_id):
                 logger.debug("Error: "+process.errors)
             return process
         else:
-            with open(os.path.join(bot_path, "data", "stdout.log"), "w+") as out, open(os.path.join(bot_path, "data", "stderr.log"), "w+") as err:
+            with open(os.path.join(bot_path, "data", "stderr.log"), "w+") as out:
                 process = subprocess.Popen(
                     ' '.join(cmd_line),
                     stdout=out,
-                    stderr=err,
+                    stderr=subprocess.STDOUT,
                     # creationflags=subprocess.CREATE_NEW_CONSOLE,
                     cwd=(str(bot_path))
                     ,shell=True
