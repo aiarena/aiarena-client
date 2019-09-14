@@ -13,7 +13,7 @@ import datetime
 import time
 import sys
 import psutil
-
+import socket
 # the default config will also import custom config values
 import default_config as config
 from utl import utl
@@ -33,7 +33,7 @@ if not config.RUN_LOCAL:
     import shutil
     import requests
     from requests.exceptions import ConnectionError
-    import socket
+    
 
 if config.RUN_LOCAL:
     WORKING_DIRECTORY = os.getcwd()
