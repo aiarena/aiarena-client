@@ -682,6 +682,7 @@ async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_d
             result.append(msg)
 
         if msg.get("Error", None):
+            utl.printout(msg)
             await session.close()
             break
 

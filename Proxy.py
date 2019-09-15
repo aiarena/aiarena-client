@@ -325,14 +325,14 @@ class ConnectionHandler:
     async def bots_connected(self, request):
         if not len(request.app['websockets'])>1:
             logger.debug("Bots did not connect in time")
-            self.supervisor.result = {"Error"}
+            await self.supervisor.send_message({"Error":"Bots did not connect in time"})
             await self.supervisor.close()
 
     async def websocket_handler(self, request):
         if bool(request.headers.get('Supervisor', False)):
             logger.debug("Using supervisor")
             self.supervisor = Supervisor()
-            timer = Timer(10, self.bots_connected,args=request)
+            timer = Timer(20, self.bots_connected,args=request)
             await self.supervisor.websocket_handler(request)
 
         elif self.supervisor is not None:
