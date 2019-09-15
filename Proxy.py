@@ -322,8 +322,10 @@ class ConnectionHandler:
         self.supervisor = None
         self.result = []
     
-    async def bots_connected(self, request):
-        if not len(request.app['websockets'])>1:
+    async def bots_connected(self, args):
+        request = args[0]
+        expected = args[1]
+        if not len(request.app['websockets'])>expected:
             logger.debug("Bots did not connect in time")
             await self.supervisor.send_message({"Error":"Bots did not connect in time"})
             await self.supervisor.close()
@@ -332,7 +334,7 @@ class ConnectionHandler:
         if bool(request.headers.get('Supervisor', False)):
             logger.debug("Using supervisor")
             self.supervisor = Supervisor()
-            timer = Timer(20, self.bots_connected,args=request)
+            timer = Timer(20, self.bots_connected,args=[request,1])
             await self.supervisor.websocket_handler(request)
 
         elif self.supervisor is not None:
@@ -344,6 +346,7 @@ class ConnectionHandler:
                 # game_created =False forces first player to create game when both players are connected.
                 logger.debug("First bot connecting")
                 await self.supervisor.send_message({"Bot":"Connected"})
+                timer = Timer(20, self.bots_connected,args=[request,2])
                 proxy1 = Proxy(game_created=False,
                                player_name=self.supervisor.player1,
                                opponent_name=self.supervisor.player2,
@@ -485,10 +488,10 @@ class Supervisor:
         t = self._game_time_seconds
         return f"{int(t // 60):02}:{int(t % 60):02}"
     
-    async def close(self,ws):
+    async def close(self):
         if self._result:
-            await ws.send_json(dict({"Result": "Error"}))
-        await ws.close()
+            await self._ws.send_json(dict({"Result": "Error"}))
+        await self._ws.close()
     
     async def send_message(self,message):
         await self._ws.send_json(message)

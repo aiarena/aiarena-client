@@ -27,3 +27,4 @@ tmp/
 
 venv/
 results
+run_tests.py
