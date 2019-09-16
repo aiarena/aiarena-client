@@ -155,8 +155,9 @@ class Proxy:
         request = sc_pb.Request()
         request.ParseFromString(msg.data)
         try:           
-            if 'join_game' in str(request):#TODO: Don't check every request
+            if not self.joined and str(request).startswith('join_game'):#TODO: Don't check every request
                 request.join_game.player_name = self.player_name
+                self.joined = True
                 return request.SerializeToString()
 
             if self.disable_debug and 'debug' in str(request) and 'draw' not in str(request):
@@ -195,7 +196,7 @@ class Proxy:
             
             except Exception as e:
                 logger.error(e)
-
+       
         if self._result:
             try:
                 if {self.player_name:sum(self.average_time)/len(self.average_time)} not in self.supervisor.average_frame_time:
@@ -242,7 +243,7 @@ class Proxy:
             logger.debug('Websocket connection: '+str(url))
             # Gives SC2 a chance to start up. TODO: Find a way by using Popen's functions
             while True:
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.2)
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 result = sock.connect_ex(('127.0.0.1', self.port))
                 if result == 0:
@@ -254,6 +255,7 @@ class Proxy:
                 if not self.created_game:
                     await self.create_game(c, players, self.map_name)
                     player = players[0]
+                    logger.debug("Player:" + str(player))
                     self.created_game = True
 
                 if not player:
@@ -292,9 +294,11 @@ class Proxy:
                     if not self._result:
                         logger.debug("Bot crashed")
                         self._result = 'Result.Crashed'
-
+                    try:
                         if await self.save_replay(ws_p2s):
                             await self._execute(ws_p2s,leave_game=sc_pb.RequestLeaveGame())
+                    except:
+                        logger.debug("Can't save replay, SC2 already closed")
                     try:
                         if {self.player_name:sum(self.average_time)/len(self.average_time)} not in self.supervisor.average_frame_time:
                             self.supervisor.average_frame_time = {self.player_name:sum(self.average_time)/len(self.average_time)}
@@ -327,7 +331,7 @@ class ConnectionHandler:
         expected = args[1]
         if not len(request.app['websockets'])>expected:
             logger.debug("Bots did not connect in time")
-            await self.supervisor.send_message({"Error":"Bots did not connect in time"})
+            await self.supervisor.send_message(dict({"Bot":"Bot did not connect in time"}))
             await self.supervisor.close()
 
     async def websocket_handler(self, request):
@@ -539,7 +543,7 @@ class Supervisor:
                 counter+=1
                 if counter%100==0:
                     await ws.send_str(json.dumps({"StillAlive":"True"}))
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.2)
                 
             final_result = {self.player1: next((str(item.get(
                 self.player1, None)) for item in self._result if item.get(
