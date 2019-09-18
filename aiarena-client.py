@@ -634,7 +634,7 @@ async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_d
     while True:
         msg = await ws.receive()
         if msg.type == aiohttp.WSMsgType.CLOSED:
-            result.append({'Result':{bot_0_name:'InitializationError'}})
+            result.append({'Result':{bot_0_name:'InitializationError',bot_1_name:"InitializationError"}})
             await session.close()
             break
         msg = msg.json()

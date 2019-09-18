@@ -278,8 +278,8 @@ class Proxy:
                                 try:
                                     data_p2s = await ws_p2s.receive_bytes()
                                     await self.process_response(data_p2s)
-                                except Exception as e:
-                                    logger.error(e)
+                                except (asyncio.CancelledError,asyncio.TimeoutError):
+                                    logger.error(str(e))
                                 await ws_c2p.send_bytes(data_p2s)
                                 start_time = time.monotonic()
                             elif msg.type == aiohttp.WSMsgType.CLOSED:
@@ -310,12 +310,6 @@ class Proxy:
                     
                     self.supervisor.result = dict({self.player_name: self._result})
                     
-                    # for pid in self.supervisor.pids:
-                    #     logger.debug("Killing "+ str(pid))
-                    #     try:
-                    #         os.kill(pid, signal.SIGTERM)
-                    #     except Exception as e:
-                    #         logger.debug("Already closed: "+ str(pid))
                     await ws_c2p.close()
                     logger.debug('Disconnected')
                     return ws_p2s
