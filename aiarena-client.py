@@ -657,7 +657,7 @@ async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_d
 
             if bot1_process.poll():
                 logger.debug(f"Bot1 crash")
-                result.append({'Result':{bot_0_name:'InitializationError'}})
+                result.append({'Result':{bot_0_name:'InitializationError',bot_1_name:"InitializationError"}})
                 await session.close()
                 break
                 
@@ -666,7 +666,7 @@ async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_d
             
             if bot2_process.poll():
                 logger.debug(f"Bot2 crash")
-                result.append({'Result':{bot_1_name:'InitializationError'}})
+                result.append({'Result':{bot_0_name:'InitializationError',bot_1_name:"InitializationError"}})
                 await session.close()
                 break
                 
@@ -697,12 +697,12 @@ async def main(mapname, bot_0_name, max_game_time, bot_1_name,bot_0_data,bot_1_d
                 utl.printout("Bot1 Init Error")
                 await session.close()
             # if not check_pid(bot1_process.pid) and not len(result) >0:
-                result.append({'Result':{bot_0_name:'InitializationError'}})
+                result.append({'Result':{bot_0_name:'InitializationError',bot_1_name:"InitializationError"}})
             if bot2_process.poll():
                 utl.printout("Bot2 Init Error")
                 await session.close()
             # if not check_pid(bot2_process.pid) and not len(result) >0:
-                result.append({'Result':{bot_1_name:'InitializationError'}})
+                result.append({'Result':{bot_0_name:'InitializationError',bot_1_name:"InitializationError"}})
 
         if msg.get("Status", None) == "Complete":
             result.append(dict({'TimeStamp':datetime.datetime.utcnow().strftime("%d-%m-%Y %H-%M-%SUTC")}))
