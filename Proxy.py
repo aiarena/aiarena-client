@@ -155,8 +155,9 @@ class Proxy:
         request = sc_pb.Request()
         request.ParseFromString(msg.data)
         try:           
-            if not self.joined and str(request).startswith('join_game'):#TODO: Don't check every request
+            if not self.joined and str(request).startswith('join_game'):
                 request.join_game.player_name = self.player_name
+                request.join_game.options.raw_affects_selection = True
                 self.joined = True
                 return request.SerializeToString()
 
@@ -186,6 +187,8 @@ class Proxy:
 
                 if self.max_game_time and result.observation.observation.game_loop > self.max_game_time:
                     self._result = 'Result.Tie'
+                    self._game_loops = result.observation.observation.game_loop
+                    self._game_time_seconds = result.observation.observation.game_loop / 22.4
 
                 if result.observation.player_result:
                     player_id_to_result = {pr.player_id: Result(
@@ -216,7 +219,7 @@ class Proxy:
         # response = sc_pb.Response()
         # response.ParseFromString(msg)
         pass
-
+        
     async def websocket_handler(self, request, portconfig):
         logger.debug("Starting client session")
         start_time = time.monotonic()
@@ -288,7 +291,7 @@ class Proxy:
                             logger.debug("Websocket connection closed")
 
                 except Exception as e:
-                    logger.error(e)
+                    logger.error(str(e))
                 finally:
                     #bot crashed, leave instead.
                     if not self._result:
@@ -352,26 +355,26 @@ class ConnectionHandler:
                 await self.supervisor.send_message({"Bot":"Connected"})
                 timer = Timer(20, self.bots_connected,args=[request,2])
                 proxy1 = Proxy(game_created=False,
-                               player_name=self.supervisor.player1,
-                               opponent_name=self.supervisor.player2,
-                               max_game_time=self.supervisor.max_game_time,
-                               map_name=self.supervisor.map,
-                               replay_name=self.supervisor.replay_name,
-                               disable_debug = bool(self.supervisor.disable_debug),
-                               supervisor=self.supervisor)
+                            player_name=self.supervisor.player1,
+                            opponent_name=self.supervisor.player2,
+                            max_game_time=self.supervisor.max_game_time,
+                            map_name=self.supervisor.map,
+                            replay_name=self.supervisor.replay_name,
+                            disable_debug = bool(self.supervisor.disable_debug),
+                            supervisor=self.supervisor)
                 p1_resp = await proxy1.websocket_handler(request, self.portconfig)
 
             elif len(request.app['websockets']) == 2:
                 logger.debug("Second bot connecting")
                 await self.supervisor.send_message({"Bot":"Connected"})
                 proxy2 = Proxy(game_created=True,
-                               player_name=self.supervisor.player2,
-                               opponent_name=self.supervisor.player1,
-                               max_game_time=self.supervisor.max_game_time,
-                               map_name=self.supervisor.map,
-                               replay_name=self.supervisor.replay_name,
-                               disable_debug = bool(self.supervisor.disable_debug),
-                               supervisor=self.supervisor)
+                            player_name=self.supervisor.player2,
+                            opponent_name=self.supervisor.player1,
+                            max_game_time=self.supervisor.max_game_time,
+                            map_name=self.supervisor.map,
+                            replay_name=self.supervisor.replay_name,
+                            disable_debug = bool(self.supervisor.disable_debug),
+                            supervisor=self.supervisor)
                 p2_resp = await proxy2.websocket_handler(request, self.portconfig)
 
         else:  # TODO: Implement this for devs running without a supervisor

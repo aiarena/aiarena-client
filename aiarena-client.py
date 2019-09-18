@@ -261,20 +261,24 @@ def postresult(match, lm_result,bot_1_name,bot_2_name):
         for x in lm_result:
             if x.get('Result',None):
                 temp_results = x['Result']
+                utl.printout(str(temp_results))
                 bot_1_name = list(x['Result'].keys())[0]
                 bot_2_name = list(x['Result'].keys())[1]
-                if temp_results[bot_1_name] == 'Result.Victory':
+                if temp_results[bot_1_name] == 'Result.Crashed':
+                    result = 'Player1Crash'
+
+                elif temp_results[bot_2_name] == 'Result.Crashed':
+                    result = 'Player2Crash'
+                    # result_json['Winner']=bot_0
+
+                elif temp_results[bot_1_name] == 'Result.Victory':
                     result='Player1Win'
                     # result_json['Winner']=bot_1_name
                 
                 elif temp_results[bot_1_name] == 'Result.Defeat':
                     result = 'Player2Win'
-                    # result_json['Winner']=bot_1
-                
-                elif temp_results[bot_1_name] == 'Result.Crashed':
-                    result = 'Player1Crash'
-                    # result_json['Winner']=bot_1
-                
+                    # result_json['Winner']=bot_1   
+
                 elif temp_results[bot_2_name] == 'Result.Crashed':
                     result = 'Player2Crash'
                     # result_json['Winner']=bot_0
@@ -439,21 +443,23 @@ def post_local_result(bot_0,bot_1,lm_result):
     for x in lm_result:
         if x.get('Result',None):
             temp_results = x['Result']
-            if temp_results[bot_0] == 'Result.Victory':
-                result='Player1Win'
-                result_json['Winner']=bot_0
+            utl.printout(str(temp_results))
             
-            elif temp_results[bot_0] == 'Result.Defeat':
-                result = 'Player2Win'
-                result_json['Winner']=bot_1
-            
-            elif temp_results[bot_0] == 'Result.Crashed':
+            if temp_results[bot_0] == 'Result.Crashed':
                 result = 'Player1Crash'
                 result_json['Winner']=bot_1
             
             elif temp_results[bot_1] == 'Result.Crashed':
                 result = 'Player2Crash'
                 result_json['Winner']=bot_0
+
+            elif temp_results[bot_0] == 'Result.Victory':
+                result='Player1Win'
+                result_json['Winner']=bot_0
+            
+            elif temp_results[bot_0] == 'Result.Defeat':
+                result = 'Player2Win'
+                result_json['Winner']=bot_1
             
             elif temp_results[bot_0] =='Result.Tie':
                 result = 'Tie'
