@@ -227,7 +227,7 @@ def getnextmatch(count):
 
         result = runmatch(count, mapname, bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatchid)        
         # utl.printout(result)
-        postresult(nextmatchdata, result,bot_0_name,bot_1_name)
+        postresult(nextmatchid, result,bot_0_name,bot_1_name)
         return True
     
     else:
@@ -250,7 +250,7 @@ def getnextmatch(count):
         post_local_result(bot_0,bot_1,result)
         return True
 
-def postresult(match, lm_result,bot_1_name,bot_2_name):
+def postresult(match_id, lm_result,bot_1_name,bot_2_name):
     # quick hack to avoid these going uninitialized
     # todo: remove these and actually fix the issue
     gametime = 0
@@ -405,7 +405,7 @@ def postresult(match, lm_result,bot_1_name,bot_2_name):
             file_list["replay_file"] = open(replay_file_path, "rb")
 
         payload = {"type": result, "match": int(
-            match["id"]), "game_steps": gametime}
+            match_id), "game_steps": gametime}
 
         if bot1_avg_step_time is not None:
             payload["bot1_avg_step_time"] = bot1_avg_step_time
