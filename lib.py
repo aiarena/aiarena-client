@@ -3,6 +3,7 @@ import logging
 from s2clientprotocol import sc2api_pb2 as sc_pb
 import asyncio
 from sc2.protocol import Protocol
+
 logger = logging.getLogger(__name__)
 
 
@@ -22,11 +23,17 @@ class Timer:
 
 
 class AbstractPlayer:
-    def __init__(self, p_type, race=None, name=None, difficulty=None, ai_build=None, fullscreen=False):
-        assert isinstance(
-            p_type, PlayerType), f"p_type is of type {type(p_type)}"
-        assert name is None or isinstance(
-            name, str), f"name is of type {type(name)}"
+    def __init__(
+        self,
+        p_type,
+        race=None,
+        name=None,
+        difficulty=None,
+        ai_build=None,
+        fullscreen=False,
+    ):
+        assert isinstance(p_type, PlayerType), f"p_type is of type {type(p_type)}"
+        assert name is None or isinstance(name, str), f"name is of type {type(name)}"
 
         self.name = name
         self.type = p_type
@@ -57,7 +64,10 @@ class Bot(AbstractPlayer):
 class ProtocolError(Exception):
     @property
     def is_game_over_error(self) -> bool:
-        return self.args[0] in ["['Game has already ended']", "['Not supported if game has already ended']"]
+        return self.args[0] in [
+            "['Game has already ended']",
+            "['Not supported if game has already ended']",
+        ]
 
 
 class ConnectionAlreadyClosed(ProtocolError):
@@ -75,8 +85,10 @@ class Controller(Protocol):
 
     async def create_game(self, game_map, players, realtime, random_seed=None):
         assert isinstance(realtime, bool)
-        req = sc_pb.RequestCreateGame(local_map=sc_pb.LocalMap(
-            map_path=str(game_map.relative_path)), realtime=realtime)
+        req = sc_pb.RequestCreateGame(
+            local_map=sc_pb.LocalMap(map_path=str(game_map.relative_path)),
+            realtime=realtime,
+        )
         if random_seed is not None:
             req.random_seed = random_seed
 

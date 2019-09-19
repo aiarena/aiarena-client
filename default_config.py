@@ -22,14 +22,11 @@ DEBUG_MODE = True
 PYTHON = "python3"
 RUN_LOCAL = False
 SYSTEM = platform.system()
-SC2_PROXY = {
-    'HOST': '127.0.0.1',
-    'PORT': 8765,
-}
+SC2_PROXY = {"HOST": "127.0.0.1", "PORT": 8765}
 
 
 # LOGGING
-LOGGING_HANDLER = logging.FileHandler('supervisor.log', 'a+')
+LOGGING_HANDLER = logging.FileHandler("supervisor.log", "a+")
 LOGGING_LEVEL = 10
 
 # PATHS AND FILES
@@ -60,27 +57,29 @@ SC2LADDERSERVER_PLAYERIDS_FILE = os.path.join(LOCAL_PATH, "playerids")
 SC2LADDERSERVER_RESULTS_FILE = os.path.join(LOCAL_PATH, "results.json")
 SC2LADDERSERVER_CONFIG_FILE = os.path.join(LOCAL_PATH, "LadderManager.json")
 # todo: download relevant settings from the API
-SC2LADDERSERVER_CONFIG_JSON = '{' \
-                              '    "LocalReplayDirectory": "./replays/",' \
-                              '    "MaxGameTime": 60480,' \
-                              '    "MatchupGenerator": "File",' \
-                              '    "MatchupListFile": "./matchuplist",' \
-                              '    "ErrorListFile": "./errorlist",' \
-                              '    "BotConfigFile": "./LadderBots.json",' \
-                              '    "EnableReplayUpload": "False",' \
-                              '    "ResultsLogFile": "./results.json",' \
-                              '    "PlayerIdFile": "./playerids",' \
-                              '    "PythonBinary": "/home/aiarena/venv/bin/python",' \
-                              '    "RealTimeMode": false,' \
-                              '    "Maps": [],' \
-                              '    "MaxFrameTime": 20000' \
-                              '}'
+SC2LADDERSERVER_CONFIG_JSON = (
+    "{"
+    '    "LocalReplayDirectory": "./replays/",'
+    '    "MaxGameTime": 60480,'
+    '    "MatchupGenerator": "File",'
+    '    "MatchupListFile": "./matchuplist",'
+    '    "ErrorListFile": "./errorlist",'
+    '    "BotConfigFile": "./LadderBots.json",'
+    '    "EnableReplayUpload": "False",'
+    '    "ResultsLogFile": "./results.json",'
+    '    "PlayerIdFile": "./playerids",'
+    '    "PythonBinary": "/home/aiarena/venv/bin/python",'
+    '    "RealTimeMode": false,'
+    '    "Maps": [],'
+    '    "MaxFrameTime": 20000'
+    "}"
+)
 
 # Override values with environment specific config
 try:
     from config import *
 except ImportError as e:
-    if e.name == 'config':
+    if e.name == "config":
         pass
     else:
         raise
