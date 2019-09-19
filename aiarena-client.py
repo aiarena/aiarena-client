@@ -754,8 +754,9 @@ def runmatch(count,mapname,bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatc
         except Exception as e:
             logger.debug(str(e))
     except:
-        result = []
-        result.append({'Result':{'Error'}})
+        # todo: usually result is a list
+        # todo: ideally this should always be the same variable type
+        result = 'Error'
 
     return result
 
