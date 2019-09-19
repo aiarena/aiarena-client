@@ -69,22 +69,22 @@ class Proxy:
         self.max_game_time = max_game_time
         self.supervisor = supervisor
 
-    async def __request(self, request, ws):
+    async def __request(self, request):
         try:
-            await ws.send_bytes(request.SerializeToString())
+            await self.ws_p2s.send_bytes(request.SerializeToString())
         except TypeError:
             logger.debug(
                 "Cannot send: SC2 Connection already closed.")
 
         response = sc_pb.Response()
         try:
-            response_bytes = await ws.receive_bytes()
+            response_bytes = await self.ws_p2s.receive_bytes()
         except TypeError:
             logger.exception("Cannot receive: SC2 Connection already closed.")
         except asyncio.CancelledError:
             # If request is sent, the response must be received before reraising cancel
             try:
-                await ws.receive_bytes()
+                await self.ws_p2s.receive_bytes()
             except asyncio.CancelledError:
                 logger.error(
                     "Requests must not be cancelled multiple times")
@@ -95,18 +95,41 @@ class Proxy:
         response.ParseFromString(response_bytes)
         return response
 
-    # TODO: Assign ws to member variable. Won't need to pass as parameter anymore
-    async def _execute(self, ws, **kwargs):
+    async def _execute(self, **kwargs):
         assert len(kwargs) == 1, "Only one request allowed"
 
         request = sc_pb.Request(**kwargs)
 
-        response = await self.__request(request, ws=ws)
+        response = await self.__request(request)
 
         if response.error:
             logger.debug(f"{response.error}")
 
         return response
+    
+    async def check_for_result(self):
+        request = sc_pb.RequestPing()
+        r = await self._execute(ping=request)
+        if r.status>3:
+            try:
+                result = await self._execute(observation=sc_pb.RequestObservation())
+                if not self.player_id:
+                    self.player_id = result.observation.observation.player_common.player_id
+
+                if self.max_game_time and result.observation.observation.game_loop > self.max_game_time:
+                    self._result = 'Result.Tie'
+                    self._game_loops = result.observation.observation.game_loop
+                    self._game_time_seconds = result.observation.observation.game_loop / 22.4
+
+                if result.observation.player_result:
+                    player_id_to_result = {pr.player_id: Result(
+                        pr.result) for pr in result.observation.player_result}
+                    self._result = player_id_to_result[self.player_id]
+                    self._game_loops = result.observation.observation.game_loop
+                    self._game_time_seconds = result.observation.observation.game_loop / 22.4
+            
+            except Exception as e:
+                logger.error(e)
 
     async def create_game(self, server, players, map_name):
         logger.debug('Creating game...')
@@ -143,15 +166,15 @@ class Proxy:
             cwd=(str(Paths.CWD) if Paths.CWD else None),
         )
 
-    async def save_replay(self, ws):
+    async def save_replay(self):
         logger.debug(f"Requesting replay from server")
-        result = await self._execute(ws=ws, save_replay=sc_pb.RequestSaveReplay())
+        result = await self._execute(save_replay=sc_pb.RequestSaveReplay())
         with open(self.replay_name, "wb") as f:
             f.write(result.save_replay.data)
         logger.debug(f"Saved replay as " + str(self.replay_name))
         return True
 
-    async def process_request(self, msg, ws, ws_c,process):
+    async def process_request(self, msg,process):
         request = sc_pb.Request()
         request.ParseFromString(msg.data)
         try:           
@@ -166,7 +189,7 @@ class Proxy:
                 # response.error.append(f"LadderManager: Debug not allowed. Request: {request}")
                 message = f"{self.player_name} used a debug command. Surrendering..."
                 ch = ChatChannel.Broadcast
-                await self._execute(ws,
+                await self._execute(
                     action=sc_pb.RequestAction(
                         actions=[sc_pb.Action(action_chat=sc_pb.ActionChat(channel=ch.value, message=message))]
                     )
@@ -178,28 +201,7 @@ class Proxy:
 
         except Exception as e:
             logger.debug(f'Exception{e}')
-
-        if not self._result:
-            try:
-                result = await self._execute(ws=ws, observation=sc_pb.RequestObservation())
-                if not self.player_id:
-                    self.player_id = result.observation.observation.player_common.player_id
-
-                if self.max_game_time and result.observation.observation.game_loop > self.max_game_time:
-                    self._result = 'Result.Tie'
-                    self._game_loops = result.observation.observation.game_loop
-                    self._game_time_seconds = result.observation.observation.game_loop / 22.4
-
-                if result.observation.player_result:
-                    player_id_to_result = {pr.player_id: Result(
-                        pr.result) for pr in result.observation.player_result}
-                    self._result = player_id_to_result[self.player_id]
-                    self._game_loops = result.observation.observation.game_loop
-                    self._game_time_seconds = result.observation.observation.game_loop / 22.4
-            
-            except Exception as e:
-                logger.error(e)
-       
+        await self.check_for_result()
         if self._result:
             try:
                 if {self.player_name:sum(self.average_time)/len(self.average_time)} not in self.supervisor.average_frame_time:
@@ -208,9 +210,9 @@ class Proxy:
                 self.supervisor.average_frame_time = {self.player_name:0}
             self.supervisor.game_time = self._game_loops
             self.supervisor.game_time_seconds = self._game_time_seconds
-            if await self.save_replay(ws):
+            if await self.save_replay():
                 if self._surrender:
-                    await self._execute(ws,leave_game=sc_pb.RequestLeaveGame())
+                    await self._execute(leave_game=sc_pb.RequestLeaveGame())
                 self.killed = True                
                 return request.SerializeToString()
         return request.SerializeToString()
@@ -226,10 +228,10 @@ class Proxy:
         async with aiohttp.ClientSession() as session:
             player = None
             logger.debug('Websocket client connection starting')
-            ws_c2p = web.WebSocketResponse(receive_timeout=30)
+            self.ws_c2p = web.WebSocketResponse(receive_timeout=30)
 
-            await ws_c2p.prepare(request)
-            request.app['websockets'].add(ws_c2p)
+            await self.ws_c2p.prepare(request)
+            request.app['websockets'].add(self.ws_c2p)
 
             logger.debug("Launching SC2")
 
@@ -254,7 +256,8 @@ class Proxy:
             logger.debug("Connecting to SC2")
             # Connects to SC2 instance
             async with session.ws_connect(url) as ws_p2s:
-                c = Controller(ws_p2s, process)
+                self.ws_p2s = ws_p2s
+                c = Controller(self.ws_p2s, process)
                 if not self.created_game:
                     await self.create_game(c, players, self.map_name)
                     player = players[0]
@@ -267,26 +270,26 @@ class Proxy:
                 logger.debug("Joining game")
                 logger.debug(r"Connecting proxy")
                 try:
-                    async for msg in ws_c2p:
+                    async for msg in self.ws_c2p:
                         if msg.data is None:
                             raise
                         self.average_time.append(time.monotonic()-start_time)
                         if not self.killed:
                             if msg.type == aiohttp.WSMsgType.BINARY:
-                                req = await self.process_request(msg, ws_p2s,ws_c2p, process)
-                                await ws_p2s.send_bytes(req)
+                                req = await self.process_request(msg, process)
+                                await self.ws_p2s.send_bytes(req)
                                 try:
                                     data_p2s = await ws_p2s.receive_bytes()
                                     await self.process_response(data_p2s)
                                 except (asyncio.CancelledError,asyncio.TimeoutError):
                                     logger.error(str(e))
-                                await ws_c2p.send_bytes(data_p2s)
+                                await self.ws_c2p.send_bytes(data_p2s)
                                 start_time = time.monotonic()
                             elif msg.type == aiohttp.WSMsgType.CLOSED:
                                 logger.error("Client shutdown")
                             else:
                                 logger.error("Incorrect message type")
-                                await ws_c2p.close()
+                                await self.ws_c2p.close()
                         else:
                             logger.debug("Websocket connection closed")
 
@@ -298,8 +301,8 @@ class Proxy:
                         logger.debug("Bot crashed")
                         self._result = 'Result.Crashed'
                     try:
-                        if await self.save_replay(ws_p2s):
-                            await self._execute(ws_p2s,leave_game=sc_pb.RequestLeaveGame())
+                        if await self.save_replay():
+                            await self._execute(leave_game=sc_pb.RequestLeaveGame())
                     except:
                         logger.debug("Can't save replay, SC2 already closed")
                     try:
@@ -310,10 +313,10 @@ class Proxy:
                     
                     self.supervisor.result = dict({self.player_name: self._result})
                     
-                    await ws_c2p.close()
+                    await self.ws_c2p.close()
                     logger.debug('Disconnected')
-                    return ws_p2s
-            return ws_p2s
+                    return self.ws_p2s
+            return self.ws_p2s
 
 
 class ConnectionHandler:
@@ -384,8 +387,8 @@ class ConnectionHandler:
             else:  # This breaks when there are more than 2 connections. TODO: fix
                 proxy2 = Proxy(game_created=True)
                 resp = await proxy2.websocket_handler(request, self.portconfig)
-        
-
+         
+         
         return web.WebSocketResponse()
 
 
