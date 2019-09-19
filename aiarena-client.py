@@ -730,28 +730,33 @@ def kill_current_server():
     except:
         pass
 def runmatch(count,mapname,bot_0_name, bot_1_name,bot_0_data,bot_1_data,nextmatchid):
-    utl.printout(f"Starting game - Round {count}")
-    kill_current_server()
-    proxy = subprocess.Popen( PYTHON+ ' Proxy.py',
-                            cwd=WORKING_DIRECTORY, shell=True)
-
-    
-    while True:
-        time.sleep(1)
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        result = sock.connect_ex((config.SC2_PROXY['HOST'], config.SC2_PROXY['PORT']))
-        if result == 0:
-            break
-
-    loop = asyncio.get_event_loop()
-    
-
-    result = loop.run_until_complete(asyncio.wait_for(main(mapname,bot_0_name,MAX_GAME_TIME, bot_1_name,bot_0_data,bot_1_data,nextmatchid),9000))
-
     try:
-        os.kill(proxy.pid, signal.SIGTERM)
-    except Exception as e:
-        logger.debug(str(e))
+        utl.printout(f"Starting game - Round {count}")
+        kill_current_server()
+        proxy = subprocess.Popen( PYTHON+ ' Proxy.py',
+                                cwd=WORKING_DIRECTORY, shell=True)
+
+
+        while True:
+            time.sleep(1)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            result = sock.connect_ex((config.SC2_PROXY['HOST'], config.SC2_PROXY['PORT']))
+            if result == 0:
+                break
+
+        loop = asyncio.get_event_loop()
+
+
+        result = loop.run_until_complete(asyncio.wait_for(main(mapname,bot_0_name,MAX_GAME_TIME, bot_1_name,bot_0_data,bot_1_data,nextmatchid),9000))
+
+        try:
+            os.kill(proxy.pid, signal.SIGTERM)
+        except Exception as e:
+            logger.debug(str(e))
+    except:
+        result = []
+        result.append({'Result':{'Error'}})
+
     return result
 
 try:
