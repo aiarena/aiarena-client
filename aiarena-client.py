@@ -249,6 +249,8 @@ def getnextmatch(count):
         )
         # utl.printout(result)
         postresult(nextmatchid, result, bot_0_name, bot_1_name)
+        if result == "Error":
+            return False
         return True
 
     else:
@@ -392,6 +394,28 @@ def postresult(match_id, lm_result, bot_1_name, bot_2_name):
     )
     zip_file.close()
 
+    # aiarenaclient logs
+    proxy_tmp = os.path.join(config.TEMP_PATH, "proxy.log")
+    supervisor_tmp = os.path.join(config.TEMP_PATH, "supervisor.log")
+    client_tmp = os.path.join(config.TEMP_PATH, "aiarenaclient.log")
+
+    client_log_zip = os.path.join(config.TEMP_PATH, "aiarenaclient_log.zip")
+
+    if os.path.isfile("proxy.log"):
+        shutil.move("proxy.log", proxy_tmp)
+    else:
+        Path("proxy.log").touch()
+
+    if os.path.isfile("supervisor.log"):
+        shutil.move("supervisor.log", supervisor_tmp)
+    else:
+        Path("supervisor.log").touch()
+
+    if os.path.isfile("aiarenaclient.log"):
+        shutil.move("aiarenaclient.log", client_tmp)
+    else:
+        Path("aiarenaclient.log").touch()
+
     # sc2ladderserver logs
     sc2ladderserver_stdout_log_tmp = os.path.join(
         config.TEMP_PATH, "sc2ladderserver_stdout.log"
@@ -414,6 +438,9 @@ def postresult(match_id, lm_result, bot_1_name, bot_2_name):
     zip_file = zipfile.ZipFile(sc2ladderserver_log_zip, "w")
     zip_file.write(sc2ladderserver_stdout_log_tmp, compress_type=zipfile.ZIP_DEFLATED)
     zip_file.write(sc2ladderserver_stderr_log_tmp, compress_type=zipfile.ZIP_DEFLATED)
+    zip_file.write(proxy_tmp, compress_type=zipfile.ZIP_DEFLATED)
+    zip_file.write(supervisor_tmp, compress_type=zipfile.ZIP_DEFLATED)
+    zip_file.write(client_tmp, compress_type=zipfile.ZIP_DEFLATED)
     zip_file.close()
 
     # Create downloable data archives
@@ -489,51 +516,53 @@ def post_local_result(bot_0, bot_1, lm_result):
         "Bot1AvgFrame": 0,
         "Bot2AvgFrame": 0,
     }
-    for x in lm_result:
-        if x.get("Result", None):
-            temp_results = x["Result"]
-            utl.printout(str(temp_results))
+    if isinstance(lm_result, list):
+        for x in lm_result:
+            if x.get("Result", None):
+                temp_results = x["Result"]
+                utl.printout(str(temp_results))
 
-            if temp_results[bot_0] == "Result.Crashed":
-                result = "Player1Crash"
-                result_json["Winner"] = bot_1
+                if temp_results[bot_0] == "Result.Crashed":
+                    result = "Player1Crash"
+                    result_json["Winner"] = bot_1
 
-            elif temp_results[bot_1] == "Result.Crashed":
-                result = "Player2Crash"
-                result_json["Winner"] = bot_0
+                elif temp_results[bot_1] == "Result.Crashed":
+                    result = "Player2Crash"
+                    result_json["Winner"] = bot_0
 
-            elif temp_results[bot_0] == "Result.Victory":
-                result = "Player1Win"
-                result_json["Winner"] = bot_0
+                elif temp_results[bot_0] == "Result.Victory":
+                    result = "Player1Win"
+                    result_json["Winner"] = bot_0
 
-            elif temp_results[bot_0] == "Result.Defeat":
-                result = "Player2Win"
-                result_json["Winner"] = bot_1
+                elif temp_results[bot_0] == "Result.Defeat":
+                    result = "Player2Win"
+                    result_json["Winner"] = bot_1
 
-            elif temp_results[bot_0] == "Result.Tie":
-                result = "Tie"
-                result_json["Winner"] = "Tie"
+                elif temp_results[bot_0] == "Result.Tie":
+                    result = "Tie"
+                    result_json["Winner"] = "Tie"
 
-            else:
-                result = "InitializationError"
+                else:
+                    result = "InitializationError"
 
-            result_json["Result"] = result
+                result_json["Result"] = result
 
-        if x.get("GameTime", None):
-            result_json["GameTime"] = x["GameTime"]
-            result_json["GameTimeFormatted"] = x["GameTimeFormatted"]
+            if x.get("GameTime", None):
+                result_json["GameTime"] = x["GameTime"]
+                result_json["GameTimeFormatted"] = x["GameTimeFormatted"]
 
-        if x.get("AverageFrameTime", None):
-            result_json["Bot1AvgFrame"] = (next(iter(x["AverageFrameTime"]))).get(
-                bot_0, 0
-            ) * 1000  # Convert to ms
-            result_json["Bot2AvgFrame"] = (next(iter(x["AverageFrameTime"]))).get(
-                bot_1, 0
-            ) * 1000  # Convert to ms
+            if x.get("AverageFrameTime", None):
+                result_json["Bot1AvgFrame"] = (next(iter(x["AverageFrameTime"]))).get(
+                    bot_0, 0
+                ) * 1000  # Convert to ms
+                result_json["Bot2AvgFrame"] = (next(iter(x["AverageFrameTime"]))).get(
+                    bot_1, 0
+                ) * 1000  # Convert to ms
 
-        if x.get("TimeStamp", None):
-            result_json["TimeStamp"] = x["TimeStamp"]
-
+            if x.get("TimeStamp", None):
+                result_json["TimeStamp"] = x["TimeStamp"]
+        else:
+            print("Error")
         # if os.path.isfile(RESULTS_LOG_FILE):#TODO: Fix the appending of results
         #     f=open(RESULTS_LOG_FILE, 'r')
         #     if len(f.readlines()) > 0:
@@ -939,6 +968,8 @@ try:
             cleanup()
         if getnextmatch(count):
             count += 1
+        else:
+            break
 
         # if RUN_LOCAL:
         #     with open('matchupList','r+') as ml:
