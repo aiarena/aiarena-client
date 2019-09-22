@@ -397,24 +397,24 @@ def postresult(match_id, lm_result, bot_1_name, bot_2_name):
     # aiarenaclient logs
     proxy_tmp = os.path.join(config.TEMP_PATH, "proxy.log")
     supervisor_tmp = os.path.join(config.TEMP_PATH, "supervisor.log")
-    client_tmp = os.path.join(config.TEMP_PATH, "aiarenaclient.log")
+    client_tmp = os.path.join(config.TEMP_PATH, "aiarena-client.log")
 
-    client_log_zip = os.path.join(config.TEMP_PATH, "aiarenaclient_log.zip")
+    client_log_zip = os.path.join(config.TEMP_PATH, "aiarena-client_log.zip")
 
     if os.path.isfile("proxy.log"):
         shutil.move("proxy.log", proxy_tmp)
     else:
-        Path("proxy.log").touch()
+        Path(proxy_tmp).touch()
 
     if os.path.isfile("supervisor.log"):
         shutil.move("supervisor.log", supervisor_tmp)
     else:
-        Path("supervisor.log").touch()
+        Path(supervisor_tmp).touch()
 
-    if os.path.isfile("aiarenaclient.log"):
-        shutil.move("aiarenaclient.log", client_tmp)
+    if os.path.isfile("aiarena-client.log"):
+        shutil.move("aiarena-client.log", client_tmp)
     else:
-        Path("aiarenaclient.log").touch()
+        Path(client_tmp).touch()
 
     # sc2ladderserver logs
     sc2ladderserver_stdout_log_tmp = os.path.join(
