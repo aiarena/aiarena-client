@@ -376,7 +376,7 @@ class ConnectionHandler:
             logger.debug("Using supervisor")
             self.supervisor = Supervisor()
 
-            Timer(20, self.bots_connected, args=[request, 1])
+            Timer(40, self.bots_connected, args=[request, 1])
 
             await self.supervisor.websocket_handler(request)
 
@@ -390,7 +390,7 @@ class ConnectionHandler:
                 logger.debug("First bot connecting")
                 await self.supervisor.send_message({"Bot": "Connected"})
 
-                Timer(20, self.bots_connected, args=[request, 2])
+                Timer(40, self.bots_connected, args=[request, 2])
 
                 proxy1 = Proxy(
                     game_created=False,
