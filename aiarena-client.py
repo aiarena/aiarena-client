@@ -277,6 +277,7 @@ def getnextmatch(count):
 
 
 def postresult(match_id, lm_result, bot_1_name, bot_2_name):
+    kill_current_server()
     # quick hack to avoid these going uninitialized
     # todo: remove these and actually fix the issue
     gametime = 0
@@ -396,7 +397,7 @@ def postresult(match_id, lm_result, bot_1_name, bot_2_name):
 
     # aiarenaclient logs
     proxy_tmp = os.path.join(config.TEMP_PATH, "proxy.log")
-    supervisor_tmp = os.path.join(config.TEMP_PATH, "supervisor.log")
+    # supervisor_tmp = os.path.join(config.TEMP_PATH, "supervisor.log")
     client_tmp = os.path.join(config.TEMP_PATH, "aiarena-client.log")
 
     client_log_zip = os.path.join(config.TEMP_PATH, "aiarena-client_log.zip")
@@ -406,10 +407,10 @@ def postresult(match_id, lm_result, bot_1_name, bot_2_name):
     else:
         Path(proxy_tmp).touch()
 
-    if os.path.isfile("supervisor.log"):
-        shutil.move("supervisor.log", supervisor_tmp)
-    else:
-        Path(supervisor_tmp).touch()
+    # if os.path.isfile("supervisor.log"):
+    #     shutil.move("supervisor.log", supervisor_tmp)
+    # else:
+    #     Path(supervisor_tmp).touch()
 
     if os.path.isfile("aiarena-client.log"):
         shutil.move("aiarena-client.log", client_tmp)
@@ -439,7 +440,7 @@ def postresult(match_id, lm_result, bot_1_name, bot_2_name):
     zip_file.write(sc2ladderserver_stdout_log_tmp, compress_type=zipfile.ZIP_DEFLATED)
     zip_file.write(sc2ladderserver_stderr_log_tmp, compress_type=zipfile.ZIP_DEFLATED)
     zip_file.write(proxy_tmp, compress_type=zipfile.ZIP_DEFLATED)
-    zip_file.write(supervisor_tmp, compress_type=zipfile.ZIP_DEFLATED)
+    # zip_file.write(supervisor_tmp, compress_type=zipfile.ZIP_DEFLATED)
     zip_file.write(client_tmp, compress_type=zipfile.ZIP_DEFLATED)
     zip_file.close()
 
@@ -779,6 +780,7 @@ async def main(
                         }
                     }
                 )
+                pid_cleanup([bot1_process.pid, bot2_process.pid])
                 await session.close()
                 break
             msg = await ws.receive_json()
@@ -798,6 +800,7 @@ async def main(
                         }
                     }
                 )
+                pid_cleanup([bot1_process.pid, bot2_process.pid])
                 await session.close()
                 break
             logger.debug(f"checking if bot is okay")
@@ -812,6 +815,7 @@ async def main(
                         }
                     }
                 )
+                pid_cleanup([bot1_process.pid, bot2_process.pid])
                 await session.close()
                 break
 
@@ -828,6 +832,7 @@ async def main(
                         }
                     }
                 )
+                pid_cleanup([bot1_process.pid, bot2_process.pid])
                 await session.close()
                 break
 
@@ -865,6 +870,7 @@ async def main(
                         }
                     }
                 )
+                pid_cleanup([bot1_process.pid, bot2_process.pid])
             if bot2_process.poll():
                 utl.printout("Bot2 Init Error")
                 await session.close()

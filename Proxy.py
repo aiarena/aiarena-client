@@ -109,6 +109,18 @@ class Proxy:
 
         return response
 
+    async def check_time(self):
+        result = await self._execute(observation=sc_pb.RequestObservation())
+        if (
+                self.max_game_time
+                and result.observation.observation.game_loop > self.max_game_time
+            ):
+                self._result = "Result.Tie"
+                self._game_loops = result.observation.observation.game_loop
+                self._game_time_seconds = (
+                    result.observation.observation.game_loop / 22.4
+                )
+
     async def check_for_result(self):
         request = sc_pb.RequestPing()
         r = await self._execute(ping=request)
@@ -118,16 +130,6 @@ class Proxy:
                 if not self.player_id:
                     self.player_id = (
                         result.observation.observation.player_common.player_id
-                    )
-
-                if (
-                    self.max_game_time
-                    and result.observation.observation.game_loop > self.max_game_time
-                ):
-                    self._result = "Result.Tie"
-                    self._game_loops = result.observation.observation.game_loop
-                    self._game_time_seconds = (
-                        result.observation.observation.game_loop / 22.4
                     )
 
                 if result.observation.player_result:
@@ -295,8 +297,13 @@ class Proxy:
                 logger.debug("Player:" + str(player))
                 logger.debug("Joining game")
                 logger.debug(r"Connecting proxy")
+                counter = 0
                 try:
                     async for msg in self.ws_c2p:
+                        if counter %1000 ==0:
+                            await self.check_time()
+                            counter =0
+                        counter +=1
                         if msg.data is None:
                             raise
                         self.average_time.append(time.monotonic() - start_time)
