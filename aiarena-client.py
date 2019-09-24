@@ -561,8 +561,8 @@ def post_local_result(bot_0, bot_1, lm_result):
 
             if x.get("TimeStamp", None):
                 result_json["TimeStamp"] = x["TimeStamp"]
-        else:
-            print("Error")
+    else:
+        print("Error")
         # if os.path.isfile(RESULTS_LOG_FILE):#TODO: Fix the appending of results
         #     f=open(RESULTS_LOG_FILE, 'r')
         #     if len(f.readlines()) > 0:
@@ -579,9 +579,9 @@ def post_local_result(bot_0, bot_1, lm_result):
 
         #             results_log.write(json.dumps(j_object, indent=4))
         # else:
-        with open(RESULTS_LOG_FILE, "w") as results_log:
-            j_object = dict({"Results": [result_json]})
-            results_log.write(json.dumps(j_object, indent=4))
+    with open(RESULTS_LOG_FILE, "w") as results_log:
+        j_object = dict({"Results": [result_json]})
+        results_log.write(json.dumps(j_object, indent=4))
 
 
 def cleanup():
@@ -762,24 +762,44 @@ async def main(
             bot1_process = start_bot(
                 bot_0_data, opponent_id=bot_1_data.get("botID", 123)
             )  # todo opponent_id
-            while (
-                not ((await ws.receive()).json()).get("Bot", None) and bot_counter < 300
-            ):
-                bot_counter += 1
-                await asyncio.sleep(0.1)
-            bot2_process = start_bot(
-                bot_1_data, opponent_id=bot_0_data.get("botID", 321)
-            )  # todo opponent_id
-            bot_counter = 0
-            while (
-                not ((await ws.receive()).json()).get("Bot", None) and bot_counter < 300
-            ):
-                bot_counter += 1
-                await asyncio.sleep(0.1)
-            logger.debug(f"Changing PGID")
-            for x in [bot1_process.pid, bot2_process.pid]:
-                move_pid(x)
 
+            msg = await ws.receive_json()
+
+            if msg.get("Bot", None) == "Connected":
+                bot2_process = start_bot(
+                    bot_1_data, opponent_id=bot_0_data.get("botID", 321)
+                )  # todo opponent_id
+            else:
+                logger.debug(f"Bot2 crash")
+                result.append(
+                    {
+                        "Result": {
+                            bot_0_name: "InitializationError",
+                            bot_1_name: "InitializationError",
+                        }
+                    }
+                )
+                await session.close()
+                break
+            msg = await ws.receive_json()
+
+            if msg.get("Bot", None) == "Connected":
+                logger.debug(f"Changing PGID")
+                for x in [bot1_process.pid, bot2_process.pid]:
+                    move_pid(x)
+                    
+            else:
+                logger.debug(f"Bot2 crash")
+                result.append(
+                    {
+                        "Result": {
+                            bot_0_name: "InitializationError",
+                            bot_1_name: "InitializationError",
+                        }
+                    }
+                )
+                await session.close()
+                break
             logger.debug(f"checking if bot is okay")
 
             if bot1_process.poll():
@@ -937,7 +957,7 @@ def runmatch(
         # todo: usually result is a list
         # todo: ideally this should always be the same variable type
         result = "Error"
-
+        
     return result
 
 

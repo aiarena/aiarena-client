@@ -369,7 +369,7 @@ class ConnectionHandler:
             await self.supervisor.send_message(
                 dict({"Bot": "Bot did not connect in time"})
             )
-            await self.supervisor.close()
+            # await self.supervisor.close()
 
     async def websocket_handler(self, request):
         if bool(request.headers.get("Supervisor", False)):

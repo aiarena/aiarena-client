@@ -24,7 +24,7 @@ tmp/
 *.log
 *.pyc
 *.stdout
-
+*.txt
 venv/
 results
 run_tests.py
