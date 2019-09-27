@@ -13,7 +13,7 @@ from urllib import parse
 
 # GERERAL
 ARENA_CLIENT_ID = "aiarenaclient_000"
-API_TOKEN = "???"
+API_TOKEN = "12345"
 ROUNDS_PER_RUN = 5
 SHUT_DOWN_AFTER_RUN = True
 RUN_REPLAY_CHECK = True
