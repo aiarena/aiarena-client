@@ -6,10 +6,20 @@ from termcolor import colored
 
 
 class Utl:
+    """
+    Class containing helper functions for the aiarena-client.
+
+    """
     def __init__(self, config):
         self._config = config
 
     def is_valid_avg_step_time(self, num):
+        """
+        Validate avg_step_time.
+
+        :param num:
+        :return:
+        """
         try:
             number = float(num)  # test float conversion
             # reject nan and inf values
@@ -19,6 +29,12 @@ class Utl:
 
     # Print to console and log
     def printout(self, text):
+        """
+        Print to screen and log file using colors.
+
+        :param text:
+        :return:
+        """
         if self._config.RUN_LOCAL:
             self._do_local_printout(text)
         else:
@@ -66,6 +82,12 @@ class Utl:
             return file.read()
 
     def load_pid_from_file(self, pid_file):
+        """
+        Load PID from PID file.
+
+        :param pid_file:
+        :return:
+        """
         try:
             with open(pid_file, "r") as file:
                 try:
@@ -80,4 +102,10 @@ class Utl:
             return None
 
     def is_pid_running(self, pid):
+        """
+        Check if PID is running.
+
+        :param pid:
+        :return:
+        """
         return pid in (p.pid for p in psutil.process_iter())

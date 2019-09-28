@@ -29,3 +29,4 @@ venv/
 results
 run_tests.py
 .vscode
+.vs

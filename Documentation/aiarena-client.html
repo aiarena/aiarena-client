@@ -1,0 +1,2601 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.7.0" />
+<title>aiarena-client API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{font-weight:bold}#index h4 + ul{margin-bottom:.6em}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>aiarena-client</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import asyncio
+import datetime
+import json
+import logging
+import os
+import signal
+import socket
+import stat
+import subprocess
+import sys
+import time
+import traceback
+
+import aiohttp
+import psutil
+
+# the default config will also import custom config values
+import default_config as config
+from utl import Utl
+
+utl = Utl(config)
+
+# Setup logging
+logger = logging.getLogger(__name__)
+logger.addHandler(config.LOGGING_HANDLER)
+logger.setLevel(config.LOGGING_LEVEL)
+
+if not config.RUN_LOCAL:
+    import hashlib
+    import zipfile
+    from pathlib import Path
+    import shutil
+    import requests
+    from requests.exceptions import ConnectionError
+
+
+if config.RUN_LOCAL:
+    WORKING_DIRECTORY = os.getcwd()
+    REPLAY_DIRECTORY = os.path.join(WORKING_DIRECTORY, &#34;Replays/&#34;)
+
+    # Try to import config settings
+    with open(&#34;LadderManager.json&#34;, &#34;r&#34;) as lm:
+        j_object = json.load(lm)
+        PYTHON = j_object[&#34;PythonBinary&#34;]
+        DISABLE_DEBUG = j_object[&#34;DisableDebug&#34;]
+        RESULTS_LOG_FILE = j_object[&#34;ResultsLogFile&#34;]
+        MAX_GAME_TIME = j_object[&#34;MaxGameTime&#34;]
+        REALTIME_MODE = j_object[&#34;RealTimeMode&#34;]
+        BOTS_DIRECTORY = j_object[&#34;BaseBotDirectory&#34;]
+        MAX_FRAME_TIME = j_object.get(&#39;MaxFrameTime&#39;, 125)
+        STRIKES = j_object.get(&#39;Strikes&#39;, 10)
+
+else:
+    PYTHON = config.PYTHON
+    REPLAY_DIRECTORY = config.REPLAYS_DIRECTORY
+    WORKING_DIRECTORY = config.WORKING_DIRECTORY
+    MAX_GAME_TIME = config.MAX_GAME_TIME
+    STRIKES = config.STRIKES
+    MAX_FRAME_TIME = config.MAX_FRAME_TIME
+
+
+def check_pid(pid: int):
+    &#34;&#34;&#34;
+    Checks if PID is running.
+
+    :param pid:
+    :return: bool
+    &#34;&#34;&#34;
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    else:
+        return True
+
+
+def get_ladder_bots_data(bot):
+    &#34;&#34;&#34;
+    Get the config file (ladderbots.json) from the bot&#39;s directory.
+
+    :param bot:
+    :return:
+    &#34;&#34;&#34;
+    bot_directory = os.path.join(BOTS_DIRECTORY, bot, &#34;ladderbots.json&#34;)
+    with open(bot_directory, &#34;r&#34;) as ladder_bots_file:
+        json_object = json.load(ladder_bots_file)
+    return bot, json_object
+
+
+class Bot:
+    &#34;&#34;&#34;
+    Class for setting up the config for a bot.
+    &#34;&#34;&#34;
+    def __init__(self, data):
+        self.id = data[&#34;id&#34;]
+        self.name = data[&#34;name&#34;]
+        self.game_display_id = data[&#34;game_display_id&#34;]
+        self.bot_zip = data[&#34;bot_zip&#34;]
+        self.bot_zip_md5hash = data[&#34;bot_zip_md5hash&#34;]
+        self.bot_data = data[&#34;bot_data&#34;]
+        self.bot_data_md5hash = data[&#34;bot_data_md5hash&#34;]
+        self.plays_race = data[&#34;plays_race&#34;]
+        self.type = data[&#34;type&#34;]
+
+    def get_bot_file(self):
+        &#34;&#34;&#34;
+        Download the bot&#39;s folder and extracts it to a specified location.
+
+        :return: bool
+        &#34;&#34;&#34;
+        utl.printout(f&#34;Downloading bot {self.name}&#34;)
+        # Download bot and save to .zip
+        r = requests.get(
+            self.bot_zip, headers={&#34;Authorization&#34;: &#34;Token &#34; + config.API_TOKEN}
+        )
+        bot_download_path = os.path.join(config.TEMP_PATH, self.name + &#34;.zip&#34;)
+        with open(bot_download_path, &#34;wb&#34;) as bot_zip:
+            bot_zip.write(r.content)
+        # Load bot from .zip to calculate md5
+        with open(bot_download_path, &#34;rb&#34;) as bot_zip:
+            calculated_md5 = hashlib.md5(utl.file_as_bytes(bot_zip)).hexdigest()
+        if self.bot_zip_md5hash == calculated_md5:
+            utl.printout(&#34;MD5 hash matches transferred file...&#34;)
+            utl.printout(f&#34;Extracting bot {self.name} to bots/{self.name}&#34;)
+            # Extract to bot folder
+            with zipfile.ZipFile(bot_download_path, &#34;r&#34;) as zip_ref:
+                zip_ref.extractall(f&#34;bots/{self.name}&#34;)
+
+            # if it&#39;s a linux bot, we need to add execute permissions
+            if self.type == &#34;cpplinux&#34;:
+                # Chmod 744: rwxr--r--
+                os.chmod(
+                    f&#34;bots/{self.name}/{self.name}&#34;,
+                    stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH,
+                )
+
+            if self.get_bot_data_file():
+                return True
+            else:
+                return False
+        else:
+            utl.printout(
+                f&#34;MD5 hash ({self.bot_zip_md5hash}) does not match transferred file ({calculated_md5})&#34;
+            )
+            cleanup()
+            return False
+
+    # Get bot data
+    def get_bot_data_file(self):
+        &#34;&#34;&#34;
+        Download bot&#39;s personal data folder and extract to specified location.
+
+        :return: bool
+        &#34;&#34;&#34;
+        if self.bot_data is None:
+            return True
+
+        utl.printout(f&#34;Downloading bot data for {self.name}&#34;)
+        # Download bot data and save to .zip
+        r = requests.get(
+            self.bot_data, headers={&#34;Authorization&#34;: &#34;Token &#34; + config.API_TOKEN}
+        )
+        bot_data_path = os.path.join(config.TEMP_PATH, self.name + &#34;-data.zip&#34;)
+        with open(bot_data_path, &#34;wb&#34;) as bot_data_zip:
+            bot_data_zip.write(r.content)
+        with open(bot_data_path, &#34;rb&#34;) as bot_data_zip:
+            calculated_md5 = hashlib.md5(utl.file_as_bytes(bot_data_zip)).hexdigest()
+        if self.bot_data_md5hash == calculated_md5:
+            utl.printout(&#34;MD5 hash matches transferred file...&#34;)
+            utl.printout(f&#34;Extracting data for {self.name} to bots/{self.name}/data&#34;)
+            with zipfile.ZipFile(bot_data_path, &#34;r&#34;) as zip_ref:
+                zip_ref.extractall(f&#34;bots/{self.name}/data&#34;)
+            return True
+        else:
+            utl.printout(
+                f&#34;MD5 hash ({self.bot_data_md5hash}) does not match transferred file ({calculated_md5})&#34;
+            )
+            cleanup()
+            return False
+
+    def get_bot_data(self):
+        &#34;&#34;&#34;
+        Get the bot&#39;s config from the ai-arena website and returns a config dictionary.
+
+        :return: bot_name
+        :return: bot_data
+        &#34;&#34;&#34;
+        if not self:
+            bot_name = &#34;OverReactBot&#34;
+            bot_race = &#34;T&#34;
+            bot_type = &#34;python&#34;
+            bot_id = &#34;123&#34;
+        else:
+            bot_name = self.name
+            bot_race = self.plays_race
+            bot_type = self.type
+            bot_id = self.game_display_id
+
+        race_map = {&#34;P&#34;: &#34;Protoss&#34;, &#34;T&#34;: &#34;Terran&#34;, &#34;Z&#34;: &#34;Zerg&#34;, &#34;R&#34;: &#34;Random&#34;}
+        bot_type_map = {
+            &#34;python&#34;: [&#34;run.py&#34;, &#34;Python&#34;],
+            &#34;cppwin32&#34;: [f&#34;{bot_name}.exe&#34;, &#34;Wine&#34;],
+            &#34;cpplinux&#34;: [f&#34;{bot_name}&#34;, &#34;BinaryCpp&#34;],
+            &#34;dotnetcore&#34;: [f&#34;{bot_name}.dll&#34;, &#34;DotNetCore&#34;],
+            &#34;java&#34;: [f&#34;{bot_name}.jar&#34;, &#34;Java&#34;],
+            &#34;nodejs&#34;: [&#34;main.jar&#34;, &#34;NodeJS&#34;],
+        }
+
+        bot_data = {
+            &#34;Race&#34;: race_map[bot_race],
+            &#34;RootPath&#34;: os.path.join(WORKING_DIRECTORY, f&#34;bots&#34;, bot_name),
+            &#34;FileName&#34;: bot_type_map[bot_type][0],
+            &#34;Type&#34;: bot_type_map[bot_type][1],
+            &#34;botID&#34;: bot_id,
+        }
+        return bot_name, bot_data
+
+
+def get_next_match(match_count: int):
+    &#34;&#34;&#34;
+    Retrieve the next match from the ai-arena website API. Runs the match, and posts the result to the ai-arena
+    website.
+
+    :param match_count:
+    :return:
+    &#34;&#34;&#34;
+    utl.printout(
+        f&#39;New match started at {time.strftime(&#34;%H:%M:%S&#34;, time.gmtime(time.time()))}&#39;
+    )
+    if not config.RUN_LOCAL:
+        try:
+            next_match_response = requests.post(
+                config.API_MATCHES_URL,
+                headers={&#34;Authorization&#34;: &#34;Token &#34; + config.API_TOKEN},
+            )
+        except ConnectionError:
+            utl.printout(
+                f&#34;ERROR: Failed to retrieve game. Connection to website failed. Sleeping.&#34;
+            )
+            time.sleep(30)
+            return False
+
+        if next_match_response.status_code &gt;= 400:
+            utl.printout(
+                f&#34;ERROR: Failed to retrieve game. Status code: {next_match_response.status_code}. Sleeping.&#34;
+            )
+            time.sleep(30)
+            return False
+
+        next_match_data = json.loads(next_match_response.text)
+
+        if &#34;id&#34; not in next_match_data:
+            utl.printout(&#34;No games available - sleeping&#34;)
+            time.sleep(30)
+            return False
+
+        next_match_id = next_match_data[&#34;id&#34;]
+        utl.printout(f&#34;Next match: {next_match_id}&#34;)
+
+        # Download map
+        map_name = next_match_data[&#34;map&#34;][&#34;name&#34;]
+        map_url = next_match_data[&#34;map&#34;][&#34;file&#34;]
+        utl.printout(f&#34;Downloading map {map_name}&#34;)
+
+        try:
+            r = requests.get(map_url)
+        except Exception as download_exception:
+            utl.printout(f&#34;ERROR: Failed to download map {map_name} at URL {map_url}. Error {download_exception}&#34;)
+            time.sleep(30)
+            return False
+
+        map_path = os.path.join(config.SC2_HOME, &#34;maps&#34;, f&#34;{map_name}.SC2Map&#34;)
+        with open(map_path, &#34;wb&#34;) as map_file:
+            map_file.write(r.content)
+
+        bot_0 = Bot(next_match_data[&#34;bot1&#34;])
+        if not bot_0.get_bot_file():
+            time.sleep(30)
+            return False
+        bot_1 = Bot(next_match_data[&#34;bot2&#34;])
+        if not bot_1.get_bot_file():
+            time.sleep(30)
+            return False
+
+        bot_0_name, bot_0_data = bot_0.get_bot_data()
+        bot_1_name, bot_1_data = bot_1.get_bot_data()
+        # bot_0_game_display_id = bot_0_data[&#39;botID&#39;]
+        # bot_1_game_display_id = bot_1_data[&#39;botID&#39;]
+
+        result = run_match(
+            match_count, map_name, bot_0_name, bot_1_name, bot_0_data, bot_1_data, next_match_id
+        )
+        # utl.printout(result)
+        post_result(next_match_id, result, bot_0_name, bot_1_name)
+        if result == &#34;Error&#34;:
+            return False
+        return True
+
+    else:
+        with open(&#34;matchupList&#34;, &#34;r&#34;) as match_up_list:
+            for i, line in enumerate(match_up_list):
+                next_match_id = i
+                break
+        utl.printout(f&#34;Next match: {next_match_id}&#34;)
+        map_name = line.split(&#39; &#39;)[1].replace(&#34;\n&#34;, &#34;&#34;).replace(&#39;.SC2Map&#39;, &#34;&#34;)
+        bot_0 = line.split(&#39;vs&#39;)[0].replace(&#39;&#34;&#39;, &#34;&#34;)
+        bot_1 = line.split(&#39;vs&#39;)[1].split(&#34; &#34;)[0].replace(&#39;&#34;&#39;, &#34;&#34;)
+        bot_0_name, bot_0_data = get_ladder_bots_data(bot_0)
+        bot_1_name, bot_1_data = get_ladder_bots_data(bot_1)
+        # bot_0_game_display_id = bot_0_data[&#39;botID&#39;]#TODO: Enable opponent_id
+        # bot_1_game_display_id = bot_1_data[&#39;botID&#39;]
+        result = run_match(
+            match_count, map_name, bot_0_name, bot_1_name, bot_0_data, bot_1_data, next_match_id
+        )
+        with open(&#34;results&#34;, &#34;a+&#34;) as map_file:
+            map_file.write(str(result) + &#34;\n\n&#34;)
+        post_local_result(bot_0, bot_1, result)
+        return True
+
+
+def post_result(match_id, lm_result, bot_1_name, bot_2_name):
+    &#34;&#34;&#34;
+    Extract the actual result from the result received from the match runner and post to the ai-arena website, along
+    with the logs.
+
+    :param match_id:
+    :param lm_result:
+    :param bot_1_name:
+    :param bot_2_name:
+    :return:
+    &#34;&#34;&#34;
+    kill_current_server()
+    # quick hack to avoid these going uninitialized
+    # todo: remove these and actually fix the issue
+    game_time: int = 0
+    bot1_avg_step_time: float = 0
+    bot2_avg_step_time: float = 0
+
+    if isinstance(lm_result, list):
+        for x in lm_result:
+            if x.get(&#34;Result&#34;, None):
+                temp_results = x[&#34;Result&#34;]
+                utl.printout(str(temp_results))
+                bot_1_name = list(x[&#34;Result&#34;].keys())[0]
+                bot_2_name = list(x[&#34;Result&#34;].keys())[1]
+
+                if temp_results[bot_1_name] == &#34;Result.Crashed&#34;:
+                    result = &#34;Player1Crash&#34;
+
+                elif temp_results[bot_2_name] == &#34;Result.Crashed&#34;:
+                    result = &#34;Player2Crash&#34;
+                    # result_json[&#39;Winner&#39;]=bot_0
+
+                elif temp_results[bot_1_name] == &#34;Result.Timeout&#34;:
+                    result = &#34;Player1TimeOut&#34;
+
+                elif temp_results[bot_2_name] == &#34;Result.Timeout&#34;:
+                    result = &#34;Player2TimeOut&#34;
+
+                elif temp_results[bot_1_name] == &#34;Result.Victory&#34;:
+                    result = &#34;Player1Win&#34;
+                    # result_json[&#39;Winner&#39;]=bot_1_name
+
+                elif temp_results[bot_1_name] == &#34;Result.Defeat&#34;:
+                    result = &#34;Player2Win&#34;
+                    # result_json[&#39;Winner&#39;]=bot_1
+
+                elif temp_results[bot_2_name] == &#34;Result.Crashed&#34;:
+                    result = &#34;Player2Crash&#34;
+                    # result_json[&#39;Winner&#39;]=bot_0
+
+                elif temp_results[bot_1_name] == &#34;Result.Tie&#34;:
+                    result = &#34;Tie&#34;
+                    # result_json[&#39;Winner&#39;]=&#39;Tie&#39;
+
+                else:
+                    result = &#34;InitializationError&#34;
+                    game_time = 0
+                    bot1_avg_step_time = 0
+                    bot2_avg_step_time = 0
+
+                # result_json[&#39;Result&#39;] = result
+
+            if x.get(&#34;GameTime&#34;, None):
+                game_time = x[&#34;GameTime&#34;]
+
+            if x.get(&#34;AverageFrameTime&#34;, None):
+                try:
+                    bot1_avg_step_time = next(
+                        item[bot_1_name] for item in x[&#39;AverageFrameTime&#39;] if item.get(bot_1_name, None))
+                except StopIteration:
+                    bot1_avg_step_time = 0
+                try:
+                    bot2_avg_step_time = next(
+                        item[bot_2_name] for item in x[&#39;AverageFrameTime&#39;] if item.get(bot_2_name, None))
+                except StopIteration:
+                    bot2_avg_step_time = 0
+
+            if x.get(&#34;TimeStamp&#34;, None):
+                time_stamp = x[&#34;TimeStamp&#34;]
+
+    else:
+        result = lm_result
+        game_time = 0
+        bot1_avg_step_time = 0
+        bot2_avg_step_time = 0
+
+    utl.printout(str(result))
+    replay_file: str = &#34;&#34;
+    for file in os.listdir(REPLAY_DIRECTORY):
+        if file.endswith(&#39;.SC2Replay&#39;):
+            replay_file = file
+            break
+
+    replay_file_path = os.path.join(REPLAY_DIRECTORY, replay_file)
+    if config.RUN_REPLAY_CHECK:
+        os.system(
+            &#34;perl &#34;
+            + os.path.join(config.LOCAL_PATH, &#34;replaycheck.pl&#34;)
+            + &#34; &#34;
+            + replay_file_path
+        )
+
+    bot1_data_folder = os.path.join(
+        config.WORKING_DIRECTORY, &#34;bots&#34;, bot_1_name, &#34;data&#34;
+    )
+    bot2_data_folder = os.path.join(
+        config.WORKING_DIRECTORY, &#34;bots&#34;, bot_2_name, &#34;data&#34;
+    )
+    bot1_error_log = os.path.join(bot1_data_folder, &#34;stderr.log&#34;)
+    bot1_error_log_tmp = os.path.join(config.TEMP_PATH, bot_1_name + &#34;-error.log&#34;)
+    if os.path.isfile(bot1_error_log):
+        shutil.move(bot1_error_log, bot1_error_log_tmp)
+    else:
+        Path(bot1_error_log_tmp).touch()
+
+    bot2_error_log = os.path.join(bot2_data_folder, &#34;stderr.log&#34;)
+    bot2_error_log_tmp = os.path.join(config.TEMP_PATH, bot_2_name + &#34;-error.log&#34;)
+    if os.path.isfile(bot2_error_log):
+        shutil.move(bot2_error_log, bot2_error_log_tmp)
+    else:
+        Path(bot2_error_log_tmp).touch()
+
+    zip_file = zipfile.ZipFile(
+        os.path.join(config.TEMP_PATH, bot_1_name + &#34;-error.zip&#34;), &#34;w&#34;
+    )
+    zip_file.write(
+        os.path.join(config.TEMP_PATH, bot_1_name + &#34;-error.log&#34;),
+        compress_type=zipfile.ZIP_DEFLATED,
+    )
+    zip_file.close()
+
+    zip_file = zipfile.ZipFile(
+        os.path.join(config.TEMP_PATH, bot_2_name + &#34;-error.zip&#34;), &#34;w&#34;
+    )
+    zip_file.write(
+        os.path.join(config.TEMP_PATH, bot_2_name + &#34;-error.log&#34;),
+        compress_type=zipfile.ZIP_DEFLATED,
+    )
+    zip_file.close()
+
+    # aiarena-client logs
+    proxy_tmp = os.path.join(config.TEMP_PATH, &#34;proxy.log&#34;)
+    # supervisor_tmp = os.path.join(config.TEMP_PATH, &#34;supervisor.log&#34;)
+    client_tmp = os.path.join(config.TEMP_PATH, &#34;aiarena-client.log&#34;)
+
+    if os.path.isfile(&#34;proxy.log&#34;):
+        shutil.move(&#34;proxy.log&#34;, proxy_tmp)
+    else:
+        Path(proxy_tmp).touch()
+
+    # if os.path.isfile(&#34;supervisor.log&#34;):
+    #     shutil.move(&#34;supervisor.log&#34;, supervisor_tmp)
+    # else:
+    #     Path(supervisor_tmp).touch()
+
+    if os.path.isfile(&#34;aiarena-client.log&#34;):
+        shutil.move(&#34;aiarena-client.log&#34;, client_tmp)
+    else:
+        Path(client_tmp).touch()
+
+    # sc2ladderserver logs
+    sc2ladderserver_stdout_log_tmp = os.path.join(
+        config.TEMP_PATH, &#34;sc2ladderserver_stdout.log&#34;
+    )
+    sc2ladderserver_stderr_log_tmp = os.path.join(
+        config.TEMP_PATH, &#34;sc2ladderserver_stderr.log&#34;
+    )
+    sc2ladderserver_log_zip = os.path.join(config.TEMP_PATH, &#34;sc2ladderserver_log.zip&#34;)
+
+    if os.path.isfile(config.SC2LADDERSERVER_STDOUT_FILE):
+        shutil.move(config.SC2LADDERSERVER_STDOUT_FILE, sc2ladderserver_stdout_log_tmp)
+    else:
+        Path(sc2ladderserver_stdout_log_tmp).touch()
+
+    if os.path.isfile(config.SC2LADDERSERVER_STDERR_FILE):
+        shutil.move(config.SC2LADDERSERVER_STDERR_FILE, sc2ladderserver_stderr_log_tmp)
+    else:
+        Path(sc2ladderserver_stderr_log_tmp).touch()
+
+    zip_file = zipfile.ZipFile(sc2ladderserver_log_zip, &#34;w&#34;)
+    zip_file.write(sc2ladderserver_stdout_log_tmp, compress_type=zipfile.ZIP_DEFLATED)
+    zip_file.write(sc2ladderserver_stderr_log_tmp, compress_type=zipfile.ZIP_DEFLATED)
+    zip_file.write(proxy_tmp, compress_type=zipfile.ZIP_DEFLATED)
+    # zip_file.write(supervisor_tmp, compress_type=zipfile.ZIP_DEFLATED)
+    zip_file.write(client_tmp, compress_type=zipfile.ZIP_DEFLATED)
+    zip_file.close()
+
+    # Create downloadable data archives
+    if not os.path.isdir(bot1_data_folder):
+        os.mkdir(bot1_data_folder)
+    shutil.make_archive(
+        os.path.join(config.TEMP_PATH, bot_1_name + &#34;-data&#34;), &#34;zip&#34;, bot1_data_folder
+    )
+    if not os.path.isdir(bot2_data_folder):
+        os.mkdir(bot2_data_folder)
+    shutil.make_archive(
+        os.path.join(config.TEMP_PATH, bot_2_name + &#34;-data&#34;), &#34;zip&#34;, bot2_data_folder
+    )
+
+    try:  # Upload replay file and bot data archives
+        file_list = {
+            &#34;bot1_data&#34;: open(
+                os.path.join(config.TEMP_PATH, f&#34;{bot_1_name}-data.zip&#34;), &#34;rb&#34;
+            ),
+            &#34;bot2_data&#34;: open(
+                os.path.join(config.TEMP_PATH, f&#34;{bot_2_name}-data.zip&#34;), &#34;rb&#34;
+            ),
+            &#34;bot1_log&#34;: open(
+                os.path.join(config.TEMP_PATH, f&#34;{bot_1_name}-error.zip&#34;), &#34;rb&#34;
+            ),
+            &#34;bot2_log&#34;: open(
+                os.path.join(config.TEMP_PATH, f&#34;{bot_2_name}-error.zip&#34;), &#34;rb&#34;
+            ),
+            &#34;arenaclient_log&#34;: open(sc2ladderserver_log_zip, &#34;rb&#34;),
+        }
+
+        if os.path.isfile(replay_file_path):
+            file_list[&#34;replay_file&#34;] = open(replay_file_path, &#34;rb&#34;)
+
+        payload = {&#34;type&#34;: result, &#34;match&#34;: int(match_id), &#34;game_steps&#34;: game_time}
+
+        if bot1_avg_step_time is not None:
+            payload[&#34;bot1_avg_step_time&#34;] = bot1_avg_step_time
+        if bot2_avg_step_time is not None:
+            payload[&#34;bot2_avg_step_time&#34;] = bot2_avg_step_time
+
+        if config.DEBUG_MODE:
+            utl.printout(json.dumps(payload))
+
+        post = requests.post(
+            config.API_RESULTS_URL,
+            files=file_list,
+            data=payload,
+            headers={&#34;Authorization&#34;: &#34;Token &#34; + config.API_TOKEN},
+        )
+        if post is None:
+            utl.printout(&#34;ERROR: Result submission failed. &#39;post&#39; was None.&#34;)
+        elif post.status_code &gt;= 400:  # todo: retry?
+            utl.printout(
+                f&#34;ERROR: Result submission failed. Status code: {post.status_code}.&#34;
+            )
+        else:
+            utl.printout(result + &#34; - Result transferred&#34;)
+    except ConnectionError:
+        utl.printout(f&#34;ERROR: Result submission failed. Connection to website failed.&#34;)
+
+
+def post_local_result(bot_0, bot_1, lm_result):
+    &#34;&#34;&#34;
+    Mirror function to save the results to the Results json file if not running matches using the website.
+    :param bot_0:
+    :param bot_1:
+    :param lm_result:
+    :return:
+    &#34;&#34;&#34;
+    result_json = {
+        &#34;Bot1&#34;: bot_0,
+        &#34;Bot2&#34;: bot_1,
+        &#34;Winner&#34;: None,
+        &#34;Map&#34;: None,
+        &#34;Result&#34;: None,
+        &#34;GameTime&#34;: None,
+        &#34;GameTimeFormatted&#34;: None,
+        &#34;TimeStamp&#34;: None,
+        &#34;Bot1AvgFrame&#34;: 0,
+        &#34;Bot2AvgFrame&#34;: 0,
+    }
+    if isinstance(lm_result, list):
+        for x in lm_result:
+            if x.get(&#34;Result&#34;, None):
+                temp_results = x[&#34;Result&#34;]
+                utl.printout(str(temp_results))
+
+                if temp_results[bot_0] == &#34;Result.Crashed&#34;:
+                    result = &#34;Player1Crash&#34;
+                    result_json[&#34;Winner&#34;] = bot_1
+
+                elif temp_results[bot_1] == &#34;Result.Crashed&#34;:
+                    result = &#34;Player2Crash&#34;
+                    result_json[&#34;Winner&#34;] = bot_0
+
+                elif temp_results[bot_0] == &#34;Result.Timeout&#34;:
+                    result = &#34;Player1TimeOut&#34;
+                    result_json[&#34;Winner&#34;] = bot_1
+
+                elif temp_results[bot_1] == &#34;Result.Timeout&#34;:
+                    result = &#34;Player2TimeOut&#34;
+                    result_json[&#34;Winner&#34;] = bot_0
+
+                elif temp_results[bot_0] == &#34;Result.Victory&#34;:
+                    result = &#34;Player1Win&#34;
+                    result_json[&#34;Winner&#34;] = bot_0
+
+                elif temp_results[bot_0] == &#34;Result.Defeat&#34;:
+                    result = &#34;Player2Win&#34;
+                    result_json[&#34;Winner&#34;] = bot_1
+
+                elif temp_results[bot_0] == &#34;Result.Tie&#34;:
+                    result = &#34;Tie&#34;
+                    result_json[&#34;Winner&#34;] = &#34;Tie&#34;
+
+                else:
+                    result = &#34;InitializationError&#34;
+
+                result_json[&#34;Result&#34;] = result
+
+            if x.get(&#34;GameTime&#34;, None):
+                result_json[&#34;GameTime&#34;] = x[&#34;GameTime&#34;]
+                result_json[&#34;GameTimeFormatted&#34;] = x[&#34;GameTimeFormatted&#34;]
+
+            if x.get(&#34;AverageFrameTime&#34;, None):
+                try:
+                    result_json[&#34;Bot1AvgFrame&#34;] = next(
+                        item[bot_0] for item in x[&#39;AverageFrameTime&#39;] if item.get(bot_0, None))
+                except StopIteration:
+                    result_json[&#34;Bot1AvgFrame&#34;] = 0
+                try:
+                    result_json[&#34;Bot2AvgFrame&#34;] = next(
+                        item[bot_1] for item in x[&#39;AverageFrameTime&#39;] if item.get(bot_1, None))
+                except StopIteration:
+                    result_json[&#34;Bot2AvgFrame&#34;] = 0
+
+            if x.get(&#34;TimeStamp&#34;, None):
+                result_json[&#34;TimeStamp&#34;] = x[&#34;TimeStamp&#34;]
+    else:
+        print(&#34;Error&#34;)
+        # if os.path.isfile(RESULTS_LOG_FILE):#TODO: Fix the appending of results
+        #     f=open(RESULTS_LOG_FILE, &#39;r&#39;)
+        #     if len(f.readlines()) &gt; 0:
+        #         f.close()
+        #         with open(RESULTS_LOG_FILE, &#39;w+&#39;) as results_log:
+        #             j_object = json.load(results_log)
+        #             if j_object.get(&#39;Results&#39;,None):
+        #                 logger.debug(&#39;append&#39;)
+        #                 j_object[&#39;Results&#39;].append(result_json)
+
+        #             else:
+        #                 logger.debug(&#39;Overwrite&#39;)
+        #                 j_object[&#39;Results&#39;] =[result_json]
+
+        #             results_log.write(json.dumps(j_object, indent=4))
+        # else:
+    utl.printout(str(result))
+    with open(RESULTS_LOG_FILE, &#34;w&#34;) as results_log:
+        json_object = dict({&#34;Results&#34;: [result_json]})
+        results_log.write(json.dumps(json_object, indent=4))
+
+
+def cleanup():
+    &#34;&#34;&#34;
+    Clean up all the folders and files used for the previous match.
+
+    :return:
+    &#34;&#34;&#34;
+    # Files to remove
+    files = [
+        config.SC2LADDERSERVER_PID_FILE,
+        config.SC2LADDERSERVER_MATCHUP_LIST_FILE,
+        config.SC2LADDERSERVER_LADDERBOTS_FILE,
+        config.SC2LADDERSERVER_PLAYERIDS_FILE,
+        config.SC2LADDERSERVER_RESULTS_FILE,
+        config.SC2LADDERSERVER_STDOUT_FILE,
+        config.SC2LADDERSERVER_STDERR_FILE,
+    ]
+
+    for file in files:
+        if os.path.isfile(file):
+            os.remove(file)
+
+    # Files to remove inside these folders
+    folders = [REPLAY_DIRECTORY, config.TEMP_PATH]
+    for folder in folders:
+        for file in os.listdir(folder):
+            file_path = os.path.join(folder, file)
+            os.remove(file_path)
+
+    # Remove entire sub folders
+    bots_dir = os.path.join(config.WORKING_DIRECTORY, &#34;bots&#34;)
+    for directory in os.listdir(bots_dir):
+        shutil.rmtree(os.path.join(bots_dir, directory))
+    logger.debug(f&#34;Killing current server&#34;)
+    kill_current_server()
+
+
+def start_bot(bot_data, opponent_id):
+    &#34;&#34;&#34;
+    Start the bot with the correct arguments.
+
+    :param bot_data:
+    :param opponent_id:
+    :return:
+    &#34;&#34;&#34;
+    # todo: move to Bot class
+
+    bot_data = bot_data[&#34;Bots&#34;] if config.RUN_LOCAL else bot_data
+    bot_name = next(iter(bot_data))
+    bot_data = bot_data[bot_name] if config.RUN_LOCAL else bot_data
+    bot_path = (
+        os.path.join(BOTS_DIRECTORY, bot_name)
+        if config.RUN_LOCAL
+        else bot_data[&#34;RootPath&#34;]
+    )  # hot fix
+    bot_file = bot_data[&#34;FileName&#34;]
+    bot_type = bot_data[&#34;Type&#34;]
+    cmd_line = [
+        bot_file,
+        &#34;--GamePort&#34;,
+        str(config.SC2_PROXY[&#34;PORT&#34;]),
+        &#34;--StartPort&#34;,
+        str(config.SC2_PROXY[&#34;PORT&#34;]),
+        &#34;--LadderServer&#34;,
+        config.SC2_PROXY[&#34;HOST&#34;],
+        &#34;--OpponentId&#34;,
+        str(opponent_id),
+    ]
+    if bot_type.lower() == &#34;python&#34;:
+        cmd_line.insert(0, PYTHON)
+    elif bot_type.lower() == &#34;wine&#34;:
+        cmd_line.insert(0, &#34;wine&#34;)
+    elif bot_type.lower() == &#34;mono&#34;:
+        cmd_line.insert(0, &#34;mono&#34;)
+    elif bot_type.lower() == &#34;dotnetcore&#34;:
+        cmd_line.insert(0, &#34;dotnet&#34;)
+    elif bot_type.lower() == &#34;commandcenter&#34;:
+        raise
+    elif bot_type.lower() == &#34;binarycpp&#34;:
+        cmd_line.insert(0, os.path.join(bot_path, bot_file))
+    elif bot_type.lower() == &#34;java&#34;:
+        cmd_line.insert(0, &#34;java&#34;)
+        cmd_line.insert(1, &#34;-jar&#34;)
+    elif bot_type.lower() == &#34;nodejs&#34;:
+        raise
+
+    try:
+        os.stat(os.path.join(bot_path, &#34;data&#34;))
+    except OSError:
+        os.mkdir(os.path.join(bot_path, &#34;data&#34;))
+    try:
+        os.stat(REPLAY_DIRECTORY)
+    except OSError:
+        os.mkdir(REPLAY_DIRECTORY)
+    try:
+        if config.SYSTEM == &#34;Linux&#34;:
+            with open(os.path.join(bot_path, &#34;data&#34;, &#34;stderr.log&#34;), &#34;w+&#34;) as out:
+                process = subprocess.Popen(
+                    &#34; &#34;.join(cmd_line),
+                    stdout=out,
+                    stderr=subprocess.STDOUT,
+                    cwd=(str(bot_path)),
+                    shell=True,
+                    preexec_fn=os.setpgrp,
+                )
+            if process.errors:
+                logger.debug(&#34;Error: &#34; + process.errors)
+            return process
+        else:
+            with open(os.path.join(bot_path, &#34;data&#34;, &#34;stderr.log&#34;), &#34;w+&#34;) as out:
+                process = subprocess.Popen(
+                    &#34; &#34;.join(cmd_line),
+                    stdout=out,
+                    stderr=subprocess.STDOUT,
+                    cwd=(str(bot_path)),
+                    shell=True,
+                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+                )
+            if process.errors:
+                logger.debug(&#34;Error: &#34; + process.errors)
+            return process
+    except Exception as exception:
+        utl.printout(exception)
+        sys.exit(0)
+
+
+def pid_cleanup(pids):
+    &#34;&#34;&#34;
+    Kills all the pids passed as a list to this function
+
+    :param pids:
+    :return:
+    &#34;&#34;&#34;
+    for pid in pids:
+        logger.debug(&#34;Killing: &#34; + str(pid))
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except Exception:
+            logger.debug(&#34;Already closed: &#34; + str(pid))
+
+
+def move_pid(pid):
+    &#34;&#34;&#34;
+    Move the pid to another process group to avoid the bot killing the ai-arena client when closing. (CPP API specific)
+
+    :param pid:
+    :return:
+    &#34;&#34;&#34;
+    if pid != 0:
+        return
+    else:
+        for i in range(0, 5):
+            try:
+                os.setpgid(pid, 0)
+                return
+            except OSError:
+                if os.getpgid(pid) == 0:
+                    return
+                time.sleep(0.25)  # sleep for retry
+
+
+async def main(
+    map_name: str, bot_0_name: str, bot_1_name: str, bot_0_data, bot_1_data, next_match_id: int
+):
+    &#34;&#34;&#34;
+    Method to interact with the match runner. Sends the config and awaits the result.
+
+    :param map_name:
+    :param bot_0_name:
+    :param bot_1_name:
+    :param bot_0_data:
+    :param bot_1_data:
+    :param next_match_id:
+    :return:
+    &#34;&#34;&#34;
+    result = []
+    session = aiohttp.ClientSession()
+    ws = await session.ws_connect(
+        f&#34;http://{config.SC2_PROXY[&#39;HOST&#39;]}:{str(config.SC2_PROXY[&#39;PORT&#39;])}/sc2api&#34;,
+        headers=dict({&#34;Supervisor&#34;: &#34;true&#34;}),
+    )
+    json_config = {
+        &#34;Config&#34;: {
+            &#34;Map&#34;: map_name,
+            &#34;MaxGameTime&#34;: MAX_GAME_TIME,
+            &#34;Player1&#34;: bot_0_name,
+            &#34;Player2&#34;: bot_1_name,
+            &#34;ReplayPath&#34;: REPLAY_DIRECTORY,
+            &#34;MatchID&#34;: next_match_id,
+            &#34;DisableDebug&#34;: &#34;False&#34;,
+            &#34;MaxFrameTime&#34;: MAX_FRAME_TIME,
+            &#34;Strikes&#34;: STRIKES
+        }
+    }
+
+    await ws.send_str(json.dumps(json_config))
+
+    while True:
+        msg = await ws.receive()
+        if msg.type == aiohttp.WSMsgType.CLOSED:
+            result.append(
+                {
+                    &#34;Result&#34;: {
+                        bot_0_name: &#34;InitializationError&#34;,
+                        bot_1_name: &#34;InitializationError&#34;,
+                    }
+                }
+            )
+            await session.close()
+            break
+        msg = msg.json()
+        if msg.get(&#34;Status&#34;, None) == &#34;Connected&#34;:
+            logger.debug(f&#34;Starting bots...&#34;)
+            bot1_process = start_bot(
+                bot_0_data, opponent_id=bot_1_data.get(&#34;botID&#34;, 123)
+            )  # todo opponent_id
+
+            msg = await ws.receive_json()
+
+            if msg.get(&#34;Bot&#34;, None) == &#34;Connected&#34;:
+                bot2_process = start_bot(
+                    bot_1_data, opponent_id=bot_0_data.get(&#34;botID&#34;, 321)
+                )  # todo opponent_id
+            else:
+                logger.debug(f&#34;Bot2 crash&#34;)
+                result.append(
+                    {
+                        &#34;Result&#34;: {
+                            bot_0_name: &#34;InitializationError&#34;,
+                            bot_1_name: &#34;InitializationError&#34;,
+                        }
+                    }
+                )
+                pid_cleanup([bot1_process.pid, bot2_process.pid])
+                await session.close()
+                break
+            msg = await ws.receive_json()
+
+            if msg.get(&#34;Bot&#34;, None) == &#34;Connected&#34;:
+                logger.debug(f&#34;Changing PGID&#34;)
+                for x in [bot1_process.pid, bot2_process.pid]:
+                    move_pid(x)
+                    
+            else:
+                logger.debug(f&#34;Bot2 crash&#34;)
+                result.append(
+                    {
+                        &#34;Result&#34;: {
+                            bot_0_name: &#34;InitializationError&#34;,
+                            bot_1_name: &#34;InitializationError&#34;,
+                        }
+                    }
+                )
+                pid_cleanup([bot1_process.pid, bot2_process.pid])
+                await session.close()
+                break
+            logger.debug(f&#34;checking if bot is okay&#34;)
+
+            if bot1_process.poll():
+                logger.debug(f&#34;Bot1 crash&#34;)
+                result.append(
+                    {
+                        &#34;Result&#34;: {
+                            bot_0_name: &#34;InitializationError&#34;,
+                            bot_1_name: &#34;InitializationError&#34;,
+                        }
+                    }
+                )
+                pid_cleanup([bot1_process.pid, bot2_process.pid])
+                await session.close()
+                break
+
+            else:
+                await ws.send_str(json.dumps({&#34;Bot1&#34;: True}))
+
+            if bot2_process.poll():
+                logger.debug(f&#34;Bot2 crash&#34;)
+                result.append(
+                    {
+                        &#34;Result&#34;: {
+                            bot_0_name: &#34;InitializationError&#34;,
+                            bot_1_name: &#34;InitializationError&#34;,
+                        }
+                    }
+                )
+                pid_cleanup([bot1_process.pid, bot2_process.pid])
+                await session.close()
+                break
+
+            else:
+                await ws.send_str(json.dumps({&#34;Bot2&#34;: True}))
+
+        if msg.get(&#34;PID&#34;, None):
+            pid_cleanup([bot1_process.pid, bot2_process.pid])  # Terminate bots first
+            pid_cleanup(msg[&#34;PID&#34;])  # Terminate SC2 processes
+
+        if msg.get(&#34;Result&#34;, None):
+            result.append(msg)
+
+        if msg.get(&#34;GameTime&#34;, None):
+            result.append(msg)
+
+        if msg.get(&#34;AverageFrameTime&#34;, None):
+            result.append(msg)
+
+        if msg.get(&#34;Error&#34;, None):
+            utl.printout(msg)
+            await session.close()
+            break
+
+        if msg.get(&#34;StillAlive&#34;, None):
+            if bot1_process.poll():
+                utl.printout(&#34;Bot1 Init Error&#34;)
+                await session.close()
+                # if not check_pid(bot1_process.pid) and not len(result) &gt;0:
+                result.append(
+                    {
+                        &#34;Result&#34;: {
+                            bot_0_name: &#34;InitializationError&#34;,
+                            bot_1_name: &#34;InitializationError&#34;,
+                        }
+                    }
+                )
+                pid_cleanup([bot1_process.pid, bot2_process.pid])
+            if bot2_process.poll():
+                utl.printout(&#34;Bot2 Init Error&#34;)
+                await session.close()
+                # if not check_pid(bot2_process.pid) and not len(result) &gt;0:
+                result.append(
+                    {
+                        &#34;Result&#34;: {
+                            bot_0_name: &#34;InitializationError&#34;,
+                            bot_1_name: &#34;InitializationError&#34;,
+                        }
+                    }
+                )
+
+        if msg.get(&#34;Status&#34;, None) == &#34;Complete&#34;:
+            result.append(
+                dict(
+                    {
+                        &#34;TimeStamp&#34;: datetime.datetime.utcnow().strftime(
+                            &#34;%d-%m-%Y %H-%M-%SUTC&#34;
+                        )
+                    }
+                )
+            )
+            await session.close()
+            break
+    if not result:
+        result.append({&#34;Result&#34;: {&#34;InitializationError&#34;}})
+    return result
+
+
+def kill_current_server():
+    &#34;&#34;&#34;
+    Kills all the processes running on the match runner&#39;s port. Also kills any SC2 processes if they are still running.
+
+    :return:
+    &#34;&#34;&#34;
+    # return None
+    try:
+        if config.SYSTEM == &#34;Linux&#34;:
+            utl.printout(&#34;Killing SC2&#34;)
+            os.system(&#34;pkill -f SC2_x64&#34;)
+            os.system(&#34;lsof -ti tcp:8765 | xargs kill&#34;)
+        for process in psutil.process_iter():
+            for conns in process.connections(kind=&#34;inet&#34;):
+                if conns.laddr.port == config.SC2_PROXY[&#34;PORT&#34;]:
+                    process.send_signal(signal.SIGTERM)
+            if process.name() == &#34;SC2_x64.exe&#34;:
+                process.send_signal(signal.SIGTERM)
+
+    except:
+        pass
+
+
+def run_match(
+    match_count, map_name, bot_0_name, bot_1_name, bot_0_data, bot_1_data, next_match_id
+):
+    &#34;&#34;&#34;
+    Runs the current match and returns the result.
+
+    :param match_count:
+    :param map_name:
+    :param bot_0_name:
+    :param bot_1_name:
+    :param bot_0_data:
+    :param bot_1_data:
+    :param next_match_id:
+    :return:
+    &#34;&#34;&#34;
+    try:
+        utl.printout(f&#34;Starting game - Round {match_count}&#34;)
+        kill_current_server()
+        proxy = subprocess.Popen(
+            PYTHON + &#34; server.py&#34;, cwd=WORKING_DIRECTORY,  shell=True
+        )
+
+        while True:
+            time.sleep(1)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            result = sock.connect_ex(
+                (config.SC2_PROXY[&#34;HOST&#34;], config.SC2_PROXY[&#34;PORT&#34;])
+            )
+            if result == 0:
+                break
+
+        loop = asyncio.get_event_loop()
+
+        result = loop.run_until_complete(
+            asyncio.wait_for(
+                main(
+                    map_name,
+                    bot_0_name,
+                    bot_1_name,
+                    bot_0_data,
+                    bot_1_data,
+                    next_match_id,
+                ),
+                9000,
+            )
+        )
+
+        try:
+            os.kill(proxy.pid, signal.SIGTERM)
+        except Exception as exception:
+            logger.debug(str(exception))
+    except Exception as e:
+        logger.error(str(e))
+        # todo: usually result is a list
+        # todo: ideally this should always be the same variable type
+        result = &#34;Error&#34;
+
+    return result
+
+
+try:
+    utl.printout(
+        f&#39;Arena Client started at {time.strftime(&#34;%H:%M:%S&#34;, time.gmtime(time.time()))}&#39;
+    )
+    os.makedirs(REPLAY_DIRECTORY, exist_ok=True)
+
+    if not config.RUN_LOCAL:
+        os.makedirs(config.TEMP_PATH, exist_ok=True)
+        os.makedirs(os.path.join(config.WORKING_DIRECTORY, &#34;bots&#34;), exist_ok=True)
+
+    os.chdir(WORKING_DIRECTORY)
+    count = 0
+    if config.RUN_LOCAL:
+        try:
+            with open(&#34;matchupList&#34;, &#34;r&#34;) as ml:
+                ROUNDS_PER_RUN = len(ml.readlines())
+        except FileNotFoundError:
+            f = open(&#34;matchupList&#34;, &#34;w+&#34;)
+            ROUNDS_PER_RUN = 0
+            f.close()
+    else:
+        ROUNDS_PER_RUN = config.ROUNDS_PER_RUN
+
+    while count &lt; ROUNDS_PER_RUN:
+        if not config.RUN_LOCAL:
+            cleanup()
+        if get_next_match(count):
+            count += 1
+        else:
+            break
+
+        # if RUN_LOCAL:
+        #     with open(&#39;matchupList&#39;,&#39;r+&#39;) as ml:
+        #         head, tail = ml.read().split(&#39;\n&#39;, 1)
+        #         ml.write(tail)
+
+except Exception as e:
+    utl.printout(f&#34;arena-client encountered an uncaught exception: {e} Exiting...&#34;)
+    if not config.RUN_LOCAL:
+        with open(os.path.join(config.LOCAL_PATH, &#34;.shutdown&#34;), &#34;w&#34;) as f:
+            f.write(&#34;Shutdown&#34;)
+    traceback.print_exc()  # Todo: Add this to the log files
+finally:
+    try:
+        kill_current_server()
+        if not config.RUN_LOCAL:
+            cleanup()  # be polite and try to cleanup
+    except:
+        pass
+if not config.RUN_LOCAL:
+    try:
+        if config.SHUT_DOWN_AFTER_RUN:
+            utl.printout(&#34;Stopping system&#34;)
+            with open(os.path.join(config.LOCAL_PATH, &#34;.shutdown&#34;), &#34;w&#34;) as f:
+                f.write(&#34;Shutdown&#34;)
+    except:
+        utl.printout(&#34;ERROR: Failed to shutdown.&#34;)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="aiarena-client.check_pid"><code class="name flex">
+<span>def <span class="ident">check_pid</span></span>(<span>pid)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Checks if PID is running.</p>
+<p>:param pid:
+:return: bool</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def check_pid(pid: int):
+    &#34;&#34;&#34;
+    Checks if PID is running.
+
+    :param pid:
+    :return: bool
+    &#34;&#34;&#34;
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    else:
+        return True</code></pre>
+</details>
+</dd>
+<dt id="aiarena-client.cleanup"><code class="name flex">
+<span>def <span class="ident">cleanup</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Clean up all the folders and files used for the previous match.</p>
+<p>:return:</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cleanup():
+    &#34;&#34;&#34;
+    Clean up all the folders and files used for the previous match.
+
+    :return:
+    &#34;&#34;&#34;
+    # Files to remove
+    files = [
+        config.SC2LADDERSERVER_PID_FILE,
+        config.SC2LADDERSERVER_MATCHUP_LIST_FILE,
+        config.SC2LADDERSERVER_LADDERBOTS_FILE,
+        config.SC2LADDERSERVER_PLAYERIDS_FILE,
+        config.SC2LADDERSERVER_RESULTS_FILE,
+        config.SC2LADDERSERVER_STDOUT_FILE,
+        config.SC2LADDERSERVER_STDERR_FILE,
+    ]
+
+    for file in files:
+        if os.path.isfile(file):
+            os.remove(file)
+
+    # Files to remove inside these folders
+    folders = [REPLAY_DIRECTORY, config.TEMP_PATH]
+    for folder in folders:
+        for file in os.listdir(folder):
+            file_path = os.path.join(folder, file)
+            os.remove(file_path)
+
+    # Remove entire sub folders
+    bots_dir = os.path.join(config.WORKING_DIRECTORY, &#34;bots&#34;)
+    for directory in os.listdir(bots_dir):
+        shutil.rmtree(os.path.join(bots_dir, directory))
+    logger.debug(f&#34;Killing current server&#34;)
+    kill_current_server()</code></pre>
+</details>
+</dd>
+<dt id="aiarena-client.get_ladder_bots_data"><code class="name flex">
+<span>def <span class="ident">get_ladder_bots_data</span></span>(<span>bot)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Get the config file (ladderbots.json) from the bot's directory.</p>
+<p>:param bot:
+:return:</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_ladder_bots_data(bot):
+    &#34;&#34;&#34;
+    Get the config file (ladderbots.json) from the bot&#39;s directory.
+
+    :param bot:
+    :return:
+    &#34;&#34;&#34;
+    bot_directory = os.path.join(BOTS_DIRECTORY, bot, &#34;ladderbots.json&#34;)
+    with open(bot_directory, &#34;r&#34;) as ladder_bots_file:
+        json_object = json.load(ladder_bots_file)
+    return bot, json_object</code></pre>
+</details>
+</dd>
+<dt id="aiarena-client.get_next_match"><code class="name flex">
+<span>def <span class="ident">get_next_match</span></span>(<span>match_count)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Retrieve the next match from the ai-arena website API. Runs the match, and posts the result to the ai-arena
+website.</p>
+<p>:param match_count:
+:return:</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_next_match(match_count: int):
+    &#34;&#34;&#34;
+    Retrieve the next match from the ai-arena website API. Runs the match, and posts the result to the ai-arena
+    website.
+
+    :param match_count:
+    :return:
+    &#34;&#34;&#34;
+    utl.printout(
+        f&#39;New match started at {time.strftime(&#34;%H:%M:%S&#34;, time.gmtime(time.time()))}&#39;
+    )
+    if not config.RUN_LOCAL:
+        try:
+            next_match_response = requests.post(
+                config.API_MATCHES_URL,
+                headers={&#34;Authorization&#34;: &#34;Token &#34; + config.API_TOKEN},
+            )
+        except ConnectionError:
+            utl.printout(
+                f&#34;ERROR: Failed to retrieve game. Connection to website failed. Sleeping.&#34;
+            )
+            time.sleep(30)
+            return False
+
+        if next_match_response.status_code &gt;= 400:
+            utl.printout(
+                f&#34;ERROR: Failed to retrieve game. Status code: {next_match_response.status_code}. Sleeping.&#34;
+            )
+            time.sleep(30)
+            return False
+
+        next_match_data = json.loads(next_match_response.text)
+
+        if &#34;id&#34; not in next_match_data:
+            utl.printout(&#34;No games available - sleeping&#34;)
+            time.sleep(30)
+            return False
+
+        next_match_id = next_match_data[&#34;id&#34;]
+        utl.printout(f&#34;Next match: {next_match_id}&#34;)
+
+        # Download map
+        map_name = next_match_data[&#34;map&#34;][&#34;name&#34;]
+        map_url = next_match_data[&#34;map&#34;][&#34;file&#34;]
+        utl.printout(f&#34;Downloading map {map_name}&#34;)
+
+        try:
+            r = requests.get(map_url)
+        except Exception as download_exception:
+            utl.printout(f&#34;ERROR: Failed to download map {map_name} at URL {map_url}. Error {download_exception}&#34;)
+            time.sleep(30)
+            return False
+
+        map_path = os.path.join(config.SC2_HOME, &#34;maps&#34;, f&#34;{map_name}.SC2Map&#34;)
+        with open(map_path, &#34;wb&#34;) as map_file:
+            map_file.write(r.content)
+
+        bot_0 = Bot(next_match_data[&#34;bot1&#34;])
+        if not bot_0.get_bot_file():
+            time.sleep(30)
+            return False
+        bot_1 = Bot(next_match_data[&#34;bot2&#34;])
+        if not bot_1.get_bot_file():
+            time.sleep(30)
+            return False
+
+        bot_0_name, bot_0_data = bot_0.get_bot_data()
+        bot_1_name, bot_1_data = bot_1.get_bot_data()
+        # bot_0_game_display_id = bot_0_data[&#39;botID&#39;]
+        # bot_1_game_display_id = bot_1_data[&#39;botID&#39;]
+
+        result = run_match(
+            match_count, map_name, bot_0_name, bot_1_name, bot_0_data, bot_1_data, next_match_id
+        )
+        # utl.printout(result)
+        post_result(next_match_id, result, bot_0_name, bot_1_name)
+        if result == &#34;Error&#34;:
+            return False
+        return True
+
+    else:
+        with open(&#34;matchupList&#34;, &#34;r&#34;) as match_up_list:
+            for i, line in enumerate(match_up_list):
+                next_match_id = i
+                break
+        utl.printout(f&#34;Next match: {next_match_id}&#34;)
+        map_name = line.split(&#39; &#39;)[1].replace(&#34;\n&#34;, &#34;&#34;).replace(&#39;.SC2Map&#39;, &#34;&#34;)
+        bot_0 = line.split(&#39;vs&#39;)[0].replace(&#39;&#34;&#39;, &#34;&#34;)
+        bot_1 = line.split(&#39;vs&#39;)[1].split(&#34; &#34;)[0].replace(&#39;&#34;&#39;, &#34;&#34;)
+        bot_0_name, bot_0_data = get_ladder_bots_data(bot_0)
+        bot_1_name, bot_1_data = get_ladder_bots_data(bot_1)
+        # bot_0_game_display_id = bot_0_data[&#39;botID&#39;]#TODO: Enable opponent_id
+        # bot_1_game_display_id = bot_1_data[&#39;botID&#39;]
+        result = run_match(
+            match_count, map_name, bot_0_name, bot_1_name, bot_0_data, bot_1_data, next_match_id
+        )
+        with open(&#34;results&#34;, &#34;a+&#34;) as map_file:
+            map_file.write(str(result) + &#34;\n\n&#34;)
+        post_local_result(bot_0, bot_1, result)
+        return True</code></pre>
+</details>
+</dd>
+<dt id="aiarena-client.kill_current_server"><code class="name flex">
+<span>def <span class="ident">kill_current_server</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Kills all the processes running on the match runner's port. Also kills any SC2 processes if they are still running.</p>
+<p>:return:</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def kill_current_server():
+    &#34;&#34;&#34;
+    Kills all the processes running on the match runner&#39;s port. Also kills any SC2 processes if they are still running.
+
+    :return:
+    &#34;&#34;&#34;
+    # return None
+    try:
+        if config.SYSTEM == &#34;Linux&#34;:
+            utl.printout(&#34;Killing SC2&#34;)
+            os.system(&#34;pkill -f SC2_x64&#34;)
+            os.system(&#34;lsof -ti tcp:8765 | xargs kill&#34;)
+        for process in psutil.process_iter():
+            for conns in process.connections(kind=&#34;inet&#34;):
+                if conns.laddr.port == config.SC2_PROXY[&#34;PORT&#34;]:
+                    process.send_signal(signal.SIGTERM)
+            if process.name() == &#34;SC2_x64.exe&#34;:
+                process.send_signal(signal.SIGTERM)
+
+    except:
+        pass</code></pre>
+</details>
+</dd>
+<dt id="aiarena-client.main"><code class="name flex">
+<span>async def <span class="ident">main</span></span>(<span>map_name, bot_0_name, bot_1_name, bot_0_data, bot_1_data, next_match_id)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Method to interact with the match runner. Sends the config and awaits the result.</p>
+<p>:param map_name:
+:param bot_0_name:
+:param bot_1_name:
+:param bot_0_data:
+:param bot_1_data:
+:param next_match_id:
+:return:</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def main(
+    map_name: str, bot_0_name: str, bot_1_name: str, bot_0_data, bot_1_data, next_match_id: int
+):
+    &#34;&#34;&#34;
+    Method to interact with the match runner. Sends the config and awaits the result.
+
+    :param map_name:
+    :param bot_0_name:
+    :param bot_1_name:
+    :param bot_0_data:
+    :param bot_1_data:
+    :param next_match_id:
+    :return:
+    &#34;&#34;&#34;
+    result = []
+    session = aiohttp.ClientSession()
+    ws = await session.ws_connect(
+        f&#34;http://{config.SC2_PROXY[&#39;HOST&#39;]}:{str(config.SC2_PROXY[&#39;PORT&#39;])}/sc2api&#34;,
+        headers=dict({&#34;Supervisor&#34;: &#34;true&#34;}),
+    )
+    json_config = {
+        &#34;Config&#34;: {
+            &#34;Map&#34;: map_name,
+            &#34;MaxGameTime&#34;: MAX_GAME_TIME,
+            &#34;Player1&#34;: bot_0_name,
+            &#34;Player2&#34;: bot_1_name,
+            &#34;ReplayPath&#34;: REPLAY_DIRECTORY,
+            &#34;MatchID&#34;: next_match_id,
+            &#34;DisableDebug&#34;: &#34;False&#34;,
+            &#34;MaxFrameTime&#34;: MAX_FRAME_TIME,
+            &#34;Strikes&#34;: STRIKES
+        }
+    }
+
+    await ws.send_str(json.dumps(json_config))
+
+    while True:
+        msg = await ws.receive()
+        if msg.type == aiohttp.WSMsgType.CLOSED:
+            result.append(
+                {
+                    &#34;Result&#34;: {
+                        bot_0_name: &#34;InitializationError&#34;,
+                        bot_1_name: &#34;InitializationError&#34;,
+                    }
+                }
+            )
+            await session.close()
+            break
+        msg = msg.json()
+        if msg.get(&#34;Status&#34;, None) == &#34;Connected&#34;:
+            logger.debug(f&#34;Starting bots...&#34;)
+            bot1_process = start_bot(
+                bot_0_data, opponent_id=bot_1_data.get(&#34;botID&#34;, 123)
+            )  # todo opponent_id
+
+            msg = await ws.receive_json()
+
+            if msg.get(&#34;Bot&#34;, None) == &#34;Connected&#34;:
+                bot2_process = start_bot(
+                    bot_1_data, opponent_id=bot_0_data.get(&#34;botID&#34;, 321)
+                )  # todo opponent_id
+            else:
+                logger.debug(f&#34;Bot2 crash&#34;)
+                result.append(
+                    {
+                        &#34;Result&#34;: {
+                            bot_0_name: &#34;InitializationError&#34;,
+                            bot_1_name: &#34;InitializationError&#34;,
+                        }
+                    }
+                )
+                pid_cleanup([bot1_process.pid, bot2_process.pid])
+                await session.close()
+                break
+            msg = await ws.receive_json()
+
+            if msg.get(&#34;Bot&#34;, None) == &#34;Connected&#34;:
+                logger.debug(f&#34;Changing PGID&#34;)
+                for x in [bot1_process.pid, bot2_process.pid]:
+                    move_pid(x)
+                    
+            else:
+                logger.debug(f&#34;Bot2 crash&#34;)
+                result.append(
+                    {
+                        &#34;Result&#34;: {
+                            bot_0_name: &#34;InitializationError&#34;,
+                            bot_1_name: &#34;InitializationError&#34;,
+                        }
+                    }
+                )
+                pid_cleanup([bot1_process.pid, bot2_process.pid])
+                await session.close()
+                break
+            logger.debug(f&#34;checking if bot is okay&#34;)
+
+            if bot1_process.poll():
+                logger.debug(f&#34;Bot1 crash&#34;)
+                result.append(
+                    {
+                        &#34;Result&#34;: {
+                            bot_0_name: &#34;InitializationError&#34;,
+                            bot_1_name: &#34;InitializationError&#34;,
+                        }
+                    }
+                )
+                pid_cleanup([bot1_process.pid, bot2_process.pid])
+                await session.close()
+                break
+
+            else:
+                await ws.send_str(json.dumps({&#34;Bot1&#34;: True}))
+
+            if bot2_process.poll():
+                logger.debug(f&#34;Bot2 crash&#34;)
+                result.append(
+                    {
+                        &#34;Result&#34;: {
+                            bot_0_name: &#34;InitializationError&#34;,
+                            bot_1_name: &#34;InitializationError&#34;,
+                        }
+                    }
+                )
+                pid_cleanup([bot1_process.pid, bot2_process.pid])
+                await session.close()
+                break
+
+            else:
+                await ws.send_str(json.dumps({&#34;Bot2&#34;: True}))
+
+        if msg.get(&#34;PID&#34;, None):
+            pid_cleanup([bot1_process.pid, bot2_process.pid])  # Terminate bots first
+            pid_cleanup(msg[&#34;PID&#34;])  # Terminate SC2 processes
+
+        if msg.get(&#34;Result&#34;, None):
+            result.append(msg)
+
+        if msg.get(&#34;GameTime&#34;, None):
+            result.append(msg)
+
+        if msg.get(&#34;AverageFrameTime&#34;, None):
+            result.append(msg)
+
+        if msg.get(&#34;Error&#34;, None):
+            utl.printout(msg)
+            await session.close()
+            break
+
+        if msg.get(&#34;StillAlive&#34;, None):
+            if bot1_process.poll():
+                utl.printout(&#34;Bot1 Init Error&#34;)
+                await session.close()
+                # if not check_pid(bot1_process.pid) and not len(result) &gt;0:
+                result.append(
+                    {
+                        &#34;Result&#34;: {
+                            bot_0_name: &#34;InitializationError&#34;,
+                            bot_1_name: &#34;InitializationError&#34;,
+                        }
+                    }
+                )
+                pid_cleanup([bot1_process.pid, bot2_process.pid])
+            if bot2_process.poll():
+                utl.printout(&#34;Bot2 Init Error&#34;)
+                await session.close()
+                # if not check_pid(bot2_process.pid) and not len(result) &gt;0:
+                result.append(
+                    {
+                        &#34;Result&#34;: {
+                            bot_0_name: &#34;InitializationError&#34;,
+                            bot_1_name: &#34;InitializationError&#34;,
+                        }
+                    }
+                )
+
+        if msg.get(&#34;Status&#34;, None) == &#34;Complete&#34;:
+            result.append(
+                dict(
+                    {
+                        &#34;TimeStamp&#34;: datetime.datetime.utcnow().strftime(
+                            &#34;%d-%m-%Y %H-%M-%SUTC&#34;
+                        )
+                    }
+                )
+            )
+            await session.close()
+            break
+    if not result:
+        result.append({&#34;Result&#34;: {&#34;InitializationError&#34;}})
+    return result</code></pre>
+</details>
+</dd>
+<dt id="aiarena-client.move_pid"><code class="name flex">
+<span>def <span class="ident">move_pid</span></span>(<span>pid)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Move the pid to another process group to avoid the bot killing the ai-arena client when closing. (CPP API specific)</p>
+<p>:param pid:
+:return:</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def move_pid(pid):
+    &#34;&#34;&#34;
+    Move the pid to another process group to avoid the bot killing the ai-arena client when closing. (CPP API specific)
+
+    :param pid:
+    :return:
+    &#34;&#34;&#34;
+    if pid != 0:
+        return
+    else:
+        for i in range(0, 5):
+            try:
+                os.setpgid(pid, 0)
+                return
+            except OSError:
+                if os.getpgid(pid) == 0:
+                    return
+                time.sleep(0.25)  # sleep for retry</code></pre>
+</details>
+</dd>
+<dt id="aiarena-client.pid_cleanup"><code class="name flex">
+<span>def <span class="ident">pid_cleanup</span></span>(<span>pids)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Kills all the pids passed as a list to this function</p>
+<p>:param pids:
+:return:</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def pid_cleanup(pids):
+    &#34;&#34;&#34;
+    Kills all the pids passed as a list to this function
+
+    :param pids:
+    :return:
+    &#34;&#34;&#34;
+    for pid in pids:
+        logger.debug(&#34;Killing: &#34; + str(pid))
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except Exception:
+            logger.debug(&#34;Already closed: &#34; + str(pid))</code></pre>
+</details>
+</dd>
+<dt id="aiarena-client.post_local_result"><code class="name flex">
+<span>def <span class="ident">post_local_result</span></span>(<span>bot_0, bot_1, lm_result)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Mirror function to save the results to the Results json file if not running matches using the website.
+:param bot_0:
+:param bot_1:
+:param lm_result:
+:return:</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def post_local_result(bot_0, bot_1, lm_result):
+    &#34;&#34;&#34;
+    Mirror function to save the results to the Results json file if not running matches using the website.
+    :param bot_0:
+    :param bot_1:
+    :param lm_result:
+    :return:
+    &#34;&#34;&#34;
+    result_json = {
+        &#34;Bot1&#34;: bot_0,
+        &#34;Bot2&#34;: bot_1,
+        &#34;Winner&#34;: None,
+        &#34;Map&#34;: None,
+        &#34;Result&#34;: None,
+        &#34;GameTime&#34;: None,
+        &#34;GameTimeFormatted&#34;: None,
+        &#34;TimeStamp&#34;: None,
+        &#34;Bot1AvgFrame&#34;: 0,
+        &#34;Bot2AvgFrame&#34;: 0,
+    }
+    if isinstance(lm_result, list):
+        for x in lm_result:
+            if x.get(&#34;Result&#34;, None):
+                temp_results = x[&#34;Result&#34;]
+                utl.printout(str(temp_results))
+
+                if temp_results[bot_0] == &#34;Result.Crashed&#34;:
+                    result = &#34;Player1Crash&#34;
+                    result_json[&#34;Winner&#34;] = bot_1
+
+                elif temp_results[bot_1] == &#34;Result.Crashed&#34;:
+                    result = &#34;Player2Crash&#34;
+                    result_json[&#34;Winner&#34;] = bot_0
+
+                elif temp_results[bot_0] == &#34;Result.Timeout&#34;:
+                    result = &#34;Player1TimeOut&#34;
+                    result_json[&#34;Winner&#34;] = bot_1
+
+                elif temp_results[bot_1] == &#34;Result.Timeout&#34;:
+                    result = &#34;Player2TimeOut&#34;
+                    result_json[&#34;Winner&#34;] = bot_0
+
+                elif temp_results[bot_0] == &#34;Result.Victory&#34;:
+                    result = &#34;Player1Win&#34;
+                    result_json[&#34;Winner&#34;] = bot_0
+
+                elif temp_results[bot_0] == &#34;Result.Defeat&#34;:
+                    result = &#34;Player2Win&#34;
+                    result_json[&#34;Winner&#34;] = bot_1
+
+                elif temp_results[bot_0] == &#34;Result.Tie&#34;:
+                    result = &#34;Tie&#34;
+                    result_json[&#34;Winner&#34;] = &#34;Tie&#34;
+
+                else:
+                    result = &#34;InitializationError&#34;
+
+                result_json[&#34;Result&#34;] = result
+
+            if x.get(&#34;GameTime&#34;, None):
+                result_json[&#34;GameTime&#34;] = x[&#34;GameTime&#34;]
+                result_json[&#34;GameTimeFormatted&#34;] = x[&#34;GameTimeFormatted&#34;]
+
+            if x.get(&#34;AverageFrameTime&#34;, None):
+                try:
+                    result_json[&#34;Bot1AvgFrame&#34;] = next(
+                        item[bot_0] for item in x[&#39;AverageFrameTime&#39;] if item.get(bot_0, None))
+                except StopIteration:
+                    result_json[&#34;Bot1AvgFrame&#34;] = 0
+                try:
+                    result_json[&#34;Bot2AvgFrame&#34;] = next(
+                        item[bot_1] for item in x[&#39;AverageFrameTime&#39;] if item.get(bot_1, None))
+                except StopIteration:
+                    result_json[&#34;Bot2AvgFrame&#34;] = 0
+
+            if x.get(&#34;TimeStamp&#34;, None):
+                result_json[&#34;TimeStamp&#34;] = x[&#34;TimeStamp&#34;]
+    else:
+        print(&#34;Error&#34;)
+        # if os.path.isfile(RESULTS_LOG_FILE):#TODO: Fix the appending of results
+        #     f=open(RESULTS_LOG_FILE, &#39;r&#39;)
+        #     if len(f.readlines()) &gt; 0:
+        #         f.close()
+        #         with open(RESULTS_LOG_FILE, &#39;w+&#39;) as results_log:
+        #             j_object = json.load(results_log)
+        #             if j_object.get(&#39;Results&#39;,None):
+        #                 logger.debug(&#39;append&#39;)
+        #                 j_object[&#39;Results&#39;].append(result_json)
+
+        #             else:
+        #                 logger.debug(&#39;Overwrite&#39;)
+        #                 j_object[&#39;Results&#39;] =[result_json]
+
+        #             results_log.write(json.dumps(j_object, indent=4))
+        # else:
+    utl.printout(str(result))
+    with open(RESULTS_LOG_FILE, &#34;w&#34;) as results_log:
+        json_object = dict({&#34;Results&#34;: [result_json]})
+        results_log.write(json.dumps(json_object, indent=4))</code></pre>
+</details>
+</dd>
+<dt id="aiarena-client.post_result"><code class="name flex">
+<span>def <span class="ident">post_result</span></span>(<span>match_id, lm_result, bot_1_name, bot_2_name)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Extract the actual result from the result received from the match runner and post to the ai-arena website, along
+with the logs.</p>
+<p>:param match_id:
+:param lm_result:
+:param bot_1_name:
+:param bot_2_name:
+:return:</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def post_result(match_id, lm_result, bot_1_name, bot_2_name):
+    &#34;&#34;&#34;
+    Extract the actual result from the result received from the match runner and post to the ai-arena website, along
+    with the logs.
+
+    :param match_id:
+    :param lm_result:
+    :param bot_1_name:
+    :param bot_2_name:
+    :return:
+    &#34;&#34;&#34;
+    kill_current_server()
+    # quick hack to avoid these going uninitialized
+    # todo: remove these and actually fix the issue
+    game_time: int = 0
+    bot1_avg_step_time: float = 0
+    bot2_avg_step_time: float = 0
+
+    if isinstance(lm_result, list):
+        for x in lm_result:
+            if x.get(&#34;Result&#34;, None):
+                temp_results = x[&#34;Result&#34;]
+                utl.printout(str(temp_results))
+                bot_1_name = list(x[&#34;Result&#34;].keys())[0]
+                bot_2_name = list(x[&#34;Result&#34;].keys())[1]
+
+                if temp_results[bot_1_name] == &#34;Result.Crashed&#34;:
+                    result = &#34;Player1Crash&#34;
+
+                elif temp_results[bot_2_name] == &#34;Result.Crashed&#34;:
+                    result = &#34;Player2Crash&#34;
+                    # result_json[&#39;Winner&#39;]=bot_0
+
+                elif temp_results[bot_1_name] == &#34;Result.Timeout&#34;:
+                    result = &#34;Player1TimeOut&#34;
+
+                elif temp_results[bot_2_name] == &#34;Result.Timeout&#34;:
+                    result = &#34;Player2TimeOut&#34;
+
+                elif temp_results[bot_1_name] == &#34;Result.Victory&#34;:
+                    result = &#34;Player1Win&#34;
+                    # result_json[&#39;Winner&#39;]=bot_1_name
+
+                elif temp_results[bot_1_name] == &#34;Result.Defeat&#34;:
+                    result = &#34;Player2Win&#34;
+                    # result_json[&#39;Winner&#39;]=bot_1
+
+                elif temp_results[bot_2_name] == &#34;Result.Crashed&#34;:
+                    result = &#34;Player2Crash&#34;
+                    # result_json[&#39;Winner&#39;]=bot_0
+
+                elif temp_results[bot_1_name] == &#34;Result.Tie&#34;:
+                    result = &#34;Tie&#34;
+                    # result_json[&#39;Winner&#39;]=&#39;Tie&#39;
+
+                else:
+                    result = &#34;InitializationError&#34;
+                    game_time = 0
+                    bot1_avg_step_time = 0
+                    bot2_avg_step_time = 0
+
+                # result_json[&#39;Result&#39;] = result
+
+            if x.get(&#34;GameTime&#34;, None):
+                game_time = x[&#34;GameTime&#34;]
+
+            if x.get(&#34;AverageFrameTime&#34;, None):
+                try:
+                    bot1_avg_step_time = next(
+                        item[bot_1_name] for item in x[&#39;AverageFrameTime&#39;] if item.get(bot_1_name, None))
+                except StopIteration:
+                    bot1_avg_step_time = 0
+                try:
+                    bot2_avg_step_time = next(
+                        item[bot_2_name] for item in x[&#39;AverageFrameTime&#39;] if item.get(bot_2_name, None))
+                except StopIteration:
+                    bot2_avg_step_time = 0
+
+            if x.get(&#34;TimeStamp&#34;, None):
+                time_stamp = x[&#34;TimeStamp&#34;]
+
+    else:
+        result = lm_result
+        game_time = 0
+        bot1_avg_step_time = 0
+        bot2_avg_step_time = 0
+
+    utl.printout(str(result))
+    replay_file: str = &#34;&#34;
+    for file in os.listdir(REPLAY_DIRECTORY):
+        if file.endswith(&#39;.SC2Replay&#39;):
+            replay_file = file
+            break
+
+    replay_file_path = os.path.join(REPLAY_DIRECTORY, replay_file)
+    if config.RUN_REPLAY_CHECK:
+        os.system(
+            &#34;perl &#34;
+            + os.path.join(config.LOCAL_PATH, &#34;replaycheck.pl&#34;)
+            + &#34; &#34;
+            + replay_file_path
+        )
+
+    bot1_data_folder = os.path.join(
+        config.WORKING_DIRECTORY, &#34;bots&#34;, bot_1_name, &#34;data&#34;
+    )
+    bot2_data_folder = os.path.join(
+        config.WORKING_DIRECTORY, &#34;bots&#34;, bot_2_name, &#34;data&#34;
+    )
+    bot1_error_log = os.path.join(bot1_data_folder, &#34;stderr.log&#34;)
+    bot1_error_log_tmp = os.path.join(config.TEMP_PATH, bot_1_name + &#34;-error.log&#34;)
+    if os.path.isfile(bot1_error_log):
+        shutil.move(bot1_error_log, bot1_error_log_tmp)
+    else:
+        Path(bot1_error_log_tmp).touch()
+
+    bot2_error_log = os.path.join(bot2_data_folder, &#34;stderr.log&#34;)
+    bot2_error_log_tmp = os.path.join(config.TEMP_PATH, bot_2_name + &#34;-error.log&#34;)
+    if os.path.isfile(bot2_error_log):
+        shutil.move(bot2_error_log, bot2_error_log_tmp)
+    else:
+        Path(bot2_error_log_tmp).touch()
+
+    zip_file = zipfile.ZipFile(
+        os.path.join(config.TEMP_PATH, bot_1_name + &#34;-error.zip&#34;), &#34;w&#34;
+    )
+    zip_file.write(
+        os.path.join(config.TEMP_PATH, bot_1_name + &#34;-error.log&#34;),
+        compress_type=zipfile.ZIP_DEFLATED,
+    )
+    zip_file.close()
+
+    zip_file = zipfile.ZipFile(
+        os.path.join(config.TEMP_PATH, bot_2_name + &#34;-error.zip&#34;), &#34;w&#34;
+    )
+    zip_file.write(
+        os.path.join(config.TEMP_PATH, bot_2_name + &#34;-error.log&#34;),
+        compress_type=zipfile.ZIP_DEFLATED,
+    )
+    zip_file.close()
+
+    # aiarena-client logs
+    proxy_tmp = os.path.join(config.TEMP_PATH, &#34;proxy.log&#34;)
+    # supervisor_tmp = os.path.join(config.TEMP_PATH, &#34;supervisor.log&#34;)
+    client_tmp = os.path.join(config.TEMP_PATH, &#34;aiarena-client.log&#34;)
+
+    if os.path.isfile(&#34;proxy.log&#34;):
+        shutil.move(&#34;proxy.log&#34;, proxy_tmp)
+    else:
+        Path(proxy_tmp).touch()
+
+    # if os.path.isfile(&#34;supervisor.log&#34;):
+    #     shutil.move(&#34;supervisor.log&#34;, supervisor_tmp)
+    # else:
+    #     Path(supervisor_tmp).touch()
+
+    if os.path.isfile(&#34;aiarena-client.log&#34;):
+        shutil.move(&#34;aiarena-client.log&#34;, client_tmp)
+    else:
+        Path(client_tmp).touch()
+
+    # sc2ladderserver logs
+    sc2ladderserver_stdout_log_tmp = os.path.join(
+        config.TEMP_PATH, &#34;sc2ladderserver_stdout.log&#34;
+    )
+    sc2ladderserver_stderr_log_tmp = os.path.join(
+        config.TEMP_PATH, &#34;sc2ladderserver_stderr.log&#34;
+    )
+    sc2ladderserver_log_zip = os.path.join(config.TEMP_PATH, &#34;sc2ladderserver_log.zip&#34;)
+
+    if os.path.isfile(config.SC2LADDERSERVER_STDOUT_FILE):
+        shutil.move(config.SC2LADDERSERVER_STDOUT_FILE, sc2ladderserver_stdout_log_tmp)
+    else:
+        Path(sc2ladderserver_stdout_log_tmp).touch()
+
+    if os.path.isfile(config.SC2LADDERSERVER_STDERR_FILE):
+        shutil.move(config.SC2LADDERSERVER_STDERR_FILE, sc2ladderserver_stderr_log_tmp)
+    else:
+        Path(sc2ladderserver_stderr_log_tmp).touch()
+
+    zip_file = zipfile.ZipFile(sc2ladderserver_log_zip, &#34;w&#34;)
+    zip_file.write(sc2ladderserver_stdout_log_tmp, compress_type=zipfile.ZIP_DEFLATED)
+    zip_file.write(sc2ladderserver_stderr_log_tmp, compress_type=zipfile.ZIP_DEFLATED)
+    zip_file.write(proxy_tmp, compress_type=zipfile.ZIP_DEFLATED)
+    # zip_file.write(supervisor_tmp, compress_type=zipfile.ZIP_DEFLATED)
+    zip_file.write(client_tmp, compress_type=zipfile.ZIP_DEFLATED)
+    zip_file.close()
+
+    # Create downloadable data archives
+    if not os.path.isdir(bot1_data_folder):
+        os.mkdir(bot1_data_folder)
+    shutil.make_archive(
+        os.path.join(config.TEMP_PATH, bot_1_name + &#34;-data&#34;), &#34;zip&#34;, bot1_data_folder
+    )
+    if not os.path.isdir(bot2_data_folder):
+        os.mkdir(bot2_data_folder)
+    shutil.make_archive(
+        os.path.join(config.TEMP_PATH, bot_2_name + &#34;-data&#34;), &#34;zip&#34;, bot2_data_folder
+    )
+
+    try:  # Upload replay file and bot data archives
+        file_list = {
+            &#34;bot1_data&#34;: open(
+                os.path.join(config.TEMP_PATH, f&#34;{bot_1_name}-data.zip&#34;), &#34;rb&#34;
+            ),
+            &#34;bot2_data&#34;: open(
+                os.path.join(config.TEMP_PATH, f&#34;{bot_2_name}-data.zip&#34;), &#34;rb&#34;
+            ),
+            &#34;bot1_log&#34;: open(
+                os.path.join(config.TEMP_PATH, f&#34;{bot_1_name}-error.zip&#34;), &#34;rb&#34;
+            ),
+            &#34;bot2_log&#34;: open(
+                os.path.join(config.TEMP_PATH, f&#34;{bot_2_name}-error.zip&#34;), &#34;rb&#34;
+            ),
+            &#34;arenaclient_log&#34;: open(sc2ladderserver_log_zip, &#34;rb&#34;),
+        }
+
+        if os.path.isfile(replay_file_path):
+            file_list[&#34;replay_file&#34;] = open(replay_file_path, &#34;rb&#34;)
+
+        payload = {&#34;type&#34;: result, &#34;match&#34;: int(match_id), &#34;game_steps&#34;: game_time}
+
+        if bot1_avg_step_time is not None:
+            payload[&#34;bot1_avg_step_time&#34;] = bot1_avg_step_time
+        if bot2_avg_step_time is not None:
+            payload[&#34;bot2_avg_step_time&#34;] = bot2_avg_step_time
+
+        if config.DEBUG_MODE:
+            utl.printout(json.dumps(payload))
+
+        post = requests.post(
+            config.API_RESULTS_URL,
+            files=file_list,
+            data=payload,
+            headers={&#34;Authorization&#34;: &#34;Token &#34; + config.API_TOKEN},
+        )
+        if post is None:
+            utl.printout(&#34;ERROR: Result submission failed. &#39;post&#39; was None.&#34;)
+        elif post.status_code &gt;= 400:  # todo: retry?
+            utl.printout(
+                f&#34;ERROR: Result submission failed. Status code: {post.status_code}.&#34;
+            )
+        else:
+            utl.printout(result + &#34; - Result transferred&#34;)
+    except ConnectionError:
+        utl.printout(f&#34;ERROR: Result submission failed. Connection to website failed.&#34;)</code></pre>
+</details>
+</dd>
+<dt id="aiarena-client.run_match"><code class="name flex">
+<span>def <span class="ident">run_match</span></span>(<span>match_count, map_name, bot_0_name, bot_1_name, bot_0_data, bot_1_data, next_match_id)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Runs the current match and returns the result.</p>
+<p>:param match_count:
+:param map_name:
+:param bot_0_name:
+:param bot_1_name:
+:param bot_0_data:
+:param bot_1_data:
+:param next_match_id:
+:return:</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def run_match(
+    match_count, map_name, bot_0_name, bot_1_name, bot_0_data, bot_1_data, next_match_id
+):
+    &#34;&#34;&#34;
+    Runs the current match and returns the result.
+
+    :param match_count:
+    :param map_name:
+    :param bot_0_name:
+    :param bot_1_name:
+    :param bot_0_data:
+    :param bot_1_data:
+    :param next_match_id:
+    :return:
+    &#34;&#34;&#34;
+    try:
+        utl.printout(f&#34;Starting game - Round {match_count}&#34;)
+        kill_current_server()
+        proxy = subprocess.Popen(
+            PYTHON + &#34; server.py&#34;, cwd=WORKING_DIRECTORY,  shell=True
+        )
+
+        while True:
+            time.sleep(1)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            result = sock.connect_ex(
+                (config.SC2_PROXY[&#34;HOST&#34;], config.SC2_PROXY[&#34;PORT&#34;])
+            )
+            if result == 0:
+                break
+
+        loop = asyncio.get_event_loop()
+
+        result = loop.run_until_complete(
+            asyncio.wait_for(
+                main(
+                    map_name,
+                    bot_0_name,
+                    bot_1_name,
+                    bot_0_data,
+                    bot_1_data,
+                    next_match_id,
+                ),
+                9000,
+            )
+        )
+
+        try:
+            os.kill(proxy.pid, signal.SIGTERM)
+        except Exception as exception:
+            logger.debug(str(exception))
+    except Exception as e:
+        logger.error(str(e))
+        # todo: usually result is a list
+        # todo: ideally this should always be the same variable type
+        result = &#34;Error&#34;
+
+    return result</code></pre>
+</details>
+</dd>
+<dt id="aiarena-client.start_bot"><code class="name flex">
+<span>def <span class="ident">start_bot</span></span>(<span>bot_data, opponent_id)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Start the bot with the correct arguments.</p>
+<p>:param bot_data:
+:param opponent_id:
+:return:</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def start_bot(bot_data, opponent_id):
+    &#34;&#34;&#34;
+    Start the bot with the correct arguments.
+
+    :param bot_data:
+    :param opponent_id:
+    :return:
+    &#34;&#34;&#34;
+    # todo: move to Bot class
+
+    bot_data = bot_data[&#34;Bots&#34;] if config.RUN_LOCAL else bot_data
+    bot_name = next(iter(bot_data))
+    bot_data = bot_data[bot_name] if config.RUN_LOCAL else bot_data
+    bot_path = (
+        os.path.join(BOTS_DIRECTORY, bot_name)
+        if config.RUN_LOCAL
+        else bot_data[&#34;RootPath&#34;]
+    )  # hot fix
+    bot_file = bot_data[&#34;FileName&#34;]
+    bot_type = bot_data[&#34;Type&#34;]
+    cmd_line = [
+        bot_file,
+        &#34;--GamePort&#34;,
+        str(config.SC2_PROXY[&#34;PORT&#34;]),
+        &#34;--StartPort&#34;,
+        str(config.SC2_PROXY[&#34;PORT&#34;]),
+        &#34;--LadderServer&#34;,
+        config.SC2_PROXY[&#34;HOST&#34;],
+        &#34;--OpponentId&#34;,
+        str(opponent_id),
+    ]
+    if bot_type.lower() == &#34;python&#34;:
+        cmd_line.insert(0, PYTHON)
+    elif bot_type.lower() == &#34;wine&#34;:
+        cmd_line.insert(0, &#34;wine&#34;)
+    elif bot_type.lower() == &#34;mono&#34;:
+        cmd_line.insert(0, &#34;mono&#34;)
+    elif bot_type.lower() == &#34;dotnetcore&#34;:
+        cmd_line.insert(0, &#34;dotnet&#34;)
+    elif bot_type.lower() == &#34;commandcenter&#34;:
+        raise
+    elif bot_type.lower() == &#34;binarycpp&#34;:
+        cmd_line.insert(0, os.path.join(bot_path, bot_file))
+    elif bot_type.lower() == &#34;java&#34;:
+        cmd_line.insert(0, &#34;java&#34;)
+        cmd_line.insert(1, &#34;-jar&#34;)
+    elif bot_type.lower() == &#34;nodejs&#34;:
+        raise
+
+    try:
+        os.stat(os.path.join(bot_path, &#34;data&#34;))
+    except OSError:
+        os.mkdir(os.path.join(bot_path, &#34;data&#34;))
+    try:
+        os.stat(REPLAY_DIRECTORY)
+    except OSError:
+        os.mkdir(REPLAY_DIRECTORY)
+    try:
+        if config.SYSTEM == &#34;Linux&#34;:
+            with open(os.path.join(bot_path, &#34;data&#34;, &#34;stderr.log&#34;), &#34;w+&#34;) as out:
+                process = subprocess.Popen(
+                    &#34; &#34;.join(cmd_line),
+                    stdout=out,
+                    stderr=subprocess.STDOUT,
+                    cwd=(str(bot_path)),
+                    shell=True,
+                    preexec_fn=os.setpgrp,
+                )
+            if process.errors:
+                logger.debug(&#34;Error: &#34; + process.errors)
+            return process
+        else:
+            with open(os.path.join(bot_path, &#34;data&#34;, &#34;stderr.log&#34;), &#34;w+&#34;) as out:
+                process = subprocess.Popen(
+                    &#34; &#34;.join(cmd_line),
+                    stdout=out,
+                    stderr=subprocess.STDOUT,
+                    cwd=(str(bot_path)),
+                    shell=True,
+                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+                )
+            if process.errors:
+                logger.debug(&#34;Error: &#34; + process.errors)
+            return process
+    except Exception as exception:
+        utl.printout(exception)
+        sys.exit(0)</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="aiarena-client.Bot"><code class="flex name class">
+<span>class <span class="ident">Bot</span></span>
+<span>(</span><span>data)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Class for setting up the config for a bot.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Bot:
+    &#34;&#34;&#34;
+    Class for setting up the config for a bot.
+    &#34;&#34;&#34;
+    def __init__(self, data):
+        self.id = data[&#34;id&#34;]
+        self.name = data[&#34;name&#34;]
+        self.game_display_id = data[&#34;game_display_id&#34;]
+        self.bot_zip = data[&#34;bot_zip&#34;]
+        self.bot_zip_md5hash = data[&#34;bot_zip_md5hash&#34;]
+        self.bot_data = data[&#34;bot_data&#34;]
+        self.bot_data_md5hash = data[&#34;bot_data_md5hash&#34;]
+        self.plays_race = data[&#34;plays_race&#34;]
+        self.type = data[&#34;type&#34;]
+
+    def get_bot_file(self):
+        &#34;&#34;&#34;
+        Download the bot&#39;s folder and extracts it to a specified location.
+
+        :return: bool
+        &#34;&#34;&#34;
+        utl.printout(f&#34;Downloading bot {self.name}&#34;)
+        # Download bot and save to .zip
+        r = requests.get(
+            self.bot_zip, headers={&#34;Authorization&#34;: &#34;Token &#34; + config.API_TOKEN}
+        )
+        bot_download_path = os.path.join(config.TEMP_PATH, self.name + &#34;.zip&#34;)
+        with open(bot_download_path, &#34;wb&#34;) as bot_zip:
+            bot_zip.write(r.content)
+        # Load bot from .zip to calculate md5
+        with open(bot_download_path, &#34;rb&#34;) as bot_zip:
+            calculated_md5 = hashlib.md5(utl.file_as_bytes(bot_zip)).hexdigest()
+        if self.bot_zip_md5hash == calculated_md5:
+            utl.printout(&#34;MD5 hash matches transferred file...&#34;)
+            utl.printout(f&#34;Extracting bot {self.name} to bots/{self.name}&#34;)
+            # Extract to bot folder
+            with zipfile.ZipFile(bot_download_path, &#34;r&#34;) as zip_ref:
+                zip_ref.extractall(f&#34;bots/{self.name}&#34;)
+
+            # if it&#39;s a linux bot, we need to add execute permissions
+            if self.type == &#34;cpplinux&#34;:
+                # Chmod 744: rwxr--r--
+                os.chmod(
+                    f&#34;bots/{self.name}/{self.name}&#34;,
+                    stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH,
+                )
+
+            if self.get_bot_data_file():
+                return True
+            else:
+                return False
+        else:
+            utl.printout(
+                f&#34;MD5 hash ({self.bot_zip_md5hash}) does not match transferred file ({calculated_md5})&#34;
+            )
+            cleanup()
+            return False
+
+    # Get bot data
+    def get_bot_data_file(self):
+        &#34;&#34;&#34;
+        Download bot&#39;s personal data folder and extract to specified location.
+
+        :return: bool
+        &#34;&#34;&#34;
+        if self.bot_data is None:
+            return True
+
+        utl.printout(f&#34;Downloading bot data for {self.name}&#34;)
+        # Download bot data and save to .zip
+        r = requests.get(
+            self.bot_data, headers={&#34;Authorization&#34;: &#34;Token &#34; + config.API_TOKEN}
+        )
+        bot_data_path = os.path.join(config.TEMP_PATH, self.name + &#34;-data.zip&#34;)
+        with open(bot_data_path, &#34;wb&#34;) as bot_data_zip:
+            bot_data_zip.write(r.content)
+        with open(bot_data_path, &#34;rb&#34;) as bot_data_zip:
+            calculated_md5 = hashlib.md5(utl.file_as_bytes(bot_data_zip)).hexdigest()
+        if self.bot_data_md5hash == calculated_md5:
+            utl.printout(&#34;MD5 hash matches transferred file...&#34;)
+            utl.printout(f&#34;Extracting data for {self.name} to bots/{self.name}/data&#34;)
+            with zipfile.ZipFile(bot_data_path, &#34;r&#34;) as zip_ref:
+                zip_ref.extractall(f&#34;bots/{self.name}/data&#34;)
+            return True
+        else:
+            utl.printout(
+                f&#34;MD5 hash ({self.bot_data_md5hash}) does not match transferred file ({calculated_md5})&#34;
+            )
+            cleanup()
+            return False
+
+    def get_bot_data(self):
+        &#34;&#34;&#34;
+        Get the bot&#39;s config from the ai-arena website and returns a config dictionary.
+
+        :return: bot_name
+        :return: bot_data
+        &#34;&#34;&#34;
+        if not self:
+            bot_name = &#34;OverReactBot&#34;
+            bot_race = &#34;T&#34;
+            bot_type = &#34;python&#34;
+            bot_id = &#34;123&#34;
+        else:
+            bot_name = self.name
+            bot_race = self.plays_race
+            bot_type = self.type
+            bot_id = self.game_display_id
+
+        race_map = {&#34;P&#34;: &#34;Protoss&#34;, &#34;T&#34;: &#34;Terran&#34;, &#34;Z&#34;: &#34;Zerg&#34;, &#34;R&#34;: &#34;Random&#34;}
+        bot_type_map = {
+            &#34;python&#34;: [&#34;run.py&#34;, &#34;Python&#34;],
+            &#34;cppwin32&#34;: [f&#34;{bot_name}.exe&#34;, &#34;Wine&#34;],
+            &#34;cpplinux&#34;: [f&#34;{bot_name}&#34;, &#34;BinaryCpp&#34;],
+            &#34;dotnetcore&#34;: [f&#34;{bot_name}.dll&#34;, &#34;DotNetCore&#34;],
+            &#34;java&#34;: [f&#34;{bot_name}.jar&#34;, &#34;Java&#34;],
+            &#34;nodejs&#34;: [&#34;main.jar&#34;, &#34;NodeJS&#34;],
+        }
+
+        bot_data = {
+            &#34;Race&#34;: race_map[bot_race],
+            &#34;RootPath&#34;: os.path.join(WORKING_DIRECTORY, f&#34;bots&#34;, bot_name),
+            &#34;FileName&#34;: bot_type_map[bot_type][0],
+            &#34;Type&#34;: bot_type_map[bot_type][1],
+            &#34;botID&#34;: bot_id,
+        }
+        return bot_name, bot_data</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="aiarena-client.Bot.get_bot_data"><code class="name flex">
+<span>def <span class="ident">get_bot_data</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Get the bot's config from the ai-arena website and returns a config dictionary.</p>
+<p>:return: bot_name
+:return: bot_data</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_bot_data(self):
+    &#34;&#34;&#34;
+    Get the bot&#39;s config from the ai-arena website and returns a config dictionary.
+
+    :return: bot_name
+    :return: bot_data
+    &#34;&#34;&#34;
+    if not self:
+        bot_name = &#34;OverReactBot&#34;
+        bot_race = &#34;T&#34;
+        bot_type = &#34;python&#34;
+        bot_id = &#34;123&#34;
+    else:
+        bot_name = self.name
+        bot_race = self.plays_race
+        bot_type = self.type
+        bot_id = self.game_display_id
+
+    race_map = {&#34;P&#34;: &#34;Protoss&#34;, &#34;T&#34;: &#34;Terran&#34;, &#34;Z&#34;: &#34;Zerg&#34;, &#34;R&#34;: &#34;Random&#34;}
+    bot_type_map = {
+        &#34;python&#34;: [&#34;run.py&#34;, &#34;Python&#34;],
+        &#34;cppwin32&#34;: [f&#34;{bot_name}.exe&#34;, &#34;Wine&#34;],
+        &#34;cpplinux&#34;: [f&#34;{bot_name}&#34;, &#34;BinaryCpp&#34;],
+        &#34;dotnetcore&#34;: [f&#34;{bot_name}.dll&#34;, &#34;DotNetCore&#34;],
+        &#34;java&#34;: [f&#34;{bot_name}.jar&#34;, &#34;Java&#34;],
+        &#34;nodejs&#34;: [&#34;main.jar&#34;, &#34;NodeJS&#34;],
+    }
+
+    bot_data = {
+        &#34;Race&#34;: race_map[bot_race],
+        &#34;RootPath&#34;: os.path.join(WORKING_DIRECTORY, f&#34;bots&#34;, bot_name),
+        &#34;FileName&#34;: bot_type_map[bot_type][0],
+        &#34;Type&#34;: bot_type_map[bot_type][1],
+        &#34;botID&#34;: bot_id,
+    }
+    return bot_name, bot_data</code></pre>
+</details>
+</dd>
+<dt id="aiarena-client.Bot.get_bot_data_file"><code class="name flex">
+<span>def <span class="ident">get_bot_data_file</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Download bot's personal data folder and extract to specified location.</p>
+<p>:return: bool</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_bot_data_file(self):
+    &#34;&#34;&#34;
+    Download bot&#39;s personal data folder and extract to specified location.
+
+    :return: bool
+    &#34;&#34;&#34;
+    if self.bot_data is None:
+        return True
+
+    utl.printout(f&#34;Downloading bot data for {self.name}&#34;)
+    # Download bot data and save to .zip
+    r = requests.get(
+        self.bot_data, headers={&#34;Authorization&#34;: &#34;Token &#34; + config.API_TOKEN}
+    )
+    bot_data_path = os.path.join(config.TEMP_PATH, self.name + &#34;-data.zip&#34;)
+    with open(bot_data_path, &#34;wb&#34;) as bot_data_zip:
+        bot_data_zip.write(r.content)
+    with open(bot_data_path, &#34;rb&#34;) as bot_data_zip:
+        calculated_md5 = hashlib.md5(utl.file_as_bytes(bot_data_zip)).hexdigest()
+    if self.bot_data_md5hash == calculated_md5:
+        utl.printout(&#34;MD5 hash matches transferred file...&#34;)
+        utl.printout(f&#34;Extracting data for {self.name} to bots/{self.name}/data&#34;)
+        with zipfile.ZipFile(bot_data_path, &#34;r&#34;) as zip_ref:
+            zip_ref.extractall(f&#34;bots/{self.name}/data&#34;)
+        return True
+    else:
+        utl.printout(
+            f&#34;MD5 hash ({self.bot_data_md5hash}) does not match transferred file ({calculated_md5})&#34;
+        )
+        cleanup()
+        return False</code></pre>
+</details>
+</dd>
+<dt id="aiarena-client.Bot.get_bot_file"><code class="name flex">
+<span>def <span class="ident">get_bot_file</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Download the bot's folder and extracts it to a specified location.</p>
+<p>:return: bool</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_bot_file(self):
+    &#34;&#34;&#34;
+    Download the bot&#39;s folder and extracts it to a specified location.
+
+    :return: bool
+    &#34;&#34;&#34;
+    utl.printout(f&#34;Downloading bot {self.name}&#34;)
+    # Download bot and save to .zip
+    r = requests.get(
+        self.bot_zip, headers={&#34;Authorization&#34;: &#34;Token &#34; + config.API_TOKEN}
+    )
+    bot_download_path = os.path.join(config.TEMP_PATH, self.name + &#34;.zip&#34;)
+    with open(bot_download_path, &#34;wb&#34;) as bot_zip:
+        bot_zip.write(r.content)
+    # Load bot from .zip to calculate md5
+    with open(bot_download_path, &#34;rb&#34;) as bot_zip:
+        calculated_md5 = hashlib.md5(utl.file_as_bytes(bot_zip)).hexdigest()
+    if self.bot_zip_md5hash == calculated_md5:
+        utl.printout(&#34;MD5 hash matches transferred file...&#34;)
+        utl.printout(f&#34;Extracting bot {self.name} to bots/{self.name}&#34;)
+        # Extract to bot folder
+        with zipfile.ZipFile(bot_download_path, &#34;r&#34;) as zip_ref:
+            zip_ref.extractall(f&#34;bots/{self.name}&#34;)
+
+        # if it&#39;s a linux bot, we need to add execute permissions
+        if self.type == &#34;cpplinux&#34;:
+            # Chmod 744: rwxr--r--
+            os.chmod(
+                f&#34;bots/{self.name}/{self.name}&#34;,
+                stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH,
+            )
+
+        if self.get_bot_data_file():
+            return True
+        else:
+            return False
+    else:
+        utl.printout(
+            f&#34;MD5 hash ({self.bot_zip_md5hash}) does not match transferred file ({calculated_md5})&#34;
+        )
+        cleanup()
+        return False</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="aiarena-client.check_pid" href="#aiarena-client.check_pid">check_pid</a></code></li>
+<li><code><a title="aiarena-client.cleanup" href="#aiarena-client.cleanup">cleanup</a></code></li>
+<li><code><a title="aiarena-client.get_ladder_bots_data" href="#aiarena-client.get_ladder_bots_data">get_ladder_bots_data</a></code></li>
+<li><code><a title="aiarena-client.get_next_match" href="#aiarena-client.get_next_match">get_next_match</a></code></li>
+<li><code><a title="aiarena-client.kill_current_server" href="#aiarena-client.kill_current_server">kill_current_server</a></code></li>
+<li><code><a title="aiarena-client.main" href="#aiarena-client.main">main</a></code></li>
+<li><code><a title="aiarena-client.move_pid" href="#aiarena-client.move_pid">move_pid</a></code></li>
+<li><code><a title="aiarena-client.pid_cleanup" href="#aiarena-client.pid_cleanup">pid_cleanup</a></code></li>
+<li><code><a title="aiarena-client.post_local_result" href="#aiarena-client.post_local_result">post_local_result</a></code></li>
+<li><code><a title="aiarena-client.post_result" href="#aiarena-client.post_result">post_result</a></code></li>
+<li><code><a title="aiarena-client.run_match" href="#aiarena-client.run_match">run_match</a></code></li>
+<li><code><a title="aiarena-client.start_bot" href="#aiarena-client.start_bot">start_bot</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="aiarena-client.Bot" href="#aiarena-client.Bot">Bot</a></code></h4>
+<ul class="">
+<li><code><a title="aiarena-client.Bot.get_bot_data" href="#aiarena-client.Bot.get_bot_data">get_bot_data</a></code></li>
+<li><code><a title="aiarena-client.Bot.get_bot_data_file" href="#aiarena-client.Bot.get_bot_data_file">get_bot_data_file</a></code></li>
+<li><code><a title="aiarena-client.Bot.get_bot_file" href="#aiarena-client.Bot.get_bot_file">get_bot_file</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.7.0</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

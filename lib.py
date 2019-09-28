@@ -4,19 +4,30 @@ import logging
 import os
 import platform
 import re
+from asyncio.futures import Future
 from pathlib import Path
 import sys
+from typing import Any
+
 from s2clientprotocol import sc2api_pb2 as sc_pb
 
 logger = logging.getLogger(__name__)
 
 
 class Timer:
+    """
+    Helper class to call a coroutine after a specified amount of time.
+
+    :param timeout: time after which to call async function.
+    :param callback: Async function to call
+    :param args: Arguments to pass to async function
+    """
+
     def __init__(self, timeout, callback, args):
-        self._timeout = timeout
+        self._timeout: float = timeout
         self._callback = callback
-        self._task = asyncio.ensure_future(self._job())
-        self._args = args
+        self._task: Future[Any] = asyncio.ensure_future(self._job())
+        self._args: list = args
 
     async def _job(self):
         await asyncio.sleep(self._timeout)
@@ -29,7 +40,9 @@ class Timer:
 class Protocol:
     def __init__(self, ws):
         """
-        :param ws:
+        python-sc2 class.  https://github.com/Dentosal/python-sc2/
+
+        :param ws: Websocket
         """
         assert ws
         self._ws = ws
@@ -95,6 +108,9 @@ class Protocol:
 
 
 class AbstractPlayer:
+    """
+    python-sc2 class. https://github.com/Dentosal/python-sc2/
+    """
     def __init__(
         self,
         p_type,
@@ -118,6 +134,9 @@ class AbstractPlayer:
 
 
 class Bot(AbstractPlayer):
+    """
+    python-sc2 class. https://github.com/Dentosal/python-sc2/
+    """
     def __init__(self, race, ai, name=None, fullscreen=False):
         """
         AI can be None if this player object is just used to inform the
@@ -134,6 +153,9 @@ class Bot(AbstractPlayer):
 
 
 class ProtocolError(Exception):
+    """
+    python-sc2 class. https://github.com/Dentosal/python-sc2/
+    """
     @property
     def is_game_over_error(self) -> bool:
         return self.args[0] in [
@@ -147,6 +169,9 @@ class ConnectionAlreadyClosed(ProtocolError):
 
 
 class Controller(Protocol):
+    """
+    python-sc2 class. https://github.com/Dentosal/python-sc2/
+    """
     def __init__(self, ws, process):
         super().__init__(ws)
         self.__process = process
@@ -218,7 +243,9 @@ def latest_executeble(versions_dir):
 
 
 class _MetaPaths(type):
-    """"Lazily loads paths to allow importing the library even if SC2 isn't installed."""
+    """"Lazily loads paths to allow importing the library even if SC2 isn't installed.
+        python-sc2 class. https://github.com/Dentosal/python-sc2/
+    """
 
     def __setup(self):
         if PF not in BASEDIR:
@@ -258,7 +285,11 @@ class _MetaPaths(type):
 
 
 class Paths(metaclass=_MetaPaths):
-    """Paths for SC2 folders, lazily loaded using the above metaclass."""
+    """
+    Paths for SC2 folders, lazily loaded using the above metaclass.
+
+    python-sc2 class. https://github.com/Dentosal/python-sc2/
+    """
 
 
 PlayerType = enum.Enum("PlayerType", sc_pb.PlayerType.items())

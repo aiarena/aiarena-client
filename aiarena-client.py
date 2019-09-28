@@ -27,7 +27,6 @@ logger.setLevel(config.LOGGING_LEVEL)
 
 if not config.RUN_LOCAL:
     import hashlib
-
     import zipfile
     from pathlib import Path
     import shutil
@@ -38,6 +37,7 @@ if not config.RUN_LOCAL:
 if config.RUN_LOCAL:
     WORKING_DIRECTORY = os.getcwd()
     REPLAY_DIRECTORY = os.path.join(WORKING_DIRECTORY, "Replays/")
+
     # Try to import config settings
     with open("LadderManager.json", "r") as lm:
         j_object = json.load(lm)
@@ -59,7 +59,13 @@ else:
     MAX_FRAME_TIME = config.MAX_FRAME_TIME
 
 
-def check_pid(pid):
+def check_pid(pid: int):
+    """
+    Checks if PID is running.
+
+    :param pid:
+    :return: bool
+    """
     try:
         os.kill(pid, 0)
     except OSError:
@@ -69,6 +75,12 @@ def check_pid(pid):
 
 
 def get_ladder_bots_data(bot):
+    """
+    Get the config file (ladderbots.json) from the bot's directory.
+
+    :param bot:
+    :return:
+    """
     bot_directory = os.path.join(BOTS_DIRECTORY, bot, "ladderbots.json")
     with open(bot_directory, "r") as ladder_bots_file:
         json_object = json.load(ladder_bots_file)
@@ -76,6 +88,9 @@ def get_ladder_bots_data(bot):
 
 
 class Bot:
+    """
+    Class for setting up the config for a bot.
+    """
     def __init__(self, data):
         self.id = data["id"]
         self.name = data["name"]
@@ -88,6 +103,11 @@ class Bot:
         self.type = data["type"]
 
     def get_bot_file(self):
+        """
+        Download the bot's folder and extracts it to a specified location.
+
+        :return: bool
+        """
         utl.printout(f"Downloading bot {self.name}")
         # Download bot and save to .zip
         r = requests.get(
@@ -127,6 +147,11 @@ class Bot:
 
     # Get bot data
     def get_bot_data_file(self):
+        """
+        Download bot's personal data folder and extract to specified location.
+
+        :return: bool
+        """
         if self.bot_data is None:
             return True
 
@@ -154,6 +179,12 @@ class Bot:
             return False
 
     def get_bot_data(self):
+        """
+        Get the bot's config from the ai-arena website and returns a config dictionary.
+
+        :return: bot_name
+        :return: bot_data
+        """
         if not self:
             bot_name = "OverReactBot"
             bot_race = "T"
@@ -186,6 +217,13 @@ class Bot:
 
 
 def get_next_match(match_count: int):
+    """
+    Retrieve the next match from the ai-arena website API. Runs the match, and posts the result to the ai-arena
+    website.
+
+    :param match_count:
+    :return:
+    """
     utl.printout(
         f'New match started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}'
     )
@@ -281,6 +319,16 @@ def get_next_match(match_count: int):
 
 
 def post_result(match_id, lm_result, bot_1_name, bot_2_name):
+    """
+    Extract the actual result from the result received from the match runner and post to the ai-arena website, along
+    with the logs.
+
+    :param match_id:
+    :param lm_result:
+    :param bot_1_name:
+    :param bot_2_name:
+    :return:
+    """
     kill_current_server()
     # quick hack to avoid these going uninitialized
     # todo: remove these and actually fix the issue
@@ -519,6 +567,13 @@ def post_result(match_id, lm_result, bot_1_name, bot_2_name):
 
 
 def post_local_result(bot_0, bot_1, lm_result):
+    """
+    Mirror function to save the results to the Results json file if not running matches using the website.
+    :param bot_0:
+    :param bot_1:
+    :param lm_result:
+    :return:
+    """
     result_json = {
         "Bot1": bot_0,
         "Bot2": bot_1,
@@ -613,6 +668,11 @@ def post_local_result(bot_0, bot_1, lm_result):
 
 
 def cleanup():
+    """
+    Clean up all the folders and files used for the previous match.
+
+    :return:
+    """
     # Files to remove
     files = [
         config.SC2LADDERSERVER_PID_FILE,
@@ -644,6 +704,15 @@ def cleanup():
 
 
 def start_bot(bot_data, opponent_id):
+    """
+    Start the bot with the correct arguments.
+
+    :param bot_data:
+    :param opponent_id:
+    :return:
+    """
+    # todo: move to Bot class
+
     bot_data = bot_data["Bots"] if config.RUN_LOCAL else bot_data
     bot_name = next(iter(bot_data))
     bot_data = bot_data[bot_name] if config.RUN_LOCAL else bot_data
@@ -724,6 +793,12 @@ def start_bot(bot_data, opponent_id):
 
 
 def pid_cleanup(pids):
+    """
+    Kills all the pids passed as a list to this function
+
+    :param pids:
+    :return:
+    """
     for pid in pids:
         logger.debug("Killing: " + str(pid))
         try:
@@ -733,6 +808,12 @@ def pid_cleanup(pids):
 
 
 def move_pid(pid):
+    """
+    Move the pid to another process group to avoid the bot killing the ai-arena client when closing. (CPP API specific)
+
+    :param pid:
+    :return:
+    """
     if pid != 0:
         return
     else:
@@ -747,8 +828,19 @@ def move_pid(pid):
 
 
 async def main(
-    map_name, bot_0_name, bot_1_name, bot_0_data, bot_1_data, next_match_id
+    map_name: str, bot_0_name: str, bot_1_name: str, bot_0_data, bot_1_data, next_match_id: int
 ):
+    """
+    Method to interact with the match runner. Sends the config and awaits the result.
+
+    :param map_name:
+    :param bot_0_name:
+    :param bot_1_name:
+    :param bot_0_data:
+    :param bot_1_data:
+    :param next_match_id:
+    :return:
+    """
     result = []
     session = aiohttp.ClientSession()
     ws = await session.ws_connect(
@@ -929,6 +1021,11 @@ async def main(
 
 
 def kill_current_server():
+    """
+    Kills all the processes running on the match runner's port. Also kills any SC2 processes if they are still running.
+
+    :return:
+    """
     # return None
     try:
         if config.SYSTEM == "Linux":
@@ -949,6 +1046,18 @@ def kill_current_server():
 def run_match(
     match_count, map_name, bot_0_name, bot_1_name, bot_0_data, bot_1_data, next_match_id
 ):
+    """
+    Runs the current match and returns the result.
+
+    :param match_count:
+    :param map_name:
+    :param bot_0_name:
+    :param bot_1_name:
+    :param bot_0_data:
+    :param bot_1_data:
+    :param next_match_id:
+    :return:
+    """
     try:
         utl.printout(f"Starting game - Round {match_count}")
         kill_current_server()
@@ -999,6 +1108,7 @@ try:
         f'Arena Client started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}'
     )
     os.makedirs(REPLAY_DIRECTORY, exist_ok=True)
+
     if not config.RUN_LOCAL:
         os.makedirs(config.TEMP_PATH, exist_ok=True)
         os.makedirs(os.path.join(config.WORKING_DIRECTORY, "bots"), exist_ok=True)
@@ -1034,7 +1144,7 @@ except Exception as e:
     if not config.RUN_LOCAL:
         with open(os.path.join(config.LOCAL_PATH, ".shutdown"), "w") as f:
             f.write("Shutdown")
-    traceback.print_exc()
+    traceback.print_exc()  # Todo: Add this to the log files
 finally:
     try:
         kill_current_server()

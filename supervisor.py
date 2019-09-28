@@ -6,32 +6,35 @@ from json import JSONDecodeError
 
 import aiohttp
 
-
 logger = logging.getLogger(__name__)
 logger.setLevel(10)
 logger.addHandler(logging.FileHandler("proxy.log", "a+"))
-logging.info("Logging started")
+logging.info("Logging started")  # Hack to show logging in PyCharm.
+
 
 class Supervisor:
+    """
+    Class to interact with proxies and external source. Receives config from external source, forwards to the proxies,
+    proxies sets the result and other relevant information in the supervisor, which forwards it back to the external
+    source.
+    """
     def __init__(self):
-        self._pids = []
-        self._average_frame_time = []
-        self._config = None
-        self._map = None
-        self._max_game_time = None
-        self._max_frame_time = None
-        self._strikes = None
-        self._result = []
-        self._player1 = None
-        self._player2 = None
-        self._replay_path = None
-        self._game_status = None
-        self._match_id = None
-        self._replay_name = None
-        self._game_time = 0
-        self._game_time_seconds = 0
-        self._game_time_formatted = None
-        self._disable_debug = True
+        self._pids: list = []
+        self._average_frame_time: list = []
+        self._map: str = ""
+        self._max_game_time: int = 0
+        self._max_frame_time: int = 0
+        self._strikes: int = 0
+        self._result: list = []
+        self._player1: str = ""
+        self._player2: str = ""
+        self._replay_path: str = ""
+        self._match_id: str = ""
+        self._replay_name: str = ""
+        self._game_time: float = 0
+        self._game_time_seconds: float = 0
+        self._game_time_formatted: str = ""
+        self._disable_debug: bool = True
         self._ws = None
 
     @property
@@ -39,7 +42,7 @@ class Supervisor:
         return self._game_time
 
     @game_time.setter
-    def game_time(self, value):
+    def game_time(self, value: float):
         self._game_time = value
 
     @property
@@ -47,7 +50,7 @@ class Supervisor:
         return self._average_frame_time
 
     @average_frame_time.setter
-    def average_frame_time(self, value):
+    def average_frame_time(self, value: float):
         self._average_frame_time.append(value)
 
     @property
@@ -59,7 +62,7 @@ class Supervisor:
         return self._game_time_seconds
 
     @game_time_seconds.setter
-    def game_time_seconds(self, value):
+    def game_time_seconds(self, value: float):
         self._game_time_seconds = value
 
     @property
@@ -71,7 +74,7 @@ class Supervisor:
         return self._pids
 
     @pids.setter
-    def pids(self, value):
+    def pids(self, value: int):
         self._pids.append(value)
 
     @property
@@ -119,18 +122,39 @@ class Supervisor:
         return self._max_frame_time
 
     def format_time(self):
+        """
+        Format game time to a hh:mm:ss string.
+        :return:
+        """
         t = self._game_time_seconds
         return f"{int(t // 60):02}:{int(t % 60):02}"
 
     async def close(self):
-        if self._result:
+        """
+        Closes client connection.
+        :return:
+        """
+        if not self._result:
             await self._ws.send_json(dict({"Result": "Error"}))
         await self._ws.close()
 
     async def send_message(self, message):
+        """
+        Sends json message to client.
+
+        :param message:
+        :return:
+        """
         await self._ws.send_json(message)
 
     async def websocket_handler(self, request):
+        """
+        Handles all requests, forwards config to proxies and receives results and other relevant information from the
+        proxies, which if forwarded to the external source (client).
+
+        :param request:
+        :return:
+        """
         ws = aiohttp.web.WebSocketResponse()
         self._ws = ws
         await ws.prepare(request)
@@ -174,7 +198,8 @@ class Supervisor:
                 except Exception as e:
                     logger.debug(e)
             counter = 0
-            while not self._result or len(self._result) < 2:
+
+            while not self._result or len(self._result) < 2:  # Wait for result from proxies.
                 counter += 1
                 if counter % 100 == 0:
                     await ws.send_str(json.dumps({"StillAlive": "True"}))
@@ -199,15 +224,8 @@ class Supervisor:
                 ),
             }
 
-            if (
-                    "Result.UsedDebug" in final_result.values()
-            ):  # Hacky way to deal with surrenders TODO:Find better way
-                for x, y in final_result.items():
-                    if y == "Result.Crashed":
-                        final_result[x] = "Result.Victory"
-
             self._game_time_formatted = self.format_time()
-            await ws.send_json(dict({"Result": final_result}))
+            await ws.send_json(dict({"Result": final_result}))  # Todo: Send everything in one message.
             await ws.send_json(dict({"PID": self._pids}))
             await ws.send_json(
                 dict(
