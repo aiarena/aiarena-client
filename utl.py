@@ -5,7 +5,7 @@ import psutil
 from termcolor import colored
 
 
-class utl:
+class Utl:
     def __init__(self, config):
         self._config = config
 
@@ -60,6 +60,7 @@ class utl:
             f.write(line)
 
     # Needed for hashlib md5 function
+
     def file_as_bytes(self, file):
         with file:
             return file.read()

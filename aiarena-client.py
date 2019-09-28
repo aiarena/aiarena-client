@@ -1,23 +1,24 @@
-import logging
-import traceback
-import stat
-import aiohttp
 import asyncio
+import datetime
 import json
-import subprocess
+import logging
 import os
 import signal
-import datetime
-import time
-import sys
-import psutil
 import socket
+import stat
+import subprocess
+import sys
+import time
+import traceback
+
+import aiohttp
+import psutil
 
 # the default config will also import custom config values
 import default_config as config
-from utl import utl
+from utl import Utl
 
-utl = utl(config)
+utl = Utl(config)
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -46,12 +47,16 @@ if config.RUN_LOCAL:
         MAX_GAME_TIME = j_object["MaxGameTime"]
         REALTIME_MODE = j_object["RealTimeMode"]
         BOTS_DIRECTORY = j_object["BaseBotDirectory"]
+        MAX_FRAME_TIME = j_object.get('MaxFrameTime', 125)
+        STRIKES = j_object.get('Strikes', 10)
 
 else:
     PYTHON = config.PYTHON
     REPLAY_DIRECTORY = config.REPLAYS_DIRECTORY
     WORKING_DIRECTORY = config.WORKING_DIRECTORY
-    MAX_GAME_TIME = 60486
+    MAX_GAME_TIME = config.MAX_GAME_TIME
+    STRIKES = config.STRIKES
+    MAX_FRAME_TIME = config.MAX_FRAME_TIME
 
 
 def check_pid(pid):
@@ -65,9 +70,9 @@ def check_pid(pid):
 
 def get_ladder_bots_data(bot):
     bot_directory = os.path.join(BOTS_DIRECTORY, bot, "ladderbots.json")
-    with open(bot_directory, "r") as f:
-        j_object = json.load(f)
-    return bot, j_object
+    with open(bot_directory, "r") as ladder_bots_file:
+        json_object = json.load(ladder_bots_file)
+    return bot, json_object
 
 
 class Bot:
@@ -82,18 +87,18 @@ class Bot:
         self.plays_race = data["plays_race"]
         self.type = data["type"]
 
-    def getbotfile(self):
+    def get_bot_file(self):
         utl.printout(f"Downloading bot {self.name}")
         # Download bot and save to .zip
         r = requests.get(
             self.bot_zip, headers={"Authorization": "Token " + config.API_TOKEN}
         )
         bot_download_path = os.path.join(config.TEMP_PATH, self.name + ".zip")
-        with open(bot_download_path, "wb") as f:
-            f.write(r.content)
+        with open(bot_download_path, "wb") as bot_zip:
+            bot_zip.write(r.content)
         # Load bot from .zip to calculate md5
-        with open(bot_download_path, "rb") as f:
-            calculated_md5 = hashlib.md5(utl.file_as_bytes(f)).hexdigest()
+        with open(bot_download_path, "rb") as bot_zip:
+            calculated_md5 = hashlib.md5(utl.file_as_bytes(bot_zip)).hexdigest()
         if self.bot_zip_md5hash == calculated_md5:
             utl.printout("MD5 hash matches transferred file...")
             utl.printout(f"Extracting bot {self.name} to bots/{self.name}")
@@ -109,7 +114,7 @@ class Bot:
                     stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH,
                 )
 
-            if self.getbotdatafile():
+            if self.get_bot_data_file():
                 return True
             else:
                 return False
@@ -121,7 +126,7 @@ class Bot:
             return False
 
     # Get bot data
-    def getbotdatafile(self):
+    def get_bot_data_file(self):
         if self.bot_data is None:
             return True
 
@@ -131,10 +136,10 @@ class Bot:
             self.bot_data, headers={"Authorization": "Token " + config.API_TOKEN}
         )
         bot_data_path = os.path.join(config.TEMP_PATH, self.name + "-data.zip")
-        with open(bot_data_path, "wb") as f:
-            f.write(r.content)
-        with open(bot_data_path, "rb") as f:
-            calculated_md5 = hashlib.md5(utl.file_as_bytes(f)).hexdigest()
+        with open(bot_data_path, "wb") as bot_data_zip:
+            bot_data_zip.write(r.content)
+        with open(bot_data_path, "rb") as bot_data_zip:
+            calculated_md5 = hashlib.md5(utl.file_as_bytes(bot_data_zip)).hexdigest()
         if self.bot_data_md5hash == calculated_md5:
             utl.printout("MD5 hash matches transferred file...")
             utl.printout(f"Extracting data for {self.name} to bots/{self.name}/data")
@@ -148,45 +153,45 @@ class Bot:
             cleanup()
             return False
 
-    def getbotdata(self):
+    def get_bot_data(self):
         if not self:
-            botname = "OverReactBot"
-            botrace = "T"
-            bottype = "python"
-            botid = "123"
+            bot_name = "OverReactBot"
+            bot_race = "T"
+            bot_type = "python"
+            bot_id = "123"
         else:
-            botname = self.name
-            botrace = self.plays_race
-            bottype = self.type
-            botid = self.game_display_id
+            bot_name = self.name
+            bot_race = self.plays_race
+            bot_type = self.type
+            bot_id = self.game_display_id
 
         race_map = {"P": "Protoss", "T": "Terran", "Z": "Zerg", "R": "Random"}
         bot_type_map = {
             "python": ["run.py", "Python"],
-            "cppwin32": [f"{botname}.exe", "Wine"],
-            "cpplinux": [f"{botname}", "BinaryCpp"],
-            "dotnetcore": [f"{botname}.dll", "DotNetCore"],
-            "java": [f"{botname}.jar", "Java"],
+            "cppwin32": [f"{bot_name}.exe", "Wine"],
+            "cpplinux": [f"{bot_name}", "BinaryCpp"],
+            "dotnetcore": [f"{bot_name}.dll", "DotNetCore"],
+            "java": [f"{bot_name}.jar", "Java"],
             "nodejs": ["main.jar", "NodeJS"],
         }
 
         bot_data = {
-            "Race": race_map[botrace],
-            "RootPath": os.path.join(WORKING_DIRECTORY, f"bots", botname),
-            "FileName": bot_type_map[bottype][0],
-            "Type": bot_type_map[bottype][1],
-            "botID": botid,
+            "Race": race_map[bot_race],
+            "RootPath": os.path.join(WORKING_DIRECTORY, f"bots", bot_name),
+            "FileName": bot_type_map[bot_type][0],
+            "Type": bot_type_map[bot_type][1],
+            "botID": bot_id,
         }
-        return botname, bot_data
+        return bot_name, bot_data
 
 
-def getnextmatch(count):
+def get_next_match(match_count: int):
     utl.printout(
         f'New match started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}'
     )
     if not config.RUN_LOCAL:
         try:
-            nextmatchresponse = requests.post(
+            next_match_response = requests.post(
                 config.API_MATCHES_URL,
                 headers={"Authorization": "Token " + config.API_TOKEN},
             )
@@ -197,92 +202,91 @@ def getnextmatch(count):
             time.sleep(30)
             return False
 
-        if nextmatchresponse.status_code >= 400:
+        if next_match_response.status_code >= 400:
             utl.printout(
-                f"ERROR: Failed to retrieve game. Status code: {nextmatchresponse.status_code}. Sleeping."
+                f"ERROR: Failed to retrieve game. Status code: {next_match_response.status_code}. Sleeping."
             )
             time.sleep(30)
             return False
 
-        nextmatchdata = json.loads(nextmatchresponse.text)
+        next_match_data = json.loads(next_match_response.text)
 
-        if "id" not in nextmatchdata:
+        if "id" not in next_match_data:
             utl.printout("No games available - sleeping")
             time.sleep(30)
             return False
 
-        nextmatchid = nextmatchdata["id"]
-        utl.printout(f"Next match: {nextmatchid}")
+        next_match_id = next_match_data["id"]
+        utl.printout(f"Next match: {next_match_id}")
 
         # Download map
-        mapname = nextmatchdata["map"]["name"]
-        mapurl = nextmatchdata["map"]["file"]
-        utl.printout(f"Downloading map {mapname}")
+        map_name = next_match_data["map"]["name"]
+        map_url = next_match_data["map"]["file"]
+        utl.printout(f"Downloading map {map_name}")
 
         try:
-            r = requests.get(mapurl)
-        except:
-            utl.printout(f"ERROR: Failed to download map {mapname} at URL {mapurl}.")
+            r = requests.get(map_url)
+        except Exception as download_exception:
+            utl.printout(f"ERROR: Failed to download map {map_name} at URL {map_url}. Error {download_exception}")
             time.sleep(30)
             return False
 
-        map_path = os.path.join(config.SC2_HOME, "maps", f"{mapname}.SC2Map")
-        with open(map_path, "wb") as f:
-            f.write(r.content)
+        map_path = os.path.join(config.SC2_HOME, "maps", f"{map_name}.SC2Map")
+        with open(map_path, "wb") as map_file:
+            map_file.write(r.content)
 
-        bot_0 = Bot(nextmatchdata["bot1"])
-        if not bot_0.getbotfile():
+        bot_0 = Bot(next_match_data["bot1"])
+        if not bot_0.get_bot_file():
             time.sleep(30)
             return False
-        bot_1 = Bot(nextmatchdata["bot2"])
-        if not bot_1.getbotfile():
+        bot_1 = Bot(next_match_data["bot2"])
+        if not bot_1.get_bot_file():
             time.sleep(30)
             return False
 
-        bot_0_name, bot_0_data = bot_0.getbotdata()
-        bot_1_name, bot_1_data = bot_1.getbotdata()
+        bot_0_name, bot_0_data = bot_0.get_bot_data()
+        bot_1_name, bot_1_data = bot_1.get_bot_data()
         # bot_0_game_display_id = bot_0_data['botID']
         # bot_1_game_display_id = bot_1_data['botID']
 
-        result = runmatch(
-            count, mapname, bot_0_name, bot_1_name, bot_0_data, bot_1_data, nextmatchid
+        result = run_match(
+            match_count, map_name, bot_0_name, bot_1_name, bot_0_data, bot_1_data, next_match_id
         )
         # utl.printout(result)
-        postresult(nextmatchid, result, bot_0_name, bot_1_name)
+        post_result(next_match_id, result, bot_0_name, bot_1_name)
         if result == "Error":
             return False
         return True
 
     else:
-        with open("matchupList", "r") as ml:
-            for i, line in enumerate(ml):
-                nextmatchid = i
-                Line = line
+        with open("matchupList", "r") as match_up_list:
+            for i, line in enumerate(match_up_list):
+                next_match_id = i
                 break
-        utl.printout(f"Next match: {nextmatchid}")
-        mapname = Line.split(" ")[1].replace("\n", "").replace(".SC2Map", "")
-        bot_0 = Line.split("vs")[0].replace('"', "")
-        bot_1 = Line.split("vs")[1].split(" ")[0].replace('"', "")
+        utl.printout(f"Next match: {next_match_id}")
+        map_name = line.split(' ')[1].replace("\n", "").replace('.SC2Map', "")
+        bot_0 = line.split('vs')[0].replace('"', "")
+        bot_1 = line.split('vs')[1].split(" ")[0].replace('"', "")
         bot_0_name, bot_0_data = get_ladder_bots_data(bot_0)
         bot_1_name, bot_1_data = get_ladder_bots_data(bot_1)
         # bot_0_game_display_id = bot_0_data['botID']#TODO: Enable opponent_id
         # bot_1_game_display_id = bot_1_data['botID']
-        result = runmatch(
-            count, mapname, bot_0_name, bot_1_name, bot_0_data, bot_1_data, nextmatchid
+        result = run_match(
+            match_count, map_name, bot_0_name, bot_1_name, bot_0_data, bot_1_data, next_match_id
         )
-        with open("results", "a+") as f:
-            f.write(str(result) + "\n\n")
+        with open("results", "a+") as map_file:
+            map_file.write(str(result) + "\n\n")
         post_local_result(bot_0, bot_1, result)
         return True
 
 
-def postresult(match_id, lm_result, bot_1_name, bot_2_name):
+def post_result(match_id, lm_result, bot_1_name, bot_2_name):
     kill_current_server()
     # quick hack to avoid these going uninitialized
     # todo: remove these and actually fix the issue
-    gametime = 0
-    bot1_avg_step_time = 0
-    bot2_avg_step_time = 0
+    game_time: int = 0
+    bot1_avg_step_time: float = 0
+    bot2_avg_step_time: float = 0
 
     if isinstance(lm_result, list):
         for x in lm_result:
@@ -291,12 +295,19 @@ def postresult(match_id, lm_result, bot_1_name, bot_2_name):
                 utl.printout(str(temp_results))
                 bot_1_name = list(x["Result"].keys())[0]
                 bot_2_name = list(x["Result"].keys())[1]
+
                 if temp_results[bot_1_name] == "Result.Crashed":
                     result = "Player1Crash"
 
                 elif temp_results[bot_2_name] == "Result.Crashed":
                     result = "Player2Crash"
                     # result_json['Winner']=bot_0
+
+                elif temp_results[bot_1_name] == "Result.Timeout":
+                    result = "Player1TimeOut"
+
+                elif temp_results[bot_2_name] == "Result.Timeout":
+                    result = "Player2TimeOut"
 
                 elif temp_results[bot_1_name] == "Result.Victory":
                     result = "Player1Win"
@@ -316,39 +327,44 @@ def postresult(match_id, lm_result, bot_1_name, bot_2_name):
 
                 else:
                     result = "InitializationError"
-                    gametime = 0
+                    game_time = 0
                     bot1_avg_step_time = 0
                     bot2_avg_step_time = 0
 
                 # result_json['Result'] = result
 
             if x.get("GameTime", None):
-                gametime = x["GameTime"]
-                gametime_formatted = x["GameTimeFormatted"]
+                game_time = x["GameTime"]
 
             if x.get("AverageFrameTime", None):
-                bot1_avg_step_time = (next(iter(x["AverageFrameTime"]))).get(
-                    bot_1_name, 0
-                )
-                bot2_avg_step_time = (next(iter(x["AverageFrameTime"]))).get(
-                    bot_2_name, 0
-                )
+                try:
+                    bot1_avg_step_time = next(
+                        item[bot_1_name] for item in x['AverageFrameTime'] if item.get(bot_1_name, None))
+                except StopIteration:
+                    bot1_avg_step_time = 0
+                try:
+                    bot2_avg_step_time = next(
+                        item[bot_2_name] for item in x['AverageFrameTime'] if item.get(bot_2_name, None))
+                except StopIteration:
+                    bot2_avg_step_time = 0
 
             if x.get("TimeStamp", None):
                 time_stamp = x["TimeStamp"]
 
     else:
         result = lm_result
-        gametime = 0
+        game_time = 0
         bot1_avg_step_time = 0
         bot2_avg_step_time = 0
 
-    replayfile = ""
+    utl.printout(str(result))
+    replay_file: str = ""
     for file in os.listdir(REPLAY_DIRECTORY):
-        if file.endswith(".SC2Replay"):
-            replayfile = file
+        if file.endswith('.SC2Replay'):
+            replay_file = file
             break
-    replay_file_path = os.path.join(REPLAY_DIRECTORY, replayfile)
+
+    replay_file_path = os.path.join(REPLAY_DIRECTORY, replay_file)
     if config.RUN_REPLAY_CHECK:
         os.system(
             "perl "
@@ -395,12 +411,10 @@ def postresult(match_id, lm_result, bot_1_name, bot_2_name):
     )
     zip_file.close()
 
-    # aiarenaclient logs
+    # aiarena-client logs
     proxy_tmp = os.path.join(config.TEMP_PATH, "proxy.log")
     # supervisor_tmp = os.path.join(config.TEMP_PATH, "supervisor.log")
     client_tmp = os.path.join(config.TEMP_PATH, "aiarena-client.log")
-
-    client_log_zip = os.path.join(config.TEMP_PATH, "aiarena-client_log.zip")
 
     if os.path.isfile("proxy.log"):
         shutil.move("proxy.log", proxy_tmp)
@@ -444,7 +458,7 @@ def postresult(match_id, lm_result, bot_1_name, bot_2_name):
     zip_file.write(client_tmp, compress_type=zipfile.ZIP_DEFLATED)
     zip_file.close()
 
-    # Create downloable data archives
+    # Create downloadable data archives
     if not os.path.isdir(bot1_data_folder):
         os.mkdir(bot1_data_folder)
     shutil.make_archive(
@@ -476,7 +490,7 @@ def postresult(match_id, lm_result, bot_1_name, bot_2_name):
         if os.path.isfile(replay_file_path):
             file_list["replay_file"] = open(replay_file_path, "rb")
 
-        payload = {"type": result, "match": int(match_id), "game_steps": gametime}
+        payload = {"type": result, "match": int(match_id), "game_steps": game_time}
 
         if bot1_avg_step_time is not None:
             payload["bot1_avg_step_time"] = bot1_avg_step_time
@@ -531,6 +545,14 @@ def post_local_result(bot_0, bot_1, lm_result):
                     result = "Player2Crash"
                     result_json["Winner"] = bot_0
 
+                elif temp_results[bot_0] == "Result.Timeout":
+                    result = "Player1TimeOut"
+                    result_json["Winner"] = bot_1
+
+                elif temp_results[bot_1] == "Result.Timeout":
+                    result = "Player2TimeOut"
+                    result_json["Winner"] = bot_0
+
                 elif temp_results[bot_0] == "Result.Victory":
                     result = "Player1Win"
                     result_json["Winner"] = bot_0
@@ -553,12 +575,16 @@ def post_local_result(bot_0, bot_1, lm_result):
                 result_json["GameTimeFormatted"] = x["GameTimeFormatted"]
 
             if x.get("AverageFrameTime", None):
-                result_json["Bot1AvgFrame"] = (next(iter(x["AverageFrameTime"]))).get(
-                    bot_0, 0
-                ) * 1000  # Convert to ms
-                result_json["Bot2AvgFrame"] = (next(iter(x["AverageFrameTime"]))).get(
-                    bot_1, 0
-                ) * 1000  # Convert to ms
+                try:
+                    result_json["Bot1AvgFrame"] = next(
+                        item[bot_0] for item in x['AverageFrameTime'] if item.get(bot_0, None))
+                except StopIteration:
+                    result_json["Bot1AvgFrame"] = 0
+                try:
+                    result_json["Bot2AvgFrame"] = next(
+                        item[bot_1] for item in x['AverageFrameTime'] if item.get(bot_1, None))
+                except StopIteration:
+                    result_json["Bot2AvgFrame"] = 0
 
             if x.get("TimeStamp", None):
                 result_json["TimeStamp"] = x["TimeStamp"]
@@ -580,9 +606,10 @@ def post_local_result(bot_0, bot_1, lm_result):
 
         #             results_log.write(json.dumps(j_object, indent=4))
         # else:
+    utl.printout(str(result))
     with open(RESULTS_LOG_FILE, "w") as results_log:
-        j_object = dict({"Results": [result_json]})
-        results_log.write(json.dumps(j_object, indent=4))
+        json_object = dict({"Results": [result_json]})
+        results_log.write(json.dumps(json_object, indent=4))
 
 
 def cleanup():
@@ -608,10 +635,10 @@ def cleanup():
             file_path = os.path.join(folder, file)
             os.remove(file_path)
 
-    # Remove entire subfolders
+    # Remove entire sub folders
     bots_dir = os.path.join(config.WORKING_DIRECTORY, "bots")
-    for dir in os.listdir(bots_dir):
-        shutil.rmtree(os.path.join(bots_dir, dir))
+    for directory in os.listdir(bots_dir):
+        shutil.rmtree(os.path.join(bots_dir, directory))
     logger.debug(f"Killing current server")
     kill_current_server()
 
@@ -624,7 +651,7 @@ def start_bot(bot_data, opponent_id):
         os.path.join(BOTS_DIRECTORY, bot_name)
         if config.RUN_LOCAL
         else bot_data["RootPath"]
-    )  # hotfix
+    )  # hot fix
     bot_file = bot_data["FileName"]
     bot_type = bot_data["Type"]
     cmd_line = [
@@ -658,11 +685,11 @@ def start_bot(bot_data, opponent_id):
 
     try:
         os.stat(os.path.join(bot_path, "data"))
-    except:
+    except OSError:
         os.mkdir(os.path.join(bot_path, "data"))
     try:
         os.stat(REPLAY_DIRECTORY)
-    except:
+    except OSError:
         os.mkdir(REPLAY_DIRECTORY)
     try:
         if config.SYSTEM == "Linux":
@@ -671,7 +698,6 @@ def start_bot(bot_data, opponent_id):
                     " ".join(cmd_line),
                     stdout=out,
                     stderr=subprocess.STDOUT,
-                    # creationflags=subprocess.CREATE_NEW_CONSOLE,
                     cwd=(str(bot_path)),
                     shell=True,
                     preexec_fn=os.setpgrp,
@@ -685,7 +711,6 @@ def start_bot(bot_data, opponent_id):
                     " ".join(cmd_line),
                     stdout=out,
                     stderr=subprocess.STDOUT,
-                    # creationflags=subprocess.CREATE_NEW_CONSOLE,
                     cwd=(str(bot_path)),
                     shell=True,
                     creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
@@ -693,8 +718,8 @@ def start_bot(bot_data, opponent_id):
             if process.errors:
                 logger.debug("Error: " + process.errors)
             return process
-    except Exception as e:
-        utl.printout(e)
+    except Exception as exception:
+        utl.printout(exception)
         sys.exit(0)
 
 
@@ -722,7 +747,7 @@ def move_pid(pid):
 
 
 async def main(
-    mapname, bot_0_name, max_game_time, bot_1_name, bot_0_data, bot_1_data, nextmatchid
+    map_name, bot_0_name, bot_1_name, bot_0_data, bot_1_data, next_match_id
 ):
     result = []
     session = aiohttp.ClientSession()
@@ -732,18 +757,20 @@ async def main(
     )
     json_config = {
         "Config": {
-            "Map": mapname,
-            "MaxGameTime": max_game_time,
+            "Map": map_name,
+            "MaxGameTime": MAX_GAME_TIME,
             "Player1": bot_0_name,
             "Player2": bot_1_name,
             "ReplayPath": REPLAY_DIRECTORY,
-            "MatchID": nextmatchid,
+            "MatchID": next_match_id,
             "DisableDebug": "False",
+            "MaxFrameTime": MAX_FRAME_TIME,
+            "Strikes": STRIKES
         }
     }
 
     await ws.send_str(json.dumps(json_config))
-    bot_counter = 0
+
     while True:
         msg = await ws.receive()
         if msg.type == aiohttp.WSMsgType.CLOSED:
@@ -902,31 +929,31 @@ async def main(
 
 
 def kill_current_server():
-
+    # return None
     try:
         if config.SYSTEM == "Linux":
             utl.printout("Killing SC2")
             os.system("pkill -f SC2_x64")
             os.system("lsof -ti tcp:8765 | xargs kill")
-        for proc in psutil.process_iter():
-            for conns in proc.connections(kind="inet"):
+        for process in psutil.process_iter():
+            for conns in process.connections(kind="inet"):
                 if conns.laddr.port == config.SC2_PROXY["PORT"]:
-                    proc.send_signal(signal.SIGTERM)
-            if proc.name() == "SC2_x64.exe":
-                proc.send_signal(signal.SIGTERM)
+                    process.send_signal(signal.SIGTERM)
+            if process.name() == "SC2_x64.exe":
+                process.send_signal(signal.SIGTERM)
 
     except:
         pass
 
 
-def runmatch(
-    count, mapname, bot_0_name, bot_1_name, bot_0_data, bot_1_data, nextmatchid
+def run_match(
+    match_count, map_name, bot_0_name, bot_1_name, bot_0_data, bot_1_data, next_match_id
 ):
     try:
-        utl.printout(f"Starting game - Round {count}")
+        utl.printout(f"Starting game - Round {match_count}")
         kill_current_server()
         proxy = subprocess.Popen(
-            PYTHON + " Proxy.py", cwd=WORKING_DIRECTORY, shell=True
+            PYTHON + " server.py", cwd=WORKING_DIRECTORY,  shell=True
         )
 
         while True:
@@ -943,13 +970,12 @@ def runmatch(
         result = loop.run_until_complete(
             asyncio.wait_for(
                 main(
-                    mapname,
+                    map_name,
                     bot_0_name,
-                    MAX_GAME_TIME,
                     bot_1_name,
                     bot_0_data,
                     bot_1_data,
-                    nextmatchid,
+                    next_match_id,
                 ),
                 9000,
             )
@@ -957,13 +983,14 @@ def runmatch(
 
         try:
             os.kill(proxy.pid, signal.SIGTERM)
-        except Exception as e:
-            logger.debug(str(e))
-    except:
+        except Exception as exception:
+            logger.debug(str(exception))
+    except Exception as e:
+        logger.error(str(e))
         # todo: usually result is a list
         # todo: ideally this should always be the same variable type
         result = "Error"
-        
+
     return result
 
 
@@ -992,7 +1019,7 @@ try:
     while count < ROUNDS_PER_RUN:
         if not config.RUN_LOCAL:
             cleanup()
-        if getnextmatch(count):
+        if get_next_match(count):
             count += 1
         else:
             break
