@@ -75,8 +75,8 @@ SC2LADDERSERVER_CONFIG_JSON = (
     "}"
 )
 MAX_GAME_TIME = 60486
-MAX_FRAME_TIME = 123
-STRIKES = 10
+MAX_FRAME_TIME = 200
+STRIKES = 15
 
 # Override values with environment specific config
 try:

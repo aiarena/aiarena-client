@@ -67,6 +67,7 @@ class Proxy:
         self.no_of_strikes: int = 0
         self.max_frame_time: int = max_frame_time
         self.strikes: int = strikes
+        self.replay_saved: bool = False
 
     async def __request(self, request):
         """
@@ -208,11 +209,14 @@ class Proxy:
         Sends a save_replay request to SC2 and writes the response bytes to self.replay_name.
         :return: bool
         """
-        logger.debug(f"Requesting replay from server")
-        result = await self._execute(save_replay=sc_pb.RequestSaveReplay())
-        with open(self.replay_name, "wb") as f:
-            f.write(result.save_replay.data)
-        logger.debug(f"Saved replay as " + str(self.replay_name))
+        if not self.replay_saved:
+            logger.debug(f"Requesting replay from server")
+            result = await self._execute(save_replay=sc_pb.RequestSaveReplay())
+            if len(result.save_replay.data)>10:
+                with open(self.replay_name, "wb") as f:
+                    f.write(result.save_replay.data)
+                logger.debug(f"Saved replay as " + str(self.replay_name))
+            self.replay_saved = True
         return True
 
     async def process_request(self, msg):
