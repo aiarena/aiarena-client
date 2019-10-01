@@ -1077,16 +1077,13 @@ def run_match(
         loop = asyncio.get_event_loop()
 
         result = loop.run_until_complete(
-            asyncio.wait_for(
                 main(
                     map_name,
                     bot_0_name,
                     bot_1_name,
                     bot_0_data,
                     bot_1_data,
-                    next_match_id,
-                ),
-                9000,
+                    next_match_id
             )
         )
 
