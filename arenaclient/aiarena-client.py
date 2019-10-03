@@ -158,6 +158,11 @@ class ArenaClient:
 
     def __init__(self, config):
         self._config = config
+
+        self._logger = logging.getLogger(__name__)
+        self._logger.addHandler(self._config.LOGGING_HANDLER)
+        self._logger.setLevel(self._config.LOGGING_LEVEL)
+
         self._utl = Utl(self._config)
 
     def run_next_match(self, match_count: int):
@@ -974,13 +979,15 @@ class ArenaClient:
     def run(self):
         try:
             self._utl.printout(f'Arena Client started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
+
+            os.chdir(self._config.WORKING_DIRECTORY)
+
             os.makedirs(self._config.REPLAYS_DIRECTORY, exist_ok=True)
 
             if not self._config.RUN_LOCAL:
                 os.makedirs(self._config.TEMP_PATH, exist_ok=True)
                 os.makedirs(self._config.BOTS_DIRECTORY, exist_ok=True)
 
-            os.chdir(self._config.WORKING_DIRECTORY)
             count = 0
             if self._config.RUN_LOCAL:
                 try:
