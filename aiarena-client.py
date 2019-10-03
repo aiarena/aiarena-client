@@ -142,7 +142,6 @@ class Bot:
             utl.printout(
                 f"MD5 hash ({self.bot_zip_md5hash}) does not match transferred file ({calculated_md5})"
             )
-            cleanup()
             return False
 
     # Get bot data
@@ -175,7 +174,6 @@ class Bot:
             utl.printout(
                 f"MD5 hash ({self.bot_data_md5hash}) does not match transferred file ({calculated_md5})"
             )
-            cleanup()
             return False
 
     def get_bot_data(self):
@@ -673,18 +671,8 @@ def cleanup():
 
     :return:
     """
-    # Files to remove
-    files = [
-        config.SC2LADDERSERVER_PID_FILE,
-        config.SC2LADDERSERVER_MATCHUP_LIST_FILE,
-        config.SC2LADDERSERVER_LADDERBOTS_FILE,
-        config.SC2LADDERSERVER_PLAYERIDS_FILE,
-        config.SC2LADDERSERVER_RESULTS_FILE,
-        config.SC2LADDERSERVER_STDOUT_FILE,
-        config.SC2LADDERSERVER_STDERR_FILE,
-    ]
 
-    for file in files:
+    for file in config.FILES_TO_CLEANUP:
         if os.path.isfile(file):
             os.remove(file)
 
@@ -1124,7 +1112,7 @@ try:
         ROUNDS_PER_RUN = config.ROUNDS_PER_RUN
 
     while count < ROUNDS_PER_RUN:
-        if not config.RUN_LOCAL:
+        if config.CLEANUP_FILES_BETWEEN_ROUNDS:
             cleanup()
         if get_next_match(count):
             count += 1
@@ -1138,14 +1126,10 @@ try:
 
 except Exception as e:
     utl.printout(f"arena-client encountered an uncaught exception: {e} Exiting...")
-    if not config.RUN_LOCAL:
-        with open(os.path.join(config.LOCAL_PATH, ".shutdown"), "w") as f:
-            f.write("Shutdown")
-    utl.printout(traceback.format_exc())
 finally:
     try:
         kill_current_server()
-        if not config.RUN_LOCAL:
+        if config.CLEANUP_FILES_BETWEEN_ROUNDS:
             cleanup()  # be polite and try to cleanup
     except:
         pass
