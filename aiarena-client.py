@@ -158,16 +158,10 @@ class Bot:
         :return: bot_name
         :return: bot_data
         """
-        if not self:
-            bot_name = "OverReactBot"
-            bot_race = "T"
-            bot_type = "python"
-            bot_id = "123"
-        else:
-            bot_name = self.name
-            bot_race = self.plays_race
-            bot_type = self.type
-            bot_id = self.game_display_id
+        bot_name = self.name
+        bot_race = self.plays_race
+        bot_type = self.type
+        bot_id = self.game_display_id
 
         race_map = {"P": "Protoss", "T": "Terran", "Z": "Zerg", "R": "Random"}
         bot_type_map = {
