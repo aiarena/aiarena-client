@@ -659,9 +659,9 @@ def cleanup():
             os.remove(file_path)
 
     # Remove entire sub folders
-    bots_dir = os.path.join(config.WORKING_DIRECTORY, "bots")
-    for directory in os.listdir(bots_dir):
-        shutil.rmtree(os.path.join(bots_dir, directory))
+    for directory in os.listdir(config.BOTS_DIRECTORY):
+        shutil.rmtree(os.path.join(config.BOTS_DIRECTORY, directory))
+
     logger.debug(f"Killing current server")
     kill_current_server()
 
@@ -1064,14 +1064,12 @@ def run_match(
 
 
 try:
-    utl.printout(
-        f'Arena Client started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}'
-    )
+    utl.printout(f'Arena Client started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
     os.makedirs(REPLAY_DIRECTORY, exist_ok=True)
 
     if not config.RUN_LOCAL:
         os.makedirs(config.TEMP_PATH, exist_ok=True)
-        os.makedirs(os.path.join(config.WORKING_DIRECTORY, "bots"), exist_ok=True)
+        os.makedirs(config.BOTS_DIRECTORY, exist_ok=True)
 
     os.chdir(WORKING_DIRECTORY)
     count = 0
