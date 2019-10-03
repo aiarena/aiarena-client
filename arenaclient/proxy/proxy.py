@@ -6,12 +6,12 @@ import tempfile
 import time
 import warnings
 
-from arenaclient.supervisor import Supervisor
+from arenaclient.proxy.supervisor import Supervisor
 import aiohttp
 import portpicker
 from s2clientprotocol import sc2api_pb2 as sc_pb
 from typing import Any
-from arenaclient import maps
+from arenaclient.proxy import maps
 from arenaclient.lib import Bot, Controller, Paths, Result
 
 logger = logging.getLogger(__name__)

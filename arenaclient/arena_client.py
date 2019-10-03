@@ -803,7 +803,7 @@ class ArenaClient:
             self._utl.printout(f"Starting game - Round {match_count}")
             self.kill_current_server()
             proxy = subprocess.Popen(
-                self._config.PYTHON + " server.py", cwd=self._config.WORKING_DIRECTORY, shell=True
+                self._config.PYTHON + " ./proxy/server.py", cwd=self._config.WORKING_DIRECTORY, shell=True
             )
 
             while True:
