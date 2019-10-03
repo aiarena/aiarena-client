@@ -27,11 +27,13 @@ class Bot:
     """
 
     def __init__(self, config, data):
-        self._logger = logging.getLogger(__name__)
-        self._logger.addHandler(config.LOGGING_HANDLER)
-        self._logger.setLevel(config.LOGGING_LEVEL)
+        self._config = config
 
-        self._utl = Utl(config)
+        self._logger = logging.getLogger(__name__)
+        self._logger.addHandler(self._config.LOGGING_HANDLER)
+        self._logger.setLevel(self._config.LOGGING_LEVEL)
+
+        self._utl = Utl(self._config)
         
         self.id = data["id"]
         self.name = data["name"]
@@ -52,9 +54,9 @@ class Bot:
         self._utl.printout(f"Downloading bot {self.name}")
         # Download bot and save to .zip
         r = requests.get(
-            self.bot_zip, headers={"Authorization": "Token " + config.API_TOKEN}
+            self.bot_zip, headers={"Authorization": "Token " + self._config.API_TOKEN}
         )
-        bot_download_path = os.path.join(config.TEMP_PATH, self.name + ".zip")
+        bot_download_path = os.path.join(self._config.TEMP_PATH, self.name + ".zip")
         with open(bot_download_path, "wb") as bot_zip:
             bot_zip.write(r.content)
         # Load bot from .zip to calculate md5
@@ -98,9 +100,9 @@ class Bot:
         self._utl.printout(f"Downloading bot data for {self.name}")
         # Download bot data and save to .zip
         r = requests.get(
-            self.bot_data, headers={"Authorization": "Token " + config.API_TOKEN}
+            self.bot_data, headers={"Authorization": "Token " + self._config.API_TOKEN}
         )
-        bot_data_path = os.path.join(config.TEMP_PATH, self.name + "-data.zip")
+        bot_data_path = os.path.join(self._config.TEMP_PATH, self.name + "-data.zip")
         with open(bot_data_path, "wb") as bot_data_zip:
             bot_data_zip.write(r.content)
         with open(bot_data_path, "rb") as bot_data_zip:
@@ -141,7 +143,7 @@ class Bot:
 
         bot_data = {
             "Race": race_map[bot_race],
-            "RootPath": os.path.join(config.BOTS_DIRECTORY, bot_name),
+            "RootPath": os.path.join(self._config.BOTS_DIRECTORY, bot_name),
             "FileName": bot_type_map[bot_type][0],
             "Type": bot_type_map[bot_type][1],
             "botID": bot_id,
@@ -169,11 +171,11 @@ class ArenaClient:
         self._utl.printout(
             f'New match started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}'
         )
-        if not config.RUN_LOCAL:
+        if not self._config.RUN_LOCAL:
             try:
                 next_match_response = requests.post(
-                    config.API_MATCHES_URL,
-                    headers={"Authorization": "Token " + config.API_TOKEN},
+                    self._config.API_MATCHES_URL,
+                    headers={"Authorization": "Token " + self._config.API_TOKEN},
                 )
             except ConnectionError:
                 self._utl.printout(
@@ -212,7 +214,7 @@ class ArenaClient:
                 time.sleep(30)
                 return False
 
-            map_path = os.path.join(config.SC2_HOME, "maps", f"{map_name}.SC2Map")
+            map_path = os.path.join(self._config.SC2_HOME, "maps", f"{map_name}.SC2Map")
             with open(map_path, "wb") as map_file:
                 map_file.write(r.content)
 
@@ -361,58 +363,58 @@ class ArenaClient:
 
         self._utl.printout(str(result))
         replay_file: str = ""
-        for file in os.listdir(config.REPLAYS_DIRECTORY):
+        for file in os.listdir(self._config.REPLAYS_DIRECTORY):
             if file.endswith('.SC2Replay'):
                 replay_file = file
                 break
 
-        replay_file_path = os.path.join(config.REPLAYS_DIRECTORY, replay_file)
-        if config.RUN_REPLAY_CHECK:
+        replay_file_path = os.path.join(self._config.REPLAYS_DIRECTORY, replay_file)
+        if self._config.RUN_REPLAY_CHECK:
             os.system(
                 "perl "
-                + os.path.join(config.LOCAL_PATH, "replaycheck.pl")
+                + os.path.join(self._config.LOCAL_PATH, "replaycheck.pl")
                 + " "
                 + replay_file_path
             )
 
-        bot1_data_folder = os.path.join(config.BOTS_DIRECTORY, bot_1_name, "data")
-        bot2_data_folder = os.path.join(config.BOTS_DIRECTORY, bot_2_name, "data")
+        bot1_data_folder = os.path.join(self._config.BOTS_DIRECTORY, bot_1_name, "data")
+        bot2_data_folder = os.path.join(self._config.BOTS_DIRECTORY, bot_2_name, "data")
         bot1_error_log = os.path.join(bot1_data_folder, "stderr.log")
-        bot1_error_log_tmp = os.path.join(config.TEMP_PATH, bot_1_name + "-error.log")
+        bot1_error_log_tmp = os.path.join(self._config.TEMP_PATH, bot_1_name + "-error.log")
         if os.path.isfile(bot1_error_log):
             shutil.move(bot1_error_log, bot1_error_log_tmp)
         else:
             Path(bot1_error_log_tmp).touch()
 
         bot2_error_log = os.path.join(bot2_data_folder, "stderr.log")
-        bot2_error_log_tmp = os.path.join(config.TEMP_PATH, bot_2_name + "-error.log")
+        bot2_error_log_tmp = os.path.join(self._config.TEMP_PATH, bot_2_name + "-error.log")
         if os.path.isfile(bot2_error_log):
             shutil.move(bot2_error_log, bot2_error_log_tmp)
         else:
             Path(bot2_error_log_tmp).touch()
 
         zip_file = zipfile.ZipFile(
-            os.path.join(config.TEMP_PATH, bot_1_name + "-error.zip"), "w"
+            os.path.join(self._config.TEMP_PATH, bot_1_name + "-error.zip"), "w"
         )
         zip_file.write(
-            os.path.join(config.TEMP_PATH, bot_1_name + "-error.log"),
+            os.path.join(self._config.TEMP_PATH, bot_1_name + "-error.log"),
             compress_type=zipfile.ZIP_DEFLATED,
         )
         zip_file.close()
 
         zip_file = zipfile.ZipFile(
-            os.path.join(config.TEMP_PATH, bot_2_name + "-error.zip"), "w"
+            os.path.join(self._config.TEMP_PATH, bot_2_name + "-error.zip"), "w"
         )
         zip_file.write(
-            os.path.join(config.TEMP_PATH, bot_2_name + "-error.log"),
+            os.path.join(self._config.TEMP_PATH, bot_2_name + "-error.log"),
             compress_type=zipfile.ZIP_DEFLATED,
         )
         zip_file.close()
 
         # aiarena-client logs
-        proxy_tmp = os.path.join(config.TEMP_PATH, "proxy.log")
-        # supervisor_tmp = os.path.join(config.TEMP_PATH, "supervisor.log")
-        client_tmp = os.path.join(config.TEMP_PATH, "aiarena-client.log")
+        proxy_tmp = os.path.join(self._config.TEMP_PATH, "proxy.log")
+        # supervisor_tmp = os.path.join(self._config.TEMP_PATH, "supervisor.log")
+        client_tmp = os.path.join(self._config.TEMP_PATH, "aiarena-client.log")
 
         if os.path.isfile("proxy.log"):
             shutil.move("proxy.log", proxy_tmp)
@@ -429,7 +431,7 @@ class ArenaClient:
         else:
             Path(client_tmp).touch()
 
-        arenaclient_log_zip = os.path.join(config.TEMP_PATH, "arenaclient_log.zip")
+        arenaclient_log_zip = os.path.join(self._config.TEMP_PATH, "arenaclient_log.zip")
         zip_file = zipfile.ZipFile(arenaclient_log_zip, "w")
         zip_file.write(proxy_tmp, compress_type=zipfile.ZIP_DEFLATED)
         # zip_file.write(supervisor_tmp, compress_type=zipfile.ZIP_DEFLATED)
@@ -440,27 +442,27 @@ class ArenaClient:
         if not os.path.isdir(bot1_data_folder):
             os.mkdir(bot1_data_folder)
         shutil.make_archive(
-            os.path.join(config.TEMP_PATH, bot_1_name + "-data"), "zip", bot1_data_folder
+            os.path.join(self._config.TEMP_PATH, bot_1_name + "-data"), "zip", bot1_data_folder
         )
         if not os.path.isdir(bot2_data_folder):
             os.mkdir(bot2_data_folder)
         shutil.make_archive(
-            os.path.join(config.TEMP_PATH, bot_2_name + "-data"), "zip", bot2_data_folder
+            os.path.join(self._config.TEMP_PATH, bot_2_name + "-data"), "zip", bot2_data_folder
         )
 
         try:  # Upload replay file and bot data archives
             file_list = {
                 "bot1_data": open(
-                    os.path.join(config.TEMP_PATH, f"{bot_1_name}-data.zip"), "rb"
+                    os.path.join(self._config.TEMP_PATH, f"{bot_1_name}-data.zip"), "rb"
                 ),
                 "bot2_data": open(
-                    os.path.join(config.TEMP_PATH, f"{bot_2_name}-data.zip"), "rb"
+                    os.path.join(self._config.TEMP_PATH, f"{bot_2_name}-data.zip"), "rb"
                 ),
                 "bot1_log": open(
-                    os.path.join(config.TEMP_PATH, f"{bot_1_name}-error.zip"), "rb"
+                    os.path.join(self._config.TEMP_PATH, f"{bot_1_name}-error.zip"), "rb"
                 ),
                 "bot2_log": open(
-                    os.path.join(config.TEMP_PATH, f"{bot_2_name}-error.zip"), "rb"
+                    os.path.join(self._config.TEMP_PATH, f"{bot_2_name}-error.zip"), "rb"
                 ),
                 "arenaclient_log": open(arenaclient_log_zip, "rb"),
             }
@@ -475,14 +477,14 @@ class ArenaClient:
             if bot2_avg_step_time is not None:
                 payload["bot2_avg_step_time"] = bot2_avg_step_time
 
-            if config.DEBUG_MODE:
+            if self._config.DEBUG_MODE:
                 self._utl.printout(json.dumps(payload))
 
             post = requests.post(
-                config.API_RESULTS_URL,
+                self._config.API_RESULTS_URL,
                 files=file_list,
                 data=payload,
-                headers={"Authorization": "Token " + config.API_TOKEN},
+                headers={"Authorization": "Token " + self._config.API_TOKEN},
             )
             if post is None:
                 self._utl.printout("ERROR: Result submission failed. 'post' was None.")
@@ -591,7 +593,7 @@ class ArenaClient:
             #             results_log.write(json.dumps(j_object, indent=4))
             # else:
         self._utl.printout(str(result))
-        with open(config.RESULTS_LOG_FILE, "w") as results_log:
+        with open(self._config.RESULTS_LOG_FILE, "w") as results_log:
             json_object = dict({"Results": [result_json]})
             results_log.write(json.dumps(json_object, indent=4))
 
@@ -602,15 +604,15 @@ class ArenaClient:
         :return:
         """
         # Files to remove inside these folders
-        folders = [config.REPLAYS_DIRECTORY, config.TEMP_PATH]
+        folders = [self._config.REPLAYS_DIRECTORY, self._config.TEMP_PATH]
         for folder in folders:
             for file in os.listdir(folder):
                 file_path = os.path.join(folder, file)
                 os.remove(file_path)
 
         # Remove entire sub folders
-        for directory in os.listdir(config.BOTS_DIRECTORY):
-            shutil.rmtree(os.path.join(config.BOTS_DIRECTORY, directory))
+        for directory in os.listdir(self._config.BOTS_DIRECTORY):
+            shutil.rmtree(os.path.join(self._config.BOTS_DIRECTORY, directory))
 
         self._logger.debug(f"Killing current server")
         self.kill_current_server()
@@ -625,12 +627,12 @@ class ArenaClient:
         """
         # todo: move to Bot class
 
-        bot_data = bot_data["Bots"] if config.RUN_LOCAL else bot_data
+        bot_data = bot_data["Bots"] if self._config.RUN_LOCAL else bot_data
         bot_name = next(iter(bot_data))
-        bot_data = bot_data[bot_name] if config.RUN_LOCAL else bot_data
+        bot_data = bot_data[bot_name] if self._config.RUN_LOCAL else bot_data
         bot_path = (
-            os.path.join(config.BOTS_DIRECTORY, bot_name)
-            if config.RUN_LOCAL
+            os.path.join(self._config.BOTS_DIRECTORY, bot_name)
+            if self._config.RUN_LOCAL
             else bot_data["RootPath"]
         )  # hot fix
         bot_file = bot_data["FileName"]
@@ -638,16 +640,16 @@ class ArenaClient:
         cmd_line = [
             bot_file,
             "--GamePort",
-            str(config.SC2_PROXY["PORT"]),
+            str(self._config.SC2_PROXY["PORT"]),
             "--StartPort",
-            str(config.SC2_PROXY["PORT"]),
+            str(self._config.SC2_PROXY["PORT"]),
             "--LadderServer",
-            config.SC2_PROXY["HOST"],
+            self._config.SC2_PROXY["HOST"],
             "--OpponentId",
             str(opponent_id),
         ]
         if bot_type.lower() == "python":
-            cmd_line.insert(0, config.PYTHON)
+            cmd_line.insert(0, self._config.PYTHON)
         elif bot_type.lower() == "wine":
             cmd_line.insert(0, "wine")
         elif bot_type.lower() == "mono":
@@ -669,11 +671,11 @@ class ArenaClient:
         except OSError:
             os.mkdir(os.path.join(bot_path, "data"))
         try:
-            os.stat(config.REPLAYS_DIRECTORY)
+            os.stat(self._config.REPLAYS_DIRECTORY)
         except OSError:
-            os.mkdir(config.REPLAYS_DIRECTORY)
+            os.mkdir(self._config.REPLAYS_DIRECTORY)
         try:
-            if config.SYSTEM == "Linux":
+            if self._config.SYSTEM == "Linux":
                 with open(os.path.join(bot_path, "data", "stderr.log"), "w+") as out:
                     process = subprocess.Popen(
                         " ".join(cmd_line),
@@ -718,20 +720,20 @@ class ArenaClient:
         result = []
         session = aiohttp.ClientSession()
         ws = await session.ws_connect(
-            f"http://{config.SC2_PROXY['HOST']}:{str(config.SC2_PROXY['PORT'])}/sc2api",
+            f"http://{self._config.SC2_PROXY['HOST']}:{str(self._config.SC2_PROXY['PORT'])}/sc2api",
             headers=dict({"Supervisor": "true"}),
         )
         json_config = {
             "Config": {
                 "Map": map_name,
-                "MaxGameTime": config.MAX_GAME_TIME,
+                "MaxGameTime": self._config.MAX_GAME_TIME,
                 "Player1": bot_0_name,
                 "Player2": bot_1_name,
-                "ReplayPath": config.REPLAYS_DIRECTORY,
+                "ReplayPath": self._config.REPLAYS_DIRECTORY,
                 "MatchID": next_match_id,
                 "DisableDebug": "False",
-                "MaxFrameTime": config.MAX_FRAME_TIME,
-                "Strikes": config.STRIKES
+                "MaxFrameTime": self._config.MAX_FRAME_TIME,
+                "Strikes": self._config.STRIKES
             }
         }
 
@@ -901,13 +903,13 @@ class ArenaClient:
         """
         # return None
         try:
-            if config.SYSTEM == "Linux":
+            if self._config.SYSTEM == "Linux":
                 self._utl.printout("Killing SC2")
                 os.system("pkill -f SC2_x64")
                 os.system("lsof -ti tcp:8765 | xargs kill")
             for process in psutil.process_iter():
                 for conns in process.connections(kind="inet"):
-                    if conns.laddr.port == config.SC2_PROXY["PORT"]:
+                    if conns.laddr.port == self._config.SC2_PROXY["PORT"]:
                         process.send_signal(signal.SIGTERM)
                 if process.name() == "SC2_x64.exe":
                     process.send_signal(signal.SIGTERM)
@@ -932,14 +934,14 @@ class ArenaClient:
             self._utl.printout(f"Starting game - Round {match_count}")
             self.kill_current_server()
             proxy = subprocess.Popen(
-                config.PYTHON + " server.py", cwd=config.WORKING_DIRECTORY, shell=True
+                self._config.PYTHON + " server.py", cwd=self._config.WORKING_DIRECTORY, shell=True
             )
 
             while True:
                 time.sleep(1)
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 result = sock.connect_ex(
-                    (config.SC2_PROXY["HOST"], config.SC2_PROXY["PORT"])
+                    (self._config.SC2_PROXY["HOST"], self._config.SC2_PROXY["PORT"])
                 )
                 if result == 0:
                     break
@@ -972,15 +974,15 @@ class ArenaClient:
     def run(self):
         try:
             self._utl.printout(f'Arena Client started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
-            os.makedirs(config.REPLAYS_DIRECTORY, exist_ok=True)
+            os.makedirs(self._config.REPLAYS_DIRECTORY, exist_ok=True)
 
-            if not config.RUN_LOCAL:
-                os.makedirs(config.TEMP_PATH, exist_ok=True)
-                os.makedirs(config.BOTS_DIRECTORY, exist_ok=True)
+            if not self._config.RUN_LOCAL:
+                os.makedirs(self._config.TEMP_PATH, exist_ok=True)
+                os.makedirs(self._config.BOTS_DIRECTORY, exist_ok=True)
 
-            os.chdir(config.WORKING_DIRECTORY)
+            os.chdir(self._config.WORKING_DIRECTORY)
             count = 0
-            if config.RUN_LOCAL:
+            if self._config.RUN_LOCAL:
                 try:
                     with open("matchupList", "r") as ml:
                         ROUNDS_PER_RUN = len(ml.readlines())
@@ -989,10 +991,10 @@ class ArenaClient:
                     ROUNDS_PER_RUN = 0
                     f.close()
             else:
-                ROUNDS_PER_RUN = config.ROUNDS_PER_RUN
+                ROUNDS_PER_RUN = self._config.ROUNDS_PER_RUN
 
             while count < ROUNDS_PER_RUN:
-                if config.CLEANUP_BETWEEN_ROUNDS:
+                if self._config.CLEANUP_BETWEEN_ROUNDS:
                     self.cleanup()
                 if self.run_next_match(count):
                     count += 1
@@ -1009,15 +1011,15 @@ class ArenaClient:
             self._utl.printout(f"arena-client encountered an uncaught exception: {e} Exiting...")
         finally:
             try:
-                if config.CLEANUP_BETWEEN_ROUNDS:
+                if self._config.CLEANUP_BETWEEN_ROUNDS:
                     self.cleanup()
             except:
                 pass  # ensure we don't skip the shutdown
 
             try:
-                if config.SHUT_DOWN_AFTER_RUN:
+                if self._config.SHUT_DOWN_AFTER_RUN:
                     self._utl.printout("Stopping system")
-                    with open(os.path.join(config.LOCAL_PATH, ".shutdown"), "w") as f:
+                    with open(os.path.join(self._config.LOCAL_PATH, ".shutdown"), "w") as f:
                         f.write("Shutdown")
             except:
                 self._utl.printout("ERROR: Failed to shutdown.")
