@@ -13,17 +13,10 @@ import traceback
 
 import aiohttp
 import psutil
+from utl import Utl
 
 # the default config will also import custom config values
 import default_config as config
-from utl import Utl
-
-utl = Utl(config)
-
-# Setup logging
-logger = logging.getLogger(__name__)
-logger.addHandler(config.LOGGING_HANDLER)
-logger.setLevel(config.LOGGING_LEVEL)
 
 if not config.RUN_LOCAL:
     import hashlib
@@ -52,7 +45,13 @@ class Bot:
     Class for setting up the config for a bot.
     """
 
-    def __init__(self, data):
+    def __init__(self, config, data):
+        self._logger = logging.getLogger(__name__)
+        self._logger.addHandler(config.LOGGING_HANDLER)
+        self._logger.setLevel(config.LOGGING_LEVEL)
+
+        self._utl = Utl(config)
+        
         self.id = data["id"]
         self.name = data["name"]
         self.game_display_id = data["game_display_id"]
@@ -69,7 +68,7 @@ class Bot:
 
         :return: bool
         """
-        utl.printout(f"Downloading bot {self.name}")
+        self._utl.printout(f"Downloading bot {self.name}")
         # Download bot and save to .zip
         r = requests.get(
             self.bot_zip, headers={"Authorization": "Token " + config.API_TOKEN}
@@ -79,10 +78,10 @@ class Bot:
             bot_zip.write(r.content)
         # Load bot from .zip to calculate md5
         with open(bot_download_path, "rb") as bot_zip:
-            calculated_md5 = hashlib.md5(utl.file_as_bytes(bot_zip)).hexdigest()
+            calculated_md5 = hashlib.md5(self._utl.file_as_bytes(bot_zip)).hexdigest()
         if self.bot_zip_md5hash == calculated_md5:
-            utl.printout("MD5 hash matches transferred file...")
-            utl.printout(f"Extracting bot {self.name} to bots/{self.name}")
+            self._utl.printout("MD5 hash matches transferred file...")
+            self._utl.printout(f"Extracting bot {self.name} to bots/{self.name}")
             # Extract to bot folder
             with zipfile.ZipFile(bot_download_path, "r") as zip_ref:
                 zip_ref.extractall(f"bots/{self.name}")
@@ -100,7 +99,7 @@ class Bot:
             else:
                 return False
         else:
-            utl.printout(
+            self._utl.printout(
                 f"MD5 hash ({self.bot_zip_md5hash}) does not match transferred file ({calculated_md5})"
             )
             return False
@@ -115,7 +114,7 @@ class Bot:
         if self.bot_data is None:
             return True
 
-        utl.printout(f"Downloading bot data for {self.name}")
+        self._utl.printout(f"Downloading bot data for {self.name}")
         # Download bot data and save to .zip
         r = requests.get(
             self.bot_data, headers={"Authorization": "Token " + config.API_TOKEN}
@@ -124,15 +123,15 @@ class Bot:
         with open(bot_data_path, "wb") as bot_data_zip:
             bot_data_zip.write(r.content)
         with open(bot_data_path, "rb") as bot_data_zip:
-            calculated_md5 = hashlib.md5(utl.file_as_bytes(bot_data_zip)).hexdigest()
+            calculated_md5 = hashlib.md5(self._utl.file_as_bytes(bot_data_zip)).hexdigest()
         if self.bot_data_md5hash == calculated_md5:
-            utl.printout("MD5 hash matches transferred file...")
-            utl.printout(f"Extracting data for {self.name} to bots/{self.name}/data")
+            self._utl.printout("MD5 hash matches transferred file...")
+            self._utl.printout(f"Extracting data for {self.name} to bots/{self.name}/data")
             with zipfile.ZipFile(bot_data_path, "r") as zip_ref:
                 zip_ref.extractall(f"bots/{self.name}/data")
             return True
         else:
-            utl.printout(
+            self._utl.printout(
                 f"MD5 hash ({self.bot_data_md5hash}) does not match transferred file ({calculated_md5})"
             )
             return False
@@ -174,6 +173,10 @@ class ArenaClient:
     Contains all the functionality necessary to operate as an arena client
     """
 
+    def __init__(self, config):
+        self._config = config
+        self._utl = Utl(self._config)
+
     def run_next_match(self, match_count: int):
         """
         Retrieve the next match from the ai-arena website API. Runs the match, and posts the result to the ai-arena
@@ -182,7 +185,7 @@ class ArenaClient:
         :param match_count:
         :return:
         """
-        utl.printout(
+        self._utl.printout(
             f'New match started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}'
         )
         if not config.RUN_LOCAL:
@@ -192,14 +195,14 @@ class ArenaClient:
                     headers={"Authorization": "Token " + config.API_TOKEN},
                 )
             except ConnectionError:
-                utl.printout(
+                self._utl.printout(
                     f"ERROR: Failed to retrieve game. Connection to website failed. Sleeping."
                 )
                 time.sleep(30)
                 return False
 
             if next_match_response.status_code >= 400:
-                utl.printout(
+                self._utl.printout(
                     f"ERROR: Failed to retrieve game. Status code: {next_match_response.status_code}. Sleeping."
                 )
                 time.sleep(30)
@@ -208,22 +211,23 @@ class ArenaClient:
             next_match_data = json.loads(next_match_response.text)
 
             if "id" not in next_match_data:
-                utl.printout("No games available - sleeping")
+                self._utl.printout("No games available - sleeping")
                 time.sleep(30)
                 return False
 
             next_match_id = next_match_data["id"]
-            utl.printout(f"Next match: {next_match_id}")
+            self._utl.printout(f"Next match: {next_match_id}")
 
             # Download map
             map_name = next_match_data["map"]["name"]
             map_url = next_match_data["map"]["file"]
-            utl.printout(f"Downloading map {map_name}")
+            self._utl.printout(f"Downloading map {map_name}")
 
             try:
                 r = requests.get(map_url)
             except Exception as download_exception:
-                utl.printout(f"ERROR: Failed to download map {map_name} at URL {map_url}. Error {download_exception}")
+                self._utl.printout(
+                    f"ERROR: Failed to download map {map_name} at URL {map_url}. Error {download_exception}")
                 time.sleep(30)
                 return False
 
@@ -231,11 +235,11 @@ class ArenaClient:
             with open(map_path, "wb") as map_file:
                 map_file.write(r.content)
 
-            bot_0 = Bot(next_match_data["bot1"])
+            bot_0 = Bot(self._config, next_match_data["bot1"])
             if not bot_0.get_bot_file():
                 time.sleep(30)
                 return False
-            bot_1 = Bot(next_match_data["bot2"])
+            bot_1 = Bot(self._config, next_match_data["bot2"])
             if not bot_1.get_bot_file():
                 time.sleep(30)
                 return False
@@ -248,7 +252,7 @@ class ArenaClient:
             result = self.run_match(
                 match_count, map_name, bot_0_name, bot_1_name, bot_0_data, bot_1_data, next_match_id
             )
-            # utl.printout(result)
+            # self._utl.printout(result)
             self.post_result(next_match_id, result, bot_0_name, bot_1_name)
             if result == "Error":
                 return False
@@ -259,7 +263,7 @@ class ArenaClient:
                 for i, line in enumerate(match_up_list):
                     next_match_id = i
                     break
-            utl.printout(f"Next match: {next_match_id}")
+            self._utl.printout(f"Next match: {next_match_id}")
             map_name = line.split(' ')[1].replace("\n", "").replace('.SC2Map', "")
             bot_0 = line.split('vs')[0].replace('"', "")
             bot_1 = line.split('vs')[1].split(" ")[0].replace('"', "")
@@ -297,7 +301,7 @@ class ArenaClient:
             for x in lm_result:
                 if x.get("Result", None):
                     temp_results = x["Result"]
-                    utl.printout(str(temp_results))
+                    self._utl.printout(str(temp_results))
                     bot_1_name = list(x["Result"].keys())[0]
                     bot_2_name = list(x["Result"].keys())[1]
 
@@ -362,7 +366,7 @@ class ArenaClient:
             bot1_avg_step_time = 0
             bot2_avg_step_time = 0
 
-        utl.printout(str(result))
+        self._utl.printout(str(result))
         replay_file: str = ""
         for file in os.listdir(config.REPLAYS_DIRECTORY):
             if file.endswith('.SC2Replay'):
@@ -479,7 +483,7 @@ class ArenaClient:
                 payload["bot2_avg_step_time"] = bot2_avg_step_time
 
             if config.DEBUG_MODE:
-                utl.printout(json.dumps(payload))
+                self._utl.printout(json.dumps(payload))
 
             post = requests.post(
                 config.API_RESULTS_URL,
@@ -488,15 +492,15 @@ class ArenaClient:
                 headers={"Authorization": "Token " + config.API_TOKEN},
             )
             if post is None:
-                utl.printout("ERROR: Result submission failed. 'post' was None.")
+                self._utl.printout("ERROR: Result submission failed. 'post' was None.")
             elif post.status_code >= 400:  # todo: retry?
-                utl.printout(
+                self._utl.printout(
                     f"ERROR: Result submission failed. Status code: {post.status_code}."
                 )
             else:
-                utl.printout(result + " - Result transferred")
+                self._utl.printout(result + " - Result transferred")
         except ConnectionError:
-            utl.printout(f"ERROR: Result submission failed. Connection to website failed.")
+            self._utl.printout(f"ERROR: Result submission failed. Connection to website failed.")
 
     def post_local_result(self, bot_0, bot_1, lm_result):
         """
@@ -522,7 +526,7 @@ class ArenaClient:
             for x in lm_result:
                 if x.get("Result", None):
                     temp_results = x["Result"]
-                    utl.printout(str(temp_results))
+                    self._utl.printout(str(temp_results))
 
                     if temp_results[bot_0] == "Result.Crashed":
                         result = "Player1Crash"
@@ -584,16 +588,16 @@ class ArenaClient:
             #         with open(RESULTS_LOG_FILE, 'w+') as results_log:
             #             j_object = json.load(results_log)
             #             if j_object.get('Results',None):
-            #                 logger.debug('append')
+            #                 self._logger.debug('append')
             #                 j_object['Results'].append(result_json)
 
             #             else:
-            #                 logger.debug('Overwrite')
+            #                 self._logger.debug('Overwrite')
             #                 j_object['Results'] =[result_json]
 
             #             results_log.write(json.dumps(j_object, indent=4))
             # else:
-        utl.printout(str(result))
+        self._utl.printout(str(result))
         with open(config.RESULTS_LOG_FILE, "w") as results_log:
             json_object = dict({"Results": [result_json]})
             results_log.write(json.dumps(json_object, indent=4))
@@ -615,7 +619,7 @@ class ArenaClient:
         for directory in os.listdir(config.BOTS_DIRECTORY):
             shutil.rmtree(os.path.join(config.BOTS_DIRECTORY, directory))
 
-        logger.debug(f"Killing current server")
+        self._logger.debug(f"Killing current server")
         self.kill_current_server()
 
     def start_bot(self, bot_data, opponent_id):
@@ -687,7 +691,7 @@ class ArenaClient:
                         preexec_fn=os.setpgrp,
                     )
                 if process.errors:
-                    logger.debug("Error: " + process.errors)
+                    self._logger.debug("Error: " + process.errors)
                 return process
             else:
                 with open(os.path.join(bot_path, "data", "stderr.log"), "w+") as out:
@@ -700,10 +704,10 @@ class ArenaClient:
                         creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
                     )
                 if process.errors:
-                    logger.debug("Error: " + process.errors)
+                    self._logger.debug("Error: " + process.errors)
                 return process
         except Exception as exception:
-            utl.printout(exception)
+            self._utl.printout(exception)
             sys.exit(0)
 
     async def main(self, map_name: str, bot_0_name: str, bot_1_name: str, bot_0_data, bot_1_data, next_match_id: int):
@@ -755,7 +759,7 @@ class ArenaClient:
                 break
             msg = msg.json()
             if msg.get("Status", None) == "Connected":
-                logger.debug(f"Starting bots...")
+                self._logger.debug(f"Starting bots...")
                 bot1_process = self.start_bot(
                     bot_0_data, opponent_id=bot_1_data.get("botID", 123)
                 )  # todo opponent_id
@@ -767,7 +771,7 @@ class ArenaClient:
                         bot_1_data, opponent_id=bot_0_data.get("botID", 321)
                     )  # todo opponent_id
                 else:
-                    logger.debug(f"Bot2 crash")
+                    self._logger.debug(f"Bot2 crash")
                     result.append(
                         {
                             "Result": {
@@ -776,18 +780,18 @@ class ArenaClient:
                             }
                         }
                     )
-                    utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
+                    self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
                     await session.close()
                     break
                 msg = await ws.receive_json()
 
                 if msg.get("Bot", None) == "Connected":
-                    logger.debug(f"Changing PGID")
+                    self._logger.debug(f"Changing PGID")
                     for x in [bot1_process.pid, bot2_process.pid]:
-                        utl.move_pid(x)
+                        self._utl.move_pid(x)
 
                 else:
-                    logger.debug(f"Bot2 crash")
+                    self._logger.debug(f"Bot2 crash")
                     result.append(
                         {
                             "Result": {
@@ -796,13 +800,13 @@ class ArenaClient:
                             }
                         }
                     )
-                    utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
+                    self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
                     await session.close()
                     break
-                logger.debug(f"checking if bot is okay")
+                self._logger.debug(f"checking if bot is okay")
 
                 if bot1_process.poll():
-                    logger.debug(f"Bot1 crash")
+                    self._logger.debug(f"Bot1 crash")
                     result.append(
                         {
                             "Result": {
@@ -811,7 +815,7 @@ class ArenaClient:
                             }
                         }
                     )
-                    utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
+                    self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
                     await session.close()
                     break
 
@@ -819,7 +823,7 @@ class ArenaClient:
                     await ws.send_str(json.dumps({"Bot1": True}))
 
                 if bot2_process.poll():
-                    logger.debug(f"Bot2 crash")
+                    self._logger.debug(f"Bot2 crash")
                     result.append(
                         {
                             "Result": {
@@ -828,7 +832,7 @@ class ArenaClient:
                             }
                         }
                     )
-                    utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
+                    self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
                     await session.close()
                     break
 
@@ -836,8 +840,8 @@ class ArenaClient:
                     await ws.send_str(json.dumps({"Bot2": True}))
 
             if msg.get("PID", None):
-                utl.pid_cleanup([bot1_process.pid, bot2_process.pid])  # Terminate bots first
-                utl.pid_cleanup(msg["PID"])  # Terminate SC2 processes
+                self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])  # Terminate bots first
+                self._utl.pid_cleanup(msg["PID"])  # Terminate SC2 processes
 
             if msg.get("Result", None):
                 result.append(msg)
@@ -849,13 +853,13 @@ class ArenaClient:
                 result.append(msg)
 
             if msg.get("Error", None):
-                utl.printout(msg)
+                self._utl.printout(msg)
                 await session.close()
                 break
 
             if msg.get("StillAlive", None):
                 if bot1_process.poll():
-                    utl.printout("Bot1 Init Error")
+                    self._utl.printout("Bot1 Init Error")
                     await session.close()
                     # if not check_pid(bot1_process.pid) and not len(result) >0:
                     result.append(
@@ -866,9 +870,9 @@ class ArenaClient:
                             }
                         }
                     )
-                    utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
+                    self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
                 if bot2_process.poll():
-                    utl.printout("Bot2 Init Error")
+                    self._utl.printout("Bot2 Init Error")
                     await session.close()
                     # if not check_pid(bot2_process.pid) and not len(result) >0:
                     result.append(
@@ -905,7 +909,7 @@ class ArenaClient:
         # return None
         try:
             if config.SYSTEM == "Linux":
-                utl.printout("Killing SC2")
+                self._utl.printout("Killing SC2")
                 os.system("pkill -f SC2_x64")
                 os.system("lsof -ti tcp:8765 | xargs kill")
             for process in psutil.process_iter():
@@ -932,7 +936,7 @@ class ArenaClient:
         :return:
         """
         try:
-            utl.printout(f"Starting game - Round {match_count}")
+            self._utl.printout(f"Starting game - Round {match_count}")
             self.kill_current_server()
             proxy = subprocess.Popen(
                 config.PYTHON + " server.py", cwd=config.WORKING_DIRECTORY, shell=True
@@ -963,9 +967,9 @@ class ArenaClient:
             try:
                 os.kill(proxy.pid, signal.SIGTERM)
             except Exception as exception:
-                logger.debug(str(exception))
+                self._logger.debug(str(exception))
         except Exception as e:
-            logger.error(str(e))
+            self._logger.error(str(e))
             # todo: usually result is a list
             # todo: ideally this should always be the same variable type
             result = "Error"
@@ -974,7 +978,7 @@ class ArenaClient:
 
     def run(self):
         try:
-            utl.printout(f'Arena Client started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
+            self._utl.printout(f'Arena Client started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
             os.makedirs(config.REPLAYS_DIRECTORY, exist_ok=True)
 
             if not config.RUN_LOCAL:
@@ -1008,8 +1012,8 @@ class ArenaClient:
                 #         ml.write(tail)
 
         except Exception as e:
-            utl.printout(traceback.format_exc())
-            utl.printout(f"arena-client encountered an uncaught exception: {e} Exiting...")
+            self._utl.printout(traceback.format_exc())
+            self._utl.printout(f"arena-client encountered an uncaught exception: {e} Exiting...")
         finally:
             try:
                 if config.CLEANUP_BETWEEN_ROUNDS:
@@ -1019,13 +1023,13 @@ class ArenaClient:
 
             try:
                 if config.SHUT_DOWN_AFTER_RUN:
-                    utl.printout("Stopping system")
+                    self._utl.printout("Stopping system")
                     with open(os.path.join(config.LOCAL_PATH, ".shutdown"), "w") as f:
                         f.write("Shutdown")
             except:
-                utl.printout("ERROR: Failed to shutdown.")
+                self._utl.printout("ERROR: Failed to shutdown.")
 
 
 if __name__ == "__main__":  # execute only if run as a script
-    ac = ArenaClient()
+    ac = ArenaClient(config)
     ac.run()
