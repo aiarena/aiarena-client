@@ -24,7 +24,6 @@ RUN_LOCAL = False
 SYSTEM = platform.system()
 SC2_PROXY = {"HOST": "127.0.0.1", "PORT": 8765}
 
-
 # LOGGING
 LOGGING_HANDLER = logging.FileHandler("supervisor.log", "a+")
 LOGGING_LEVEL = 10
@@ -35,6 +34,7 @@ LOCAL_PATH = os.path.dirname(__file__)
 WORKING_DIRECTORY = LOCAL_PATH  # same for now
 LOG_FILE = os.path.join(WORKING_DIRECTORY, "aiarena-client.log")
 REPLAYS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "replays")
+BOTS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "bots")
 
 # WEBSITE
 BASE_WEBSITE_URL = "https://ai-arena.net"
