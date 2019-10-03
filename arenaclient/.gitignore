@@ -1,0 +1,7 @@
+bots/
+replays/
+tmp/
+
+config.py
+results
+.shutdown
