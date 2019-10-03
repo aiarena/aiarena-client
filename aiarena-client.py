@@ -14,31 +14,12 @@ import traceback
 import aiohttp
 import psutil
 from utl import Utl
-
-# the default config will also import custom config values
-import default_config as config
-
-if not config.RUN_LOCAL:
-    import hashlib
-    import zipfile
-    from pathlib import Path
-    import shutil
-    import requests
-    from requests.exceptions import ConnectionError
-
-
-def get_ladder_bots_data(bot):
-    """
-    Get the config file (ladderbots.json) from the bot's directory.
-
-    :param bot:
-    :return:
-    """
-    bot_directory = os.path.join(config.BOTS_DIRECTORY, bot, "ladderbots.json")
-    with open(bot_directory, "r") as ladder_bots_file:
-        json_object = json.load(ladder_bots_file)
-    return bot, json_object
-
+import hashlib
+import zipfile
+from pathlib import Path
+import shutil
+import requests
+from requests.exceptions import ConnectionError
 
 class Bot:
     """
@@ -267,8 +248,8 @@ class ArenaClient:
             map_name = line.split(' ')[1].replace("\n", "").replace('.SC2Map', "")
             bot_0 = line.split('vs')[0].replace('"', "")
             bot_1 = line.split('vs')[1].split(" ")[0].replace('"', "")
-            bot_0_name, bot_0_data = get_ladder_bots_data(bot_0)
-            bot_1_name, bot_1_data = get_ladder_bots_data(bot_1)
+            bot_0_name, bot_0_data = self.get_ladder_bots_data(bot_0)
+            bot_1_name, bot_1_data = self.get_ladder_bots_data(bot_1)
             # bot_0_game_display_id = bot_0_data['botID']#TODO: Enable opponent_id
             # bot_1_game_display_id = bot_1_data['botID']
             result = self.run_match(
@@ -278,6 +259,18 @@ class ArenaClient:
                 map_file.write(str(result) + "\n\n")
             self.post_local_result(bot_0, bot_1, result)
             return True
+
+    def get_ladder_bots_data(self, bot):
+        """
+        Get the config file (ladderbots.json) from the bot's directory.
+
+        :param bot:
+        :return:
+        """
+        bot_directory = os.path.join(self._config.BOTS_DIRECTORY, bot, "ladderbots.json")
+        with open(bot_directory, "r") as ladder_bots_file:
+            json_object = json.load(ladder_bots_file)
+        return bot, json_object
 
     def post_result(self, match_id, lm_result, bot_1_name, bot_2_name):
         """
@@ -1031,5 +1024,6 @@ class ArenaClient:
 
 
 if __name__ == "__main__":  # execute only if run as a script
-    ac = ArenaClient(config)
+    import default_config as cfg  # the default config will also import custom config values
+    ac = ArenaClient(cfg)
     ac.run()
