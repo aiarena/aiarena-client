@@ -1125,15 +1125,20 @@ try:
         #         ml.write(tail)
 
 except Exception as e:
+    utl.printout(traceback.format_exc())
     utl.printout(f"arena-client encountered an uncaught exception: {e} Exiting...")
 finally:
     try:
-        kill_current_server()
         if config.CLEANUP_FILES_BETWEEN_ROUNDS:
-            cleanup()  # be polite and try to cleanup
+            cleanup()  # attempt a cleanup
     except:
-        pass
-if not config.RUN_LOCAL:
+        pass  # ensure we don't skip the server kill or shutdown
+
+    try:
+        kill_current_server()
+    except:
+        pass  # ensure we don't skip the shutdown
+
     try:
         if config.SHUT_DOWN_AFTER_RUN:
             utl.printout("Stopping system")
