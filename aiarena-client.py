@@ -1085,7 +1085,7 @@ try:
         ROUNDS_PER_RUN = config.ROUNDS_PER_RUN
 
     while count < ROUNDS_PER_RUN:
-        if config.CLEANUP_FILES_BETWEEN_ROUNDS:
+        if config.CLEANUP_BETWEEN_ROUNDS:
             cleanup()
         if get_next_match(count):
             count += 1
@@ -1102,13 +1102,8 @@ except Exception as e:
     utl.printout(f"arena-client encountered an uncaught exception: {e} Exiting...")
 finally:
     try:
-        if config.CLEANUP_FILES_BETWEEN_ROUNDS:
-            cleanup()  # attempt a cleanup
-    except:
-        pass  # ensure we don't skip the server kill or shutdown
-
-    try:
-        kill_current_server()
+        if config.CLEANUP_BETWEEN_ROUNDS:
+            cleanup()
     except:
         pass  # ensure we don't skip the shutdown
 
