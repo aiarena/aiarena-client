@@ -245,13 +245,6 @@ class ArenaClient:
                 break
 
         replay_file_path = os.path.join(self._config.REPLAYS_DIRECTORY, replay_file)
-        if self._config.RUN_REPLAY_CHECK:
-            os.system(
-                "perl "
-                + os.path.join(self._config.LOCAL_PATH, "replaycheck.pl")
-                + " "
-                + replay_file_path
-            )
 
         bot1_data_folder = os.path.join(self._config.BOTS_DIRECTORY, bot_1_name, "data")
         bot2_data_folder = os.path.join(self._config.BOTS_DIRECTORY, bot_2_name, "data")
