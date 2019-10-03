@@ -34,31 +34,6 @@ if not config.RUN_LOCAL:
     from requests.exceptions import ConnectionError
 
 
-if config.RUN_LOCAL:
-    WORKING_DIRECTORY = os.getcwd()
-    REPLAY_DIRECTORY = os.path.join(WORKING_DIRECTORY, "Replays/")
-
-    # Try to import config settings
-    with open("LadderManager.json", "r") as lm:
-        j_object = json.load(lm)
-        PYTHON = j_object["PythonBinary"]
-        DISABLE_DEBUG = j_object["DisableDebug"]
-        RESULTS_LOG_FILE = j_object["ResultsLogFile"]
-        MAX_GAME_TIME = j_object["MaxGameTime"]
-        REALTIME_MODE = j_object["RealTimeMode"]
-        BOTS_DIRECTORY = j_object["BaseBotDirectory"]
-        MAX_FRAME_TIME = j_object.get('MaxFrameTime', 125)
-        STRIKES = j_object.get('Strikes', 10)
-
-else:
-    PYTHON = config.PYTHON
-    REPLAY_DIRECTORY = config.REPLAYS_DIRECTORY
-    WORKING_DIRECTORY = config.WORKING_DIRECTORY
-    MAX_GAME_TIME = config.MAX_GAME_TIME
-    STRIKES = config.STRIKES
-    MAX_FRAME_TIME = config.MAX_FRAME_TIME
-
-
 def check_pid(pid: int):
     """
     Checks if PID is running.
@@ -81,7 +56,7 @@ def get_ladder_bots_data(bot):
     :param bot:
     :return:
     """
-    bot_directory = os.path.join(BOTS_DIRECTORY, bot, "ladderbots.json")
+    bot_directory = os.path.join(config.BOTS_DIRECTORY, bot, "ladderbots.json")
     with open(bot_directory, "r") as ladder_bots_file:
         json_object = json.load(ladder_bots_file)
     return bot, json_object
@@ -206,7 +181,7 @@ class Bot:
 
         bot_data = {
             "Race": race_map[bot_race],
-            "RootPath": os.path.join(WORKING_DIRECTORY, f"bots", bot_name),
+            "RootPath": os.path.join(config.BOTS_DIRECTORY, bot_name),
             "FileName": bot_type_map[bot_type][0],
             "Type": bot_type_map[bot_type][1],
             "botID": bot_id,
@@ -405,12 +380,12 @@ def post_result(match_id, lm_result, bot_1_name, bot_2_name):
 
     utl.printout(str(result))
     replay_file: str = ""
-    for file in os.listdir(REPLAY_DIRECTORY):
+    for file in os.listdir(config.REPLAYS_DIRECTORY):
         if file.endswith('.SC2Replay'):
             replay_file = file
             break
 
-    replay_file_path = os.path.join(REPLAY_DIRECTORY, replay_file)
+    replay_file_path = os.path.join(config.REPLAYS_DIRECTORY, replay_file)
     if config.RUN_REPLAY_CHECK:
         os.system(
             "perl "
@@ -419,12 +394,8 @@ def post_result(match_id, lm_result, bot_1_name, bot_2_name):
             + replay_file_path
         )
 
-    bot1_data_folder = os.path.join(
-        config.WORKING_DIRECTORY, "bots", bot_1_name, "data"
-    )
-    bot2_data_folder = os.path.join(
-        config.WORKING_DIRECTORY, "bots", bot_2_name, "data"
-    )
+    bot1_data_folder = os.path.join(config.BOTS_DIRECTORY, bot_1_name, "data")
+    bot2_data_folder = os.path.join(config.BOTS_DIRECTORY, bot_2_name, "data")
     bot1_error_log = os.path.join(bot1_data_folder, "stderr.log")
     bot1_error_log_tmp = os.path.join(config.TEMP_PATH, bot_1_name + "-error.log")
     if os.path.isfile(bot1_error_log):
@@ -640,7 +611,7 @@ def post_local_result(bot_0, bot_1, lm_result):
         #             results_log.write(json.dumps(j_object, indent=4))
         # else:
     utl.printout(str(result))
-    with open(RESULTS_LOG_FILE, "w") as results_log:
+    with open(config.RESULTS_LOG_FILE, "w") as results_log:
         json_object = dict({"Results": [result_json]})
         results_log.write(json.dumps(json_object, indent=4))
 
@@ -652,7 +623,7 @@ def cleanup():
     :return:
     """
     # Files to remove inside these folders
-    folders = [REPLAY_DIRECTORY, config.TEMP_PATH]
+    folders = [config.REPLAYS_DIRECTORY, config.TEMP_PATH]
     for folder in folders:
         for file in os.listdir(folder):
             file_path = os.path.join(folder, file)
@@ -680,7 +651,7 @@ def start_bot(bot_data, opponent_id):
     bot_name = next(iter(bot_data))
     bot_data = bot_data[bot_name] if config.RUN_LOCAL else bot_data
     bot_path = (
-        os.path.join(BOTS_DIRECTORY, bot_name)
+        os.path.join(config.BOTS_DIRECTORY, bot_name)
         if config.RUN_LOCAL
         else bot_data["RootPath"]
     )  # hot fix
@@ -698,7 +669,7 @@ def start_bot(bot_data, opponent_id):
         str(opponent_id),
     ]
     if bot_type.lower() == "python":
-        cmd_line.insert(0, PYTHON)
+        cmd_line.insert(0, config.PYTHON)
     elif bot_type.lower() == "wine":
         cmd_line.insert(0, "wine")
     elif bot_type.lower() == "mono":
@@ -720,9 +691,9 @@ def start_bot(bot_data, opponent_id):
     except OSError:
         os.mkdir(os.path.join(bot_path, "data"))
     try:
-        os.stat(REPLAY_DIRECTORY)
+        os.stat(config.REPLAYS_DIRECTORY)
     except OSError:
-        os.mkdir(REPLAY_DIRECTORY)
+        os.mkdir(config.REPLAYS_DIRECTORY)
     try:
         if config.SYSTEM == "Linux":
             with open(os.path.join(bot_path, "data", "stderr.log"), "w+") as out:
@@ -813,14 +784,14 @@ async def main(
     json_config = {
         "Config": {
             "Map": map_name,
-            "MaxGameTime": MAX_GAME_TIME,
+            "MaxGameTime": config.MAX_GAME_TIME,
             "Player1": bot_0_name,
             "Player2": bot_1_name,
-            "ReplayPath": REPLAY_DIRECTORY,
+            "ReplayPath": config.REPLAYS_DIRECTORY,
             "MatchID": next_match_id,
             "DisableDebug": "False",
-            "MaxFrameTime": MAX_FRAME_TIME,
-            "Strikes": STRIKES
+            "MaxFrameTime": config.MAX_FRAME_TIME,
+            "Strikes": config.STRIKES
         }
     }
 
@@ -1025,7 +996,7 @@ def run_match(
         utl.printout(f"Starting game - Round {match_count}")
         kill_current_server()
         proxy = subprocess.Popen(
-            PYTHON + " server.py", cwd=WORKING_DIRECTORY,  shell=True
+            config.PYTHON + " server.py", cwd=config.WORKING_DIRECTORY,  shell=True
         )
 
         while True:
@@ -1065,13 +1036,13 @@ def run_match(
 
 try:
     utl.printout(f'Arena Client started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
-    os.makedirs(REPLAY_DIRECTORY, exist_ok=True)
+    os.makedirs(config.REPLAYS_DIRECTORY, exist_ok=True)
 
     if not config.RUN_LOCAL:
         os.makedirs(config.TEMP_PATH, exist_ok=True)
         os.makedirs(config.BOTS_DIRECTORY, exist_ok=True)
 
-    os.chdir(WORKING_DIRECTORY)
+    os.chdir(config.WORKING_DIRECTORY)
     count = 0
     if config.RUN_LOCAL:
         try:

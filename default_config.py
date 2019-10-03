@@ -21,6 +21,7 @@ USE_PID_CHECK = False
 DEBUG_MODE = True
 PYTHON = "python3"
 RUN_LOCAL = False
+CLEANUP_BETWEEN_ROUNDS = True
 SYSTEM = platform.system()
 SC2_PROXY = {"HOST": "127.0.0.1", "PORT": 8765}
 
@@ -33,6 +34,7 @@ TEMP_PATH = "/tmp/aiarena/"
 LOCAL_PATH = os.path.dirname(__file__)
 WORKING_DIRECTORY = LOCAL_PATH  # same for now
 LOG_FILE = os.path.join(WORKING_DIRECTORY, "aiarena-client.log")
+RESULTS_LOG_FILE = os.path.join(WORKING_DIRECTORY, "results.log")
 REPLAYS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "replays")
 BOTS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "bots")
 
@@ -44,30 +46,9 @@ API_RESULTS_URL = parse.urljoin(BASE_WEBSITE_URL, "/api/arenaclient/results/")
 # STARCRAFT
 SC2_HOME = "/home/aiarena/StarCraftII/"
 SC2_BINARY = os.path.join(SC2_HOME, "Versions/Base75689/SC2_x64")
-
-# todo: download relevant settings from the API
-SC2LADDERSERVER_CONFIG_JSON = (
-    "{"
-    '    "LocalReplayDirectory": "./replays/",'
-    '    "MaxGameTime": 60480,'
-    '    "MatchupGenerator": "File",'
-    '    "MatchupListFile": "./matchuplist",'
-    '    "ErrorListFile": "./errorlist",'
-    '    "BotConfigFile": "./LadderBots.json",'
-    '    "EnableReplayUpload": "False",'
-    '    "ResultsLogFile": "./results.json",'
-    '    "PlayerIdFile": "./playerids",'
-    '    "PythonBinary": "/home/aiarena/venv/bin/python",'
-    '    "RealTimeMode": false,'
-    '    "Maps": [],'
-    '    "MaxFrameTime": 20000'
-    "}"
-)
 MAX_GAME_TIME = 60486
 MAX_FRAME_TIME = 1000
 STRIKES = 10
-
-CLEANUP_BETWEEN_ROUNDS = True
 
 # Override values with environment specific config
 try:
