@@ -11,6 +11,8 @@ import os
 import platform
 from urllib import parse
 
+from arenaclient.matches import MatchSourceType
+
 # GERERAL
 ARENA_CLIENT_ID = "aiarenaclient_000"
 API_TOKEN = "12345"
@@ -19,7 +21,7 @@ SHUT_DOWN_AFTER_RUN = True
 USE_PID_CHECK = False
 DEBUG_MODE = True
 PYTHON = "python3"
-RUN_LOCAL = False
+RUN_LOCAL = False  # todo: this will be superseded by the MATCH_SOURCE_CONFIG type
 CLEANUP_BETWEEN_ROUNDS = True
 SYSTEM = platform.system()
 SC2_PROXY = {"HOST": "127.0.0.1", "PORT": 8765}
@@ -36,6 +38,14 @@ LOG_FILE = os.path.join(WORKING_DIRECTORY, "aiarena-client.log")
 RESULTS_LOG_FILE = os.path.join(WORKING_DIRECTORY, "results.log")
 REPLAYS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "replays")
 BOTS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "bots")
+
+MATCH_SOURCE_CONFIG = {
+    # todo: Cater for HTTP_API type
+    # "SOURCE_TYPE": MatchSourceType.LOCAL if RUN_LOCAL else MatchSourceType.HTTP_API,
+    "SOURCE_TYPE": MatchSourceType.FILE,
+    "MATCHES_FILE": "./matches",
+    "BOTS_DIRECTORY": BOTS_DIRECTORY,
+}
 
 # WEBSITE
 BASE_WEBSITE_URL = "https://ai-arena.net"
