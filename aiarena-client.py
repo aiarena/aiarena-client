@@ -380,13 +380,6 @@ def post_result(match_id, lm_result, bot_1_name, bot_2_name):
             break
 
     replay_file_path = os.path.join(config.REPLAYS_DIRECTORY, replay_file)
-    if config.RUN_REPLAY_CHECK:
-        os.system(
-            "perl "
-            + os.path.join(config.LOCAL_PATH, "replaycheck.pl")
-            + " "
-            + replay_file_path
-        )
 
     bot1_data_folder = os.path.join(config.BOTS_DIRECTORY, bot_1_name, "data")
     bot2_data_folder = os.path.join(config.BOTS_DIRECTORY, bot_2_name, "data")
