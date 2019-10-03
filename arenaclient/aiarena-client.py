@@ -13,7 +13,7 @@ import traceback
 
 import aiohttp
 import psutil
-from utl import Utl
+from arenaclient.utl import Utl
 import hashlib
 import zipfile
 from pathlib import Path
@@ -1024,6 +1024,7 @@ class ArenaClient:
 
 
 if __name__ == "__main__":  # execute only if run as a script
-    import default_config as cfg  # the default config will also import custom config values
+    from arenaclient import default_config as cfg
+
     ac = ArenaClient(cfg)
     ac.run()

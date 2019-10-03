@@ -7,7 +7,7 @@ matchuplist
 playerids
 sc2ladderserver_stderr.log
 sc2ladderserver_stdout.log
-aiarena-client.log
+arenaclient/aiarena-client.log
 errorlist
 results.json
 laddermanager.pid
@@ -18,7 +18,7 @@ replays/
 
 .idea/
 
-config.py
+arenaclient/config.py
 
 tmp/
 *.log

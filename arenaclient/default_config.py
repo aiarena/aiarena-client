@@ -52,7 +52,7 @@ STRIKES = 10
 
 # Override values with environment specific config
 try:
-    from config import *
+    from arenaclient.config import *
 except ImportError as e:
     if e.name == "config":
         pass

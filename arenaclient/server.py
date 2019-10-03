@@ -4,11 +4,11 @@ import weakref
 
 
 from aiohttp import web
-from portconfig import Portconfig
+from arenaclient.portconfig import Portconfig
 
-from lib import Timer
-from proxy import Proxy
-from supervisor import Supervisor
+from arenaclient.lib import Timer
+from arenaclient.proxy import Proxy
+from arenaclient.supervisor import Supervisor
 
 HOST = os.getenv("HOST", "127.0.0.1")  # Environment variables for ease of access.
 PORT = int(os.getenv("PORT", 8765))
