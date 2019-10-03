@@ -183,7 +183,7 @@ class Bot:
         return bot_name, bot_data
 
 
-def get_next_match(match_count: int):
+def run_next_match(match_count: int):
     """
     Retrieve the next match from the ai-arena website API. Runs the match, and posts the result to the ai-arena
     website.
@@ -1052,7 +1052,7 @@ try:
     while count < ROUNDS_PER_RUN:
         if config.CLEANUP_BETWEEN_ROUNDS:
             cleanup()
-        if get_next_match(count):
+        if run_next_match(count):
             count += 1
         else:
             break
