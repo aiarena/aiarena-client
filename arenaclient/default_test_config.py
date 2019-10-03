@@ -1,11 +1,11 @@
-#########################################################
-#                                                       #
-# DEFAULT CONFIG                                        #
-#                                                       #
-# !!!! DO NOT UPDATE THIS FILE WITH LOCAL SETTINGS !!!! #
-# Create a config.py file to override config values     #
-#                                                       #
-#########################################################
+##########################################################
+#                                                        #
+# DEFAULT TEST CONFIG                                    #
+#                                                        #
+# !!!! DO NOT UPDATE THIS FILE WITH LOCAL SETTINGS !!!!  #
+# Create a test_config.py file to override config values #
+#                                                        #
+##########################################################
 import logging
 import os
 import platform
@@ -14,16 +14,16 @@ from urllib import parse
 from arenaclient.matches import MatchSourceType
 
 # GERERAL
-ARENA_CLIENT_ID = "aiarenaclient_000"
-API_TOKEN = "12345"
-ROUNDS_PER_RUN = 5
+ARENA_CLIENT_ID = "aiarenaclient_test"
+API_TOKEN = ""
+ROUNDS_PER_RUN = 1
 SHUT_DOWN_AFTER_RUN = True
 USE_PID_CHECK = False
 DEBUG_MODE = True
 PYTHON = "python3"
-RUN_LOCAL = False  # todo: this will be superseded by the MATCH_SOURCE_CONFIG type
-TEST_MODE = False
-CLEANUP_BETWEEN_ROUNDS = True
+RUN_LOCAL = True  # todo: this will be superseded by the MATCH_SOURCE_CONFIG type
+TEST_MODE = True
+CLEANUP_BETWEEN_ROUNDS = False
 SYSTEM = platform.system()
 SC2_PROXY = {"HOST": "127.0.0.1", "PORT": 8765}
 
@@ -62,9 +62,9 @@ STRIKES = 10
 
 # Override values with environment specific config
 try:
-    from arenaclient.config import *
+    from arenaclient.test_config import *
 except ImportError as e:
-    if e.name == "arenaclient.config":
+    if e.name == "arenaclient.test_config":
         pass
     else:
         raise

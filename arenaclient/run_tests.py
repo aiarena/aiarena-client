@@ -1,58 +1,52 @@
-import subprocess
 import json
-import default_config as config
-from utl import Utl
+import os
 
-with open("LadderManager.json", "r") as lm:
-    j_object = json.load(lm)
-    PYTHON = j_object["PythonBinary"]
-    # DISABLE_DEBUG = j_object["DisableDebug"]
-    RESULTS_LOG_FILE = j_object["ResultsLogFile"]
-    # MAX_GAME_TIME = j_object["MaxGameTime"]
-    # REALTIME_MODE = j_object["RealTimeMode"]
-    # BOTS_DIRECTORY = j_object["BaseBotDirectory"]
+import arenaclient.default_test_config as config
+from arenaclient.arena_client import ArenaClient
+from arenaclient.utl import Utl
 
-with open("config.py", "w+") as f:
-    f.write("RUN_LOCAL = True\nTEST = True\n")
+# Sanity check the config and remind people to check their config
+assert config.TEST_MODE, "LOCAL_TEST_MODE config value must must be set to True to run tests." + os.linesep \
+                         + "IMPORTANT: Are you configured properly for tests?"
+assert config.RUN_LOCAL, "RUN_LOCAL config value must must be set to True to run tests." + os.linesep \
+                         + "IMPORTANT: Are you configured properly for tests?"
 
 utl = Utl(config)
 
 games = {
-    '"loser_bot"vs"loser_bot" AutomatonLE.SC2Map': "Tie",
-    '"basic_bot"vs"crash" AutomatonLE.SC2Map': "Player2Crash",
-    '"basic_bot"vs"connect_timeout" AutomatonLE.SC2Map': "InitializationError",
-    '"basic_bot"vs"crash_on_first_frame" AutomatonLE.SC2Map': "Player2Crash",
-    '"basic_bot"vs"hang" AutomatonLE.SC2Map': "Player2Crash",
-    '"basic_bot"vs"too_slow_bot" AutomatonLE.SC2Map': "Player2TimeOut",
-    '"basic_bot"vs"instant_crash" AutomatonLE.SC2Map': "InitializationError",
-    '"timeout_bot"vs"timeout_bot" AutomatonLE.SC2Map': "Tie",
-    '"crash"vs"basic_bot" AutomatonLE.SC2Map': "Player1Crash",
-    '"connect_timeout"vs"basic_bot" AutomatonLE.SC2Map': "Player1Crash",
-    '"crash_on_first_frame"vs"basic_bot" AutomatonLE.SC2Map': "Player1Crash",
-    '"hang"vs"basic_bot" AutomatonLE.SC2Map': "Player1Crash",
-    '"instant_crash"vs"basic_bot" AutomatonLE.SC2Map': "Player1Crash",
-    '"loser_bot"vs"basic_bot" AutomatonLE.SC2Map': "Player2Win",
-    '"too_slow_bot"vs"basic_bot" AutomatonLE.SC2Map': "Player1TimeOut",
-    '"basic_bot"vs"loser_bot" AutomatonLE.SC2Map': "Player1Win",
+    'loser_bot,T,python,loser_bot,T,python,AutomatonLE': "Tie",
+    'basic_bot,T,python,crash,T,python,AutomatonLE': "Player2Crash",
+    'basic_bot,T,python,connect_timeout,T,python,AutomatonLE': "InitializationError",
+    'basic_bot,T,python,crash_on_first_frame,T,python,AutomatonLE': "Player2Crash",
+    'basic_bot,T,python,hang,T,python,AutomatonLE': "Player2Crash",
+    'basic_bot,T,python,too_slow_bot,T,python,AutomatonLE': "Player2TimeOut",
+    'basic_bot,T,python,instant_crash,T,python,AutomatonLE': "InitializationError",
+    'timeout_bot,T,python,timeout_bot,T,python,AutomatonLE': "Tie",
+    'crash,T,python,basic_bot,T,python,AutomatonLE': "Player1Crash",
+    'connect_timeout,T,python,basic_bot,T,python,AutomatonLE': "Player1Crash",
+    'crash_on_first_frame,T,python,basic_bot,T,python,AutomatonLE': "Player1Crash",
+    'hang,T,python,basic_bot,T,python,AutomatonLE': "Player1Crash",
+    'instant_crash,T,python,basic_bot,T,python,AutomatonLE': "Player1Crash",
+    'loser_bot,T,python,basic_bot,T,python,AutomatonLE': "Player2Win",
+    'too_slow_bot,T,python,basic_bot,T,python,AutomatonLE': "Player1TimeOut",
+    'basic_bot,T,python,loser_bot,T,python,AutomatonLE': "Player1Win",
 }
 
+ORIGINAL_MAX_GAME_TIME = config.MAX_GAME_TIME
 for key, value in games.items():
 
-    with open("matchupList", "w+") as f:
-        f.write(key)
-    if key == '"loser_bot"vs"loser_bot" AutomatonLE.SC2Map':
-        with open("config.py", "w+") as f:
-            f.write("RUN_LOCAL = True\nTEST = True\nMAX_GAME_TIME=1000")
+    with open(config.MATCH_SOURCE_CONFIG["MATCHES_FILE"], "w+") as f:
+        f.write(key + os.linesep)
+    if key == 'loser_bot,T,python,loser_bot,T,python,AutomatonLE':
+        config.MAX_GAME_TIME = 1000
     else:
-        with open("config.py", "w+") as f:
-            f.write("RUN_LOCAL = True\nTEST = True\n")
-    r = subprocess.Popen(
-        [PYTHON, "aiarena-client.py"], cwd=config.WORKING_DIRECTORY, shell=True
-    )
-    status_code = r.wait()
+        config.MAX_GAME_TIME = ORIGINAL_MAX_GAME_TIME
+
+    ac = ArenaClient(config)
+    ac.run()
 
     try:
-        with open(RESULTS_LOG_FILE, "r") as f:
+        with open(config.RESULTS_LOG_FILE, "r") as f:
             result = json.load(f)
         test_result = f"Result ({str(result['Results'][0]['Result'])}) matches expected result ({value}):" + \
                       str(result["Results"][0]["Result"] == value)

@@ -51,6 +51,8 @@ class ArenaClient:
         if self._config.RUN_LOCAL:
             match_source = MatchSourceFactory.build_match_source(self._config.MATCH_SOURCE_CONFIG)
             match = match_source.next_match()
+            if match is None:
+                return True  # return True here, else we could end up in an infinite loop
             self._utl.printout(f"Next match: {match.id}")
             result = self.run_match(
                 match_count,
@@ -358,6 +360,7 @@ class ArenaClient:
         :param lm_result:
         :return:
         """
+        result = "Error"  # avoid error from this not being initialized
         result_json = {
             "Bot1": bot_0,
             "Bot2": bot_1,

@@ -3,6 +3,7 @@ replays/
 tmp/
 
 config.py
+test_config.py
 matches
 results
 .shutdown
