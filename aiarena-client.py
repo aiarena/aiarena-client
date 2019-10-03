@@ -1141,7 +1141,7 @@ except Exception as e:
     if not config.RUN_LOCAL:
         with open(os.path.join(config.LOCAL_PATH, ".shutdown"), "w") as f:
             f.write("Shutdown")
-    traceback.print_exc()  # Todo: Add this to the log files
+    utl.printout(traceback.format_exc())
 finally:
     try:
         kill_current_server()
