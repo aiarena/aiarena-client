@@ -45,17 +45,6 @@ API_RESULTS_URL = parse.urljoin(BASE_WEBSITE_URL, "/api/arenaclient/results/")
 SC2_HOME = "/home/aiarena/StarCraftII/"
 SC2_BINARY = os.path.join(SC2_HOME, "Versions/Base75689/SC2_x64")
 
-# SC2LADDERSERVER
-SC2LADDERSERVER_PID_FILE = os.path.join(LOCAL_PATH, "laddermanager.pid")
-SC2LADDERSERVER_PID_FILE_CREATION_TIMEOUT = 10
-SC2LADDERSERVER_STDOUT_FILE = os.path.join(LOCAL_PATH, "sc2ladderserver_stdout.log")
-SC2LADDERSERVER_STDERR_FILE = os.path.join(LOCAL_PATH, "sc2ladderserver_stderr.log")
-SC2LADDERSERVER_BINARY = os.path.join(LOCAL_PATH, "Sc2LadderServer")
-SC2LADDERSERVER_MATCHUP_LIST_FILE = os.path.join(LOCAL_PATH, "matchuplist")
-SC2LADDERSERVER_LADDERBOTS_FILE = os.path.join(LOCAL_PATH, "LadderBots.json")
-SC2LADDERSERVER_PLAYERIDS_FILE = os.path.join(LOCAL_PATH, "playerids")
-SC2LADDERSERVER_RESULTS_FILE = os.path.join(LOCAL_PATH, "results.json")
-SC2LADDERSERVER_CONFIG_FILE = os.path.join(LOCAL_PATH, "LadderManager.json")
 # todo: download relevant settings from the API
 SC2LADDERSERVER_CONFIG_JSON = (
     "{"

@@ -477,28 +477,8 @@ def post_result(match_id, lm_result, bot_1_name, bot_2_name):
     else:
         Path(client_tmp).touch()
 
-    # sc2ladderserver logs
-    sc2ladderserver_stdout_log_tmp = os.path.join(
-        config.TEMP_PATH, "sc2ladderserver_stdout.log"
-    )
-    sc2ladderserver_stderr_log_tmp = os.path.join(
-        config.TEMP_PATH, "sc2ladderserver_stderr.log"
-    )
-    sc2ladderserver_log_zip = os.path.join(config.TEMP_PATH, "sc2ladderserver_log.zip")
-
-    if os.path.isfile(config.SC2LADDERSERVER_STDOUT_FILE):
-        shutil.move(config.SC2LADDERSERVER_STDOUT_FILE, sc2ladderserver_stdout_log_tmp)
-    else:
-        Path(sc2ladderserver_stdout_log_tmp).touch()
-
-    if os.path.isfile(config.SC2LADDERSERVER_STDERR_FILE):
-        shutil.move(config.SC2LADDERSERVER_STDERR_FILE, sc2ladderserver_stderr_log_tmp)
-    else:
-        Path(sc2ladderserver_stderr_log_tmp).touch()
-
-    zip_file = zipfile.ZipFile(sc2ladderserver_log_zip, "w")
-    zip_file.write(sc2ladderserver_stdout_log_tmp, compress_type=zipfile.ZIP_DEFLATED)
-    zip_file.write(sc2ladderserver_stderr_log_tmp, compress_type=zipfile.ZIP_DEFLATED)
+    arenaclient_log_zip = os.path.join(config.TEMP_PATH, "arenaclient_log.zip")
+    zip_file = zipfile.ZipFile(arenaclient_log_zip, "w")
     zip_file.write(proxy_tmp, compress_type=zipfile.ZIP_DEFLATED)
     # zip_file.write(supervisor_tmp, compress_type=zipfile.ZIP_DEFLATED)
     zip_file.write(client_tmp, compress_type=zipfile.ZIP_DEFLATED)
@@ -530,7 +510,7 @@ def post_result(match_id, lm_result, bot_1_name, bot_2_name):
             "bot2_log": open(
                 os.path.join(config.TEMP_PATH, f"{bot_2_name}-error.zip"), "rb"
             ),
-            "arenaclient_log": open(sc2ladderserver_log_zip, "rb"),
+            "arenaclient_log": open(arenaclient_log_zip, "rb"),
         }
 
         if os.path.isfile(replay_file_path):
@@ -671,11 +651,6 @@ def cleanup():
 
     :return:
     """
-
-    for file in config.FILES_TO_CLEANUP:
-        if os.path.isfile(file):
-            os.remove(file)
-
     # Files to remove inside these folders
     folders = [REPLAY_DIRECTORY, config.TEMP_PATH]
     for folder in folders:
