@@ -894,10 +894,3 @@ class ArenaClient:
                         f.write("Shutdown")
             except:
                 self._utl.printout("ERROR: Failed to shutdown.")
-
-
-if __name__ == "__main__":  # execute only if run as a script
-    from arenaclient import default_config as cfg
-
-    ac = ArenaClient(cfg)
-    ac.run()
