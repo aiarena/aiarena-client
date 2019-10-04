@@ -3,24 +3,21 @@ import datetime
 import json
 import logging
 import os
+import shutil
 import signal
 import socket
-import stat
 import subprocess
 import sys
 import time
 import traceback
+import zipfile
+from pathlib import Path
 
 import aiohttp
 import psutil
-import hashlib
-import zipfile
-from pathlib import Path
-import shutil
 import requests
 from requests.exceptions import ConnectionError
 
-# the default config will also import custom config values
 from arenaclient.bot import Bot
 from arenaclient.utl import Utl
 
