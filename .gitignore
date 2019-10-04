@@ -6,14 +6,3 @@
 .vscode
 .vs
 venv/
-
-tmp/
-bots/
-replays/
-matchuplist
-aiarena-client.log
-results.log
-laddermanager.pid
-.shutdown
-config.py
-run_tests.py

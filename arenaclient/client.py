@@ -15,8 +15,8 @@ import aiohttp
 import psutil
 
 # the default config will also import custom config values
-import default_config as config
-from utl import Utl
+from arenaclient.utl import Utl
+import arenaclient.defaultconfig as config
 
 utl = Utl(config)
 
