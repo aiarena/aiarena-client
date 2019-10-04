@@ -983,7 +983,7 @@ def run_match(
         utl.printout(f"Starting game - Round {match_count}")
         kill_current_server()
         proxy = subprocess.Popen(
-            config.PYTHON + " server.py", cwd=config.WORKING_DIRECTORY,  shell=True
+            config.PYTHON + " ./proxy/server.py", cwd=config.WORKING_DIRECTORY,  shell=True
         )
 
         while True:
