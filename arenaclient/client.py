@@ -33,22 +33,6 @@ if not config.RUN_LOCAL:
     import requests
     from requests.exceptions import ConnectionError
 
-
-def check_pid(pid: int):
-    """
-    Checks if PID is running.
-
-    :param pid:
-    :return: bool
-    """
-    try:
-        os.kill(pid, 0)
-    except OSError:
-        return False
-    else:
-        return True
-
-
 def get_ladder_bots_data(bot):
     """
     Get the config file (ladderbots.json) from the bot's directory.
@@ -714,39 +698,6 @@ class Client:
             utl.printout(exception)
             sys.exit(0)
 
-    def pid_cleanup(self, pids):
-        """
-        Kills all the pids passed as a list to this function
-
-        :param pids:
-        :return:
-        """
-        for pid in pids:
-            logger.debug("Killing: " + str(pid))
-            try:
-                os.kill(pid, signal.SIGTERM)
-            except Exception:
-                logger.debug("Already closed: " + str(pid))
-
-    def move_pid(self, pid):
-        """
-        Move the pid to another process group to avoid the bot killing the ai-arena client when closing. (CPP API specific)
-
-        :param pid:
-        :return:
-        """
-        if pid != 0:
-            return
-        else:
-            for i in range(0, 5):
-                try:
-                    os.setpgid(pid, 0)
-                    return
-                except OSError:
-                    if os.getpgid(pid) == 0:
-                        return
-                    time.sleep(0.25)  # sleep for retry
-
     async def main(self, map_name: str, bot_0_name: str, bot_1_name: str, bot_0_data, bot_1_data, next_match_id: int):
         """
         Method to interact with the match runner. Sends the config and awaits the result.
@@ -817,7 +768,7 @@ class Client:
                             }
                         }
                     )
-                    self.pid_cleanup([bot1_process.pid, bot2_process.pid])
+                    utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
                     await session.close()
                     break
                 msg = await ws.receive_json()
@@ -825,7 +776,7 @@ class Client:
                 if msg.get("Bot", None) == "Connected":
                     logger.debug(f"Changing PGID")
                     for x in [bot1_process.pid, bot2_process.pid]:
-                        self.move_pid(x)
+                        utl.move_pid(x)
 
                 else:
                     logger.debug(f"Bot2 crash")
@@ -837,7 +788,7 @@ class Client:
                             }
                         }
                     )
-                    self.pid_cleanup([bot1_process.pid, bot2_process.pid])
+                    utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
                     await session.close()
                     break
                 logger.debug(f"checking if bot is okay")
@@ -852,7 +803,7 @@ class Client:
                             }
                         }
                     )
-                    self.pid_cleanup([bot1_process.pid, bot2_process.pid])
+                    utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
                     await session.close()
                     break
 
@@ -869,7 +820,7 @@ class Client:
                             }
                         }
                     )
-                    self.pid_cleanup([bot1_process.pid, bot2_process.pid])
+                    utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
                     await session.close()
                     break
 
@@ -877,8 +828,8 @@ class Client:
                     await ws.send_str(json.dumps({"Bot2": True}))
 
             if msg.get("PID", None):
-                self.pid_cleanup([bot1_process.pid, bot2_process.pid])  # Terminate bots first
-                self.pid_cleanup(msg["PID"])  # Terminate SC2 processes
+                utl.pid_cleanup([bot1_process.pid, bot2_process.pid])  # Terminate bots first
+                utl.pid_cleanup(msg["PID"])  # Terminate SC2 processes
 
             if msg.get("Result", None):
                 result.append(msg)
@@ -898,7 +849,7 @@ class Client:
                 if bot1_process.poll():
                     utl.printout("Bot1 Init Error")
                     await session.close()
-                    # if not check_pid(bot1_process.pid) and not len(result) >0:
+                    # if not utl.check_pid(bot1_process.pid) and not len(result) >0:
                     result.append(
                         {
                             "Result": {
@@ -907,11 +858,11 @@ class Client:
                             }
                         }
                     )
-                    self.pid_cleanup([bot1_process.pid, bot2_process.pid])
+                    utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
                 if bot2_process.poll():
                     utl.printout("Bot2 Init Error")
                     await session.close()
-                    # if not check_pid(bot2_process.pid) and not len(result) >0:
+                    # if not utl.check_pid(bot2_process.pid) and not len(result) >0:
                     result.append(
                         {
                             "Result": {
