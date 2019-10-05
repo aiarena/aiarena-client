@@ -1,10 +1,10 @@
-.idea/
 *.log
 *.pyc
 *.stdout
 *.txt
 .vscode
 .vs
+.idea/
 venv/
 
 tmp/

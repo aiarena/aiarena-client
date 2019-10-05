@@ -1,5 +1,4 @@
 import hashlib
-import json
 import logging
 import os
 import stat
@@ -14,6 +13,20 @@ class Bot:
     """
     Class for setting up the config for a bot.
     """
+
+    RACE_MAP = {"P": "Protoss", "T": "Terran", "Z": "Zerg", "R": "Random"}
+
+    @staticmethod
+    def map_to_type(bot_name, bot_type):
+        BOT_TYPE_MAP = {
+            "python": ["run.py", "Python"],
+            "cppwin32": [f"{bot_name}.exe", "Wine"],
+            "cpplinux": [f"{bot_name}", "BinaryCpp"],
+            "dotnetcore": [f"{bot_name}.dll", "DotNetCore"],
+            "java": [f"{bot_name}.jar", "Java"],
+            "nodejs": ["main.jar", "NodeJS"],
+        }
+        return BOT_TYPE_MAP[bot_type][0], BOT_TYPE_MAP[bot_type][1]
 
     def __init__(self, config, data):
         self._config = config
@@ -115,39 +128,12 @@ class Bot:
         :return: bot_name
         :return: bot_data
         """
-        bot_name = self.name
-        bot_race = self.plays_race
-        bot_type = self.type
-        bot_id = self.game_display_id
-
-        race_map = {"P": "Protoss", "T": "Terran", "Z": "Zerg", "R": "Random"}
-        bot_type_map = {
-            "python": ["run.py", "Python"],
-            "cppwin32": [f"{bot_name}.exe", "Wine"],
-            "cpplinux": [f"{bot_name}", "BinaryCpp"],
-            "dotnetcore": [f"{bot_name}.dll", "DotNetCore"],
-            "java": [f"{bot_name}.jar", "Java"],
-            "nodejs": ["main.jar", "NodeJS"],
-        }
+        bot_mapped_type = self.map_to_type(self.name, self.type)
 
         bot_data = {
-            "Race": race_map[bot_race],
-            "RootPath": os.path.join(self._config.BOTS_DIRECTORY, bot_name),
-            "FileName": bot_type_map[bot_type][0],
-            "Type": bot_type_map[bot_type][1],
-            "botID": bot_id,
+            "Race": self.RACE_MAP[self.plays_race],
+            "FileName": bot_mapped_type[0],
+            "Type": bot_mapped_type[1],
+            "botID": self.game_display_id,
         }
-        return bot_name, bot_data
-
-    def get_ladder_bots_data(self):
-        """
-        Get the config file (ladderbots.json) from the bot's directory.
-
-        :param bot:
-        :return:
-        """
-        bot_directory = os.path.join(self._config.BOTS_DIRECTORY, self, "ladderbots.json")
-        with open(bot_directory, "r") as ladder_bots_file:
-            json_object = json.load(ladder_bots_file)
-        return self, json_object
-
+        return self.name, bot_data

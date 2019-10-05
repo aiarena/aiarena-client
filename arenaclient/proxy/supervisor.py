@@ -18,6 +18,7 @@ class Supervisor:
     proxies sets the result and other relevant information in the supervisor, which forwards it back to the external
     source.
     """
+
     def __init__(self):
         self._pids: list = []
         self._average_frame_time: list = []
