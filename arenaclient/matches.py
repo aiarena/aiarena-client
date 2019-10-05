@@ -1,3 +1,4 @@
+import json
 from enum import Enum
 
 from arenaclient.bot import Bot
@@ -21,6 +22,9 @@ class MatchSource:
         pass
 
     def next_match(self) -> Match:
+        raise NotImplementedError()
+
+    def submit_result(self, match: Match, result):
         raise NotImplementedError()
 
 
@@ -100,20 +104,102 @@ class FileMatchSource(MatchSource):
                 "botID": 2,
             }
 
-    def __init__(self, match_file):
-        self._match_file = match_file
+    def __init__(self, config):
+        self._matches_file = config["MATCHES_FILE"]
+        self._results_file = config["RESULTS_FILE"]
 
     def next_match(self) -> FileMatch:
 
         next_match = None
 
-        with open(self._match_file, "r") as match_list:
+        with open(self._matches_file, "r") as match_list:
             for match_id, line in enumerate(match_list):
                 if line != '':  # if the line isn't empty, we've got a match to play
                     next_match = self.FileMatch(match_id, line)
                     break
 
         return next_match
+
+    def submit_result(self, match: FileMatch, result):
+        with open("results", "a+") as map_file:
+            map_file.write(str(result) + "\n\n")
+
+        result_type = "Error"  # avoid error from this not being initialized
+        result_json = {
+            "Bot1": match.bot1_name,
+            "Bot2": match.bot2_name,
+            "Winner": None,
+            "Map": None,
+            "Result": None,
+            "GameTime": None,
+            "GameTimeFormatted": None,
+            "TimeStamp": None,
+            "Bot1AvgFrame": 0,
+            "Bot2AvgFrame": 0,
+        }
+        if isinstance(result, list):
+            for x in result:
+                if x.get("Result", None):
+                    temp_results = x["Result"]
+                    # self._utl.printout(str(temp_results))
+
+                    if temp_results[match.bot1_name] == "Result.Crashed":
+                        result_type = "Player1Crash"
+                        result_json["Winner"] = match.bot2_name
+
+                    elif temp_results[match.bot2_name] == "Result.Crashed":
+                        result_type = "Player2Crash"
+                        result_json["Winner"] = match.bot1_name
+
+                    elif temp_results[match.bot1_name] == "Result.Timeout":
+                        result_type = "Player1TimeOut"
+                        result_json["Winner"] = match.bot2_name
+
+                    elif temp_results[match.bot2_name] == "Result.Timeout":
+                        result_type = "Player2TimeOut"
+                        result_json["Winner"] = match.bot1_name
+
+                    elif temp_results[match.bot1_name] == "Result.Victory":
+                        result_type = "Player1Win"
+                        result_json["Winner"] = match.bot1_name
+
+                    elif temp_results[match.bot1_name] == "Result.Defeat":
+                        result_type = "Player2Win"
+                        result_json["Winner"] = match.bot2_name
+
+                    elif temp_results[match.bot1_name] == "Result.Tie":
+                        result_type = "Tie"
+                        result_json["Winner"] = "Tie"
+
+                    else:
+                        result_type = "InitializationError"
+
+                    result_json["Result"] = result_type
+
+                if x.get("GameTime", None):
+                    result_json["GameTime"] = x["GameTime"]
+                    result_json["GameTimeFormatted"] = x["GameTimeFormatted"]
+
+                if x.get("AverageFrameTime", None):
+                    try:
+                        result_json["Bot1AvgFrame"] = next(
+                            item[match.bot1_name] for item in x['AverageFrameTime'] if item.get(match.bot1_name, None))
+                    except StopIteration:
+                        result_json["Bot1AvgFrame"] = 0
+                    try:
+                        result_json["Bot2AvgFrame"] = next(
+                            item[match.bot2_name] for item in x['AverageFrameTime'] if item.get(match.bot2_name, None))
+                    except StopIteration:
+                        result_json["Bot2AvgFrame"] = 0
+
+                if x.get("TimeStamp", None):
+                    result_json["TimeStamp"] = x["TimeStamp"]
+        else:
+            result_json["Result"] = result_type
+
+        with open(self._results_file, "w") as results_log:
+            json_object = dict({"Results": [result_json]})
+            results_log.write(json.dumps(json_object, indent=4))
 
 
 class MatchSourceFactory:
@@ -124,6 +210,6 @@ class MatchSourceFactory:
     @staticmethod
     def build_match_source(config) -> MatchSource:
         if config["SOURCE_TYPE"] == MatchSourceType.FILE:
-            return FileMatchSource(config["MATCHES_FILE"])
+            return FileMatchSource(config)
         else:
             raise NotImplementedError()

@@ -47,7 +47,7 @@ for key, value in games.items():
     ac.run()
 
     try:
-        with open(config.RESULTS_LOG_FILE, "r") as f:
+        with open(config.MATCH_SOURCE_CONFIG["RESULTS_FILE"], "r") as f:
             result = json.load(f)
         test_result = f"Result ({str(result['Results'][0]['Result'])}) matches expected result ({value}):" + \
                       str(result["Results"][0]["Result"] == value)
