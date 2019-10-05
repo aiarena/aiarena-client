@@ -13,12 +13,12 @@ class MatchSource:
     """
     Abstract representation of a source of matches for the arena client to run.
     next_match must be implemented
+    submit_result must be implemented
     """
 
     class MatchSourceConfig:
         def __init__(self):
             self.TYPE = None
-
 
     class Match:
         """
