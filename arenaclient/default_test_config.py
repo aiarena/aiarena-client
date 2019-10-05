@@ -11,7 +11,7 @@ import os
 import platform
 from urllib import parse
 
-from arenaclient.matches import MatchSourceType
+from arenaclient.matches import FileMatchSource
 
 # GERERAL
 ARENA_CLIENT_ID = "aiarenaclient_test"
@@ -39,14 +39,11 @@ LOG_FILE = os.path.join(WORKING_DIRECTORY, "client.log")
 REPLAYS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "replays")
 BOTS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "bots")
 
-MATCH_SOURCE_CONFIG = {
-    # todo: Cater for HTTP_API type
-    # "SOURCE_TYPE": MatchSourceType.LOCAL if RUN_LOCAL else MatchSourceType.HTTP_API,
-    "SOURCE_TYPE": MatchSourceType.FILE,
-    "MATCHES_FILE": os.path.join(WORKING_DIRECTORY, "matches"),
-    "RESULTS_FILE": os.path.join(WORKING_DIRECTORY, "results"),
-    "BOTS_DIRECTORY": BOTS_DIRECTORY,
-}
+
+MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(
+    matches_file=os.path.join(WORKING_DIRECTORY, "matches"),
+    results_file=os.path.join(WORKING_DIRECTORY, "results")
+)
 
 # WEBSITE
 BASE_WEBSITE_URL = "https://ai-arena.net"

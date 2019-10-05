@@ -15,10 +15,18 @@ class MatchSource:
     next_match must be implemented
     """
 
+    class MatchSourceConfig:
+        def __init__(self):
+            self.TYPE = None
+
+
     class Match:
         """
         Abstract representation of a match.
         """
+        pass
+
+    def __init__(self, config: MatchSourceConfig):
         pass
 
     def next_match(self) -> Match:
@@ -58,6 +66,12 @@ class FileMatchSource(MatchSource):
     """
 
     MATCH_FILE_VALUE_SEPARATOR = ','
+
+    class FileMatchSourceConfig:
+        def __init__(self, matches_file, results_file):
+            self.TYPE = MatchSourceType.FILE
+            self.MATCHES_FILE = matches_file
+            self.RESULTS_FILE = results_file
 
     class FileMatch(MatchSource.Match):
         """
@@ -104,9 +118,9 @@ class FileMatchSource(MatchSource):
                 "botID": 2,
             }
 
-    def __init__(self, config):
-        self._matches_file = config["MATCHES_FILE"]
-        self._results_file = config["RESULTS_FILE"]
+    def __init__(self, config: FileMatchSourceConfig):
+        self._matches_file = config.MATCHES_FILE
+        self._results_file = config.RESULTS_FILE
 
     def next_match(self) -> FileMatch:
 
@@ -209,7 +223,7 @@ class MatchSourceFactory:
 
     @staticmethod
     def build_match_source(config) -> MatchSource:
-        if config["SOURCE_TYPE"] == MatchSourceType.FILE:
+        if config.TYPE == MatchSourceType.FILE:
             return FileMatchSource(config)
         else:
             raise NotImplementedError()

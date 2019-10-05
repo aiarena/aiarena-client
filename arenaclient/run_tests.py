@@ -36,7 +36,7 @@ games = {
 ORIGINAL_MAX_GAME_TIME = config.MAX_GAME_TIME
 for key, value in games.items():
 
-    with open(config.MATCH_SOURCE_CONFIG["MATCHES_FILE"], "w+") as f:
+    with open(config.MATCH_SOURCE_CONFIG.MATCHES_FILE, "w+") as f:
         f.write(key + os.linesep)
     if key == 'loser_bot,T,python,loser_bot,T,python,AutomatonLE':
         config.MAX_GAME_TIME = 1000
@@ -47,7 +47,7 @@ for key, value in games.items():
     ac.run()
 
     try:
-        with open(config.MATCH_SOURCE_CONFIG["RESULTS_FILE"], "r") as f:
+        with open(config.MATCH_SOURCE_CONFIG.RESULTS_FILE, "r") as f:
             result = json.load(f)
         test_result = f"Result ({str(result['Results'][0]['Result'])}) matches expected result ({value}):" + \
                       str(result["Results"][0]["Result"] == value)
