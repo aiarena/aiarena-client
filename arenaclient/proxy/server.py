@@ -2,11 +2,10 @@ import logging
 import os
 import weakref
 
-
 from aiohttp import web
-from arenaclient.proxy.portconfig import Portconfig
 
 from arenaclient.proxy.lib import Timer
+from arenaclient.proxy.port_config import Portconfig
 from arenaclient.proxy.proxy import Proxy
 from arenaclient.proxy.supervisor import Supervisor
 
@@ -20,6 +19,7 @@ class ConnectionHandler:
     """
     Handles all connections and creates the relevant objects.
     """
+
     def __init__(self):
         self.connected_clients: int = 0
         self.portconfig = None

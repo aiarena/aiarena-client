@@ -5,14 +5,15 @@ import subprocess
 import tempfile
 import time
 import warnings
+from typing import Any
 
-from arenaclient.proxy.supervisor import Supervisor
 import aiohttp
 import portpicker
 from s2clientprotocol import sc2api_pb2 as sc_pb
-from typing import Any
-from arenaclient.proxy import maps
+
 from arenaclient.proxy.lib import Bot, Controller, Paths, Result
+from arenaclient.proxy import maps
+from arenaclient.proxy.supervisor import Supervisor
 
 logger = logging.getLogger(__name__)
 logger.setLevel(10)
@@ -212,7 +213,7 @@ class Proxy:
         if not self.replay_saved:
             logger.debug(f"Requesting replay from server")
             result = await self._execute(save_replay=sc_pb.RequestSaveReplay())
-            if len(result.save_replay.data)>10:
+            if len(result.save_replay.data) > 10:
                 with open(self.replay_name, "wb") as f:
                     f.write(result.save_replay.data)
                 logger.debug(f"Saved replay as " + str(self.replay_name))

@@ -19,6 +19,7 @@ import requests
 from requests.exceptions import ConnectionError
 
 from arenaclient.bot import Bot
+from arenaclient.matches import MatchSourceFactory
 from arenaclient.utl import Utl
 
 
@@ -35,6 +36,8 @@ class Client:
         self._logger.addHandler(self._config.LOGGING_HANDLER)
         self._logger.setLevel(self._config.LOGGING_LEVEL)
 
+        self._utl = Utl(self._config)
+
     def run_next_match(self, match_count: int):
         """
         Retrieve the next match from the ai-arena website API. Runs the match, and posts the result to the ai-arena
@@ -46,7 +49,25 @@ class Client:
         self._utl.printout(
             f'New match started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}'
         )
-        if not self._config.RUN_LOCAL:
+        if self._config.RUN_LOCAL:
+            match_source = MatchSourceFactory.build_match_source(self._config.MATCH_SOURCE_CONFIG)
+            match = match_source.next_match()
+            if match is None:
+                return True  # return True here, else we could end up in an infinite loop
+            self._utl.printout(f"Next match: {match.id}")
+            result = self.run_match(
+                match_count,
+                match.map_name,
+                match.bot1_name, match.bot2_name,
+                match.bot1_data, match.bot2_data,
+                match.id
+            )
+            with open("results", "a+") as map_file:
+                map_file.write(str(result) + "\n\n")
+
+            self.post_local_result(match.bot1_name, match.bot2_name, result)
+            return True
+        else:
             try:
                 next_match_response = requests.post(
                     self._config.API_MATCHES_URL,
@@ -113,27 +134,6 @@ class Client:
             self.post_result(next_match_id, result, bot_0_name, bot_1_name)
             if result == "Error":
                 return False
-            return True
-
-        else:
-            with open("matchupList", "r") as match_up_list:
-                for i, line in enumerate(match_up_list):
-                    next_match_id = i
-                    break
-            self._utl.printout(f"Next match: {next_match_id}")
-            map_name = line.split(' ')[1].replace("\n", "").replace('.SC2Map', "")
-            bot_0 = line.split('vs')[0].replace('"', "")
-            bot_1 = line.split('vs')[1].split(" ")[0].replace('"', "")
-            bot_0_name, bot_0_data = bot_0.get_ladder_bots_data(bot_0)
-            bot_1_name, bot_1_data = bot_1.get_ladder_bots_data(bot_1)
-            # bot_0_game_display_id = bot_0_data['botID']#TODO: Enable opponent_id
-            # bot_1_game_display_id = bot_1_data['botID']
-            result = self.run_match(
-                match_count, map_name, bot_0_name, bot_1_name, bot_0_data, bot_1_data, next_match_id
-            )
-            with open("results", "a+") as map_file:
-                map_file.write(str(result) + "\n\n")
-            self.post_local_result(bot_0, bot_1, result)
             return True
 
     def post_result(self, match_id, lm_result, bot_1_name, bot_2_name):
@@ -360,6 +360,7 @@ class Client:
         :param lm_result:
         :return:
         """
+        result = "Error"  # avoid error from this not being initialized
         result_json = {
             "Bot1": bot_0,
             "Bot2": bot_1,
@@ -472,7 +473,7 @@ class Client:
         self._logger.debug(f"Killing current server")
         self.kill_current_server()
 
-    def start_bot(self, bot_data, opponent_id):
+    def start_bot(self, bot_name, bot_data, opponent_id):
         """
         Start the bot with the correct arguments.
 
@@ -482,14 +483,7 @@ class Client:
         """
         # todo: move to Bot class
 
-        bot_data = bot_data["Bots"] if self._config.RUN_LOCAL else bot_data
-        bot_name = next(iter(bot_data))
-        bot_data = bot_data[bot_name] if self._config.RUN_LOCAL else bot_data
-        bot_path = (
-            os.path.join(self._config.BOTS_DIRECTORY, bot_name)
-            if self._config.RUN_LOCAL
-            else bot_data["RootPath"]
-        )  # hot fix
+        bot_path = os.path.join(self._config.BOTS_DIRECTORY, bot_name)
         bot_file = bot_data["FileName"]
         bot_type = bot_data["Type"]
         cmd_line = [
@@ -611,14 +605,14 @@ class Client:
             if msg.get("Status", None) == "Connected":
                 self._logger.debug(f"Starting bots...")
                 bot1_process = self.start_bot(
-                    bot_0_data, opponent_id=bot_1_data.get("botID", 123)
+                    bot_0_name, bot_0_data, opponent_id=bot_1_data.get("botID", 123)
                 )  # todo opponent_id
 
                 msg = await ws.receive_json()
 
                 if msg.get("Bot", None) == "Connected":
                     bot2_process = self.start_bot(
-                        bot_1_data, opponent_id=bot_0_data.get("botID", 321)
+                        bot_1_name, bot_1_data, opponent_id=bot_0_data.get("botID", 321)
                     )  # todo opponent_id
                 else:
                     self._logger.debug(f"Bot2 crash")
@@ -829,26 +823,18 @@ class Client:
     def run(self):
         try:
             self._utl.printout(f'Arena Client started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
+
+            os.chdir(self._config.WORKING_DIRECTORY)
+
             os.makedirs(self._config.REPLAYS_DIRECTORY, exist_ok=True)
 
             if not self._config.RUN_LOCAL:
                 os.makedirs(self._config.TEMP_PATH, exist_ok=True)
                 os.makedirs(self._config.BOTS_DIRECTORY, exist_ok=True)
 
-            os.chdir(self._config.WORKING_DIRECTORY)
             count = 0
-            if self._config.RUN_LOCAL:
-                try:
-                    with open("matchupList", "r") as ml:
-                        ROUNDS_PER_RUN = len(ml.readlines())
-                except FileNotFoundError:
-                    f = open("matchupList", "w+")
-                    ROUNDS_PER_RUN = 0
-                    f.close()
-            else:
-                ROUNDS_PER_RUN = self._config.ROUNDS_PER_RUN
 
-            while count < ROUNDS_PER_RUN:
+            while count < self._config.ROUNDS_PER_RUN:
                 if self._config.CLEANUP_BETWEEN_ROUNDS:
                     self.cleanup()
                 if self.run_next_match(count):

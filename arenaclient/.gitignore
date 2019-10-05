@@ -1,10 +1,9 @@
-tmp/
 bots/
 replays/
-matchuplist
-aiarena-client.log
-results.log
-laddermanager.pid
-.shutdown
+tmp/
+
 config.py
-run_tests.py
+test_config.py
+matches
+results
+.shutdown
