@@ -1,6 +1,6 @@
 import logging
 
-from lib import Paths
+from arenaclient.proxy.lib import Paths
 
 logger = logging.getLogger(__name__)
 

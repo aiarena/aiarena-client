@@ -1,12 +1,3 @@
-.idea/
-*.log
-*.pyc
-*.stdout
-*.txt
-.vscode
-.vs
-venv/
-
 tmp/
 bots/
 replays/
