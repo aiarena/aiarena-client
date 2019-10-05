@@ -1,5 +1,9 @@
 import datetime
+import logging
 import math
+import os
+import signal
+import time
 
 import psutil
 from termcolor import colored
@@ -10,8 +14,13 @@ class Utl:
     Class containing helper functions for the aiarena-client.
 
     """
+
     def __init__(self, config):
         self._config = config
+
+        self._logger = logging.getLogger(__name__)
+        self._logger.addHandler(config.LOGGING_HANDLER)
+        self._logger.setLevel(config.LOGGING_LEVEL)
 
     def is_valid_avg_step_time(self, num):
         """
@@ -109,3 +118,50 @@ class Utl:
         :return:
         """
         return pid in (p.pid for p in psutil.process_iter())
+
+    def check_pid(self, pid: int):
+        """
+        Checks if PID is running.
+
+        :param pid:
+        :return: bool
+        """
+        try:
+            os.kill(pid, 0)
+        except OSError:
+            return False
+        else:
+            return True
+
+    def pid_cleanup(self, pids):
+        """
+        Kills all the pids passed as a list to this function
+
+        :param pids:
+        :return:
+        """
+        for pid in pids:
+            self._logger.debug("Killing: " + str(pid))
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except Exception:
+                self._logger.debug("Already closed: " + str(pid))
+
+    def move_pid(self, pid):
+        """
+        Move the pid to another process group to avoid the bot killing the ai-arena client when closing. (CPP API specific)
+
+        :param pid:
+        :return:
+        """
+        if pid != 0:
+            return
+        else:
+            for i in range(0, 5):
+                try:
+                    os.setpgid(pid, 0)
+                    return
+                except OSError:
+                    if os.getpgid(pid) == 0:
+                        return
+                    time.sleep(0.25)  # sleep for retry
