@@ -46,9 +46,7 @@ class Client:
         :param match_count:
         :return:
         """
-        self._utl.printout(
-            f'New match started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}'
-        )
+        self._utl.printout(f'New match started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
         if self._config.RUN_LOCAL:
             match_source = MatchSourceFactory.build_match_source(self._config.MATCH_SOURCE_CONFIG)
             match = match_source.next_match()
@@ -62,10 +60,7 @@ class Client:
                 match.bot1_data, match.bot2_data,
                 match.id
             )
-            with open("results", "a+") as map_file:
-                map_file.write(str(result) + "\n\n")
-
-            self.post_local_result(match.bot1_name, match.bot2_name, result)
+            match_source.submit_result(match, result)
             return True
         else:
             try:
@@ -266,10 +261,10 @@ class Client:
         )
         zip_file.close()
 
-        # aiarena-client logs
+        # client logs
         proxy_tmp = os.path.join(self._config.TEMP_PATH, "proxy.log")
         # supervisor_tmp = os.path.join(self._config.TEMP_PATH, "supervisor.log")
-        client_tmp = os.path.join(self._config.TEMP_PATH, "aiarena-client.log")
+        client_tmp = os.path.join(self._config.TEMP_PATH, "client.log")
 
         if os.path.isfile("proxy.log"):
             shutil.move("proxy.log", proxy_tmp)
@@ -281,8 +276,8 @@ class Client:
         # else:
         #     Path(supervisor_tmp).touch()
 
-        if os.path.isfile("aiarena-client.log"):
-            shutil.move("aiarena-client.log", client_tmp)
+        if os.path.isfile("client.log"):
+            shutil.move("client.log", client_tmp)
         else:
             Path(client_tmp).touch()
 
@@ -351,107 +346,6 @@ class Client:
                 self._utl.printout(result + " - Result transferred")
         except ConnectionError:
             self._utl.printout(f"ERROR: Result submission failed. Connection to website failed.")
-
-    def post_local_result(self, bot_0, bot_1, lm_result):
-        """
-        Mirror function to save the results to the Results json file if not running matches using the website.
-        :param bot_0:
-        :param bot_1:
-        :param lm_result:
-        :return:
-        """
-        result = "Error"  # avoid error from this not being initialized
-        result_json = {
-            "Bot1": bot_0,
-            "Bot2": bot_1,
-            "Winner": None,
-            "Map": None,
-            "Result": None,
-            "GameTime": None,
-            "GameTimeFormatted": None,
-            "TimeStamp": None,
-            "Bot1AvgFrame": 0,
-            "Bot2AvgFrame": 0,
-        }
-        if isinstance(lm_result, list):
-            for x in lm_result:
-                if x.get("Result", None):
-                    temp_results = x["Result"]
-                    self._utl.printout(str(temp_results))
-
-                    if temp_results[bot_0] == "Result.Crashed":
-                        result = "Player1Crash"
-                        result_json["Winner"] = bot_1
-
-                    elif temp_results[bot_1] == "Result.Crashed":
-                        result = "Player2Crash"
-                        result_json["Winner"] = bot_0
-
-                    elif temp_results[bot_0] == "Result.Timeout":
-                        result = "Player1TimeOut"
-                        result_json["Winner"] = bot_1
-
-                    elif temp_results[bot_1] == "Result.Timeout":
-                        result = "Player2TimeOut"
-                        result_json["Winner"] = bot_0
-
-                    elif temp_results[bot_0] == "Result.Victory":
-                        result = "Player1Win"
-                        result_json["Winner"] = bot_0
-
-                    elif temp_results[bot_0] == "Result.Defeat":
-                        result = "Player2Win"
-                        result_json["Winner"] = bot_1
-
-                    elif temp_results[bot_0] == "Result.Tie":
-                        result = "Tie"
-                        result_json["Winner"] = "Tie"
-
-                    else:
-                        result = "InitializationError"
-
-                    result_json["Result"] = result
-
-                if x.get("GameTime", None):
-                    result_json["GameTime"] = x["GameTime"]
-                    result_json["GameTimeFormatted"] = x["GameTimeFormatted"]
-
-                if x.get("AverageFrameTime", None):
-                    try:
-                        result_json["Bot1AvgFrame"] = next(
-                            item[bot_0] for item in x['AverageFrameTime'] if item.get(bot_0, None))
-                    except StopIteration:
-                        result_json["Bot1AvgFrame"] = 0
-                    try:
-                        result_json["Bot2AvgFrame"] = next(
-                            item[bot_1] for item in x['AverageFrameTime'] if item.get(bot_1, None))
-                    except StopIteration:
-                        result_json["Bot2AvgFrame"] = 0
-
-                if x.get("TimeStamp", None):
-                    result_json["TimeStamp"] = x["TimeStamp"]
-        else:
-            print("Error")
-            # if os.path.isfile(RESULTS_LOG_FILE):#TODO: Fix the appending of results
-            #     f=open(RESULTS_LOG_FILE, 'r')
-            #     if len(f.readlines()) > 0:
-            #         f.close()
-            #         with open(RESULTS_LOG_FILE, 'w+') as results_log:
-            #             j_object = json.load(results_log)
-            #             if j_object.get('Results',None):
-            #                 self._logger.debug('append')
-            #                 j_object['Results'].append(result_json)
-
-            #             else:
-            #                 self._logger.debug('Overwrite')
-            #                 j_object['Results'] =[result_json]
-
-            #             results_log.write(json.dumps(j_object, indent=4))
-            # else:
-        self._utl.printout(str(result))
-        with open(self._config.RESULTS_LOG_FILE, "w") as results_log:
-            json_object = dict({"Results": [result_json]})
-            results_log.write(json.dumps(json_object, indent=4))
 
     def cleanup(self):
         """

@@ -11,7 +11,7 @@ from termcolor import colored
 
 class Utl:
     """
-    Class containing helper functions for the aiarena-client.
+    Class containing helper functions for the AI Arena Client.
 
     """
 

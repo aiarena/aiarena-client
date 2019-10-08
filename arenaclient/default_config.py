@@ -32,8 +32,7 @@ LOGGING_LEVEL = 10
 TEMP_PATH = "/tmp/aiarena/"
 LOCAL_PATH = os.path.dirname(__file__)
 WORKING_DIRECTORY = LOCAL_PATH  # same for now
-LOG_FILE = os.path.join(WORKING_DIRECTORY, "aiarena-client.log")
-RESULTS_LOG_FILE = os.path.join(WORKING_DIRECTORY, "results.log")
+LOG_FILE = os.path.join(WORKING_DIRECTORY, "client.log")
 REPLAYS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "replays")
 BOTS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "bots")
 
