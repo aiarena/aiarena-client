@@ -239,6 +239,12 @@ class Proxy:
 
             if request.HasField("debug"):
                 return False
+            
+            if request.HasField("leave_game"):
+                logger.debug(f'{self.player_name} has issued a LeaveGameRequest')
+
+                self._surrender = True
+                self._result = "Result.Defeat"
 
         except Exception as e:
             logger.debug(f"Exception{e}")

@@ -36,7 +36,6 @@ class Client:
         self._logger.addHandler(self._config.LOGGING_HANDLER)
         self._logger.setLevel(self._config.LOGGING_LEVEL)
 
-        self._utl = Utl(self._config)
 
     def run_next_match(self, match_count: int):
         """
