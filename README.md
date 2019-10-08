@@ -1,9 +1,8 @@
 # aiarena-client
-
-## python-sc2 fix
-After installing the pip requirements, you will need to run the below command, as described here: https://github.com/Dentosal/python-sc2/issues/283#issuecomment-513864602
-```python
-pip install --upgrade  git+https://github.com/Dentosal/python-sc2@develop
+## Running the client
+Navigate to the containing cloned repo and start the client with
+```
+python -m arenaclient
 ```
 
 ## License
