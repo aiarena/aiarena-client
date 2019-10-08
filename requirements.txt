@@ -8,3 +8,4 @@ typing==3.7.4.1
 aiodns>=1.1
 Brotli
 cchardet
+uvloop

@@ -3,6 +3,13 @@ import os
 import weakref
 
 from aiohttp import web
+import asyncio
+try:
+    import uvloop
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+except ModuleNotFoundError:
+    print("Uvloop not found, using default asyncio")
+    pass
 
 from arenaclient.proxy.lib import Timer
 from arenaclient.proxy.port_config import Portconfig
@@ -126,7 +133,9 @@ def main():
 
     :return:
     """
+    loop = asyncio.get_event_loop()
     app = web.Application()
+    app._loop = loop
     app["websockets"] = weakref.WeakSet()
     connection = ConnectionHandler()
     app.router.add_route("GET", "/sc2api", connection.websocket_handler)  # Default route bots connect to.
