@@ -295,7 +295,7 @@ class Proxy:
         start_time = time.monotonic()
         async with aiohttp.ClientSession() as session:
             logger.debug("Websocket client connection starting")
-            self.ws_c2p = aiohttp.web.WebSocketResponse(receive_timeout=40)  # Set to 40 to detect internal bot crashes
+            self.ws_c2p = aiohttp.web.WebSocketResponse(receive_timeout=40, max_msg_size=0)  # Set to 40 to detect internal bot crashes
             await self.ws_c2p.prepare(request)
             request.app["websockets"].add(self.ws_c2p)  # Add bot client to WeakSet for use in detecting amount of
             # clients connected
@@ -323,7 +323,7 @@ class Proxy:
                     break
             logger.debug("Connecting to SC2")
 
-            async with session.ws_connect(url) as ws_p2s:  # Connects to SC2 instance
+            async with session.ws_connect(url, max_msg_size=0) as ws_p2s:  # Connects to SC2 instance
                 self.ws_p2s = ws_p2s
                 c = Controller(self.ws_p2s, process)
                 if not self.created_game:
