@@ -714,6 +714,7 @@ class Client:
         return result
 
     def run(self):
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
         try:
             self._utl.printout(f'Arena Client started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
 
