@@ -1,3 +1,4 @@
+import traceback
 import asyncio
 import logging
 import socket
@@ -6,6 +7,8 @@ import tempfile
 import time
 import warnings
 from typing import Any
+from arenaclient.imagezmq import ImageSender
+
 
 import aiohttp
 import portpicker
@@ -14,6 +17,8 @@ from s2clientprotocol import sc2api_pb2 as sc_pb
 from arenaclient.proxy.lib import Bot, Controller, Paths, Result
 from arenaclient.proxy import maps
 from arenaclient.proxy.supervisor import Supervisor
+
+from arenaclient.mini_map import Minimap
 
 logger = logging.getLogger(__name__)
 logger.setLevel(10)
@@ -69,6 +74,12 @@ class Proxy:
         self.max_frame_time: int = max_frame_time
         self.strikes: int = strikes
         self.replay_saved: bool = False
+        self.mini_map = Minimap()
+        self.observation_loaded = False
+        self.game_info_loaded = False
+        self.sender = None
+        self.game_data_loaded = False
+        self.visualize = True
 
     async def __request(self, request):
         """
@@ -239,6 +250,12 @@ class Proxy:
 
             if request.HasField("debug"):
                 return False
+            if request.HasField('data'):
+                request.data.unit_type_id = True
+                request.data.upgrade_id = True
+                request.data.buff_id = True
+                request.data.effect_id = True
+                request.data.ability_id = True
             
             if request.HasField("leave_game"):
                 logger.debug(f'{self.player_name} has issued a LeaveGameRequest')
@@ -276,10 +293,32 @@ class Proxy:
         :param msg:
         :return:
         """
+        import random as rd
         response = sc_pb.Response()
         response.ParseFromString(msg)
+        if self.sender is None:
+            self.sender = ImageSender(connect_to="tcp://{}:5555".format('127.0.0.1'))
         if response.HasField('observation'):
             self._game_loops = response.observation.observation.game_loop
+            if self.visualize:
+                if rd.random() > 0.9:
+                    self.observation_loaded = True
+
+                    self.mini_map.load_state(response)
+
+        elif self.visualize and response.HasField('game_info'):
+            self.game_info_loaded = True
+            self.mini_map.load_game_info(response)
+        
+        elif self.visualize and response.HasField('data'):
+            self.game_data_loaded = True
+            self.mini_map.load_game_data(response)
+
+        if self.visualize and self.game_info_loaded and self.observation_loaded and self.game_data_loaded:
+            self.mini_map.player_name = self.player_name
+            image = await self.mini_map.draw_map()
+            self.sender.send_image(self.player_name, image)
+
         if response.status > 3:
             await self.check_for_result()
 
@@ -382,8 +421,10 @@ class Proxy:
                                     except (
                                             asyncio.CancelledError,
                                             asyncio.TimeoutError,
+                                            Exception
                                     ) as e:
                                         logger.error(str(e))
+                                        print(traceback.format_exc())
                                     await self.ws_c2p.send_bytes(data_p2s)  # Forward response to bot
                                 start_time = time.monotonic()  # Start the frame timer.
                             elif msg.type == aiohttp.WSMsgType.CLOSED:
