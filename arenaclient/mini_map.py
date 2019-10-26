@@ -75,8 +75,8 @@ class Minimap:
             #     self.add_ramps(map_data)
             # if self.show_vision_blockers:
             #     map_data = self.add_vision_blockers(map_data)
-            if self.show_psi:
-                map_data = self.add_psi(map_data)
+            # if self.show_psi:
+            #     map_data = self.add_psi(map_data)
             if self.show_minerals:
                 self.add_minerals(map_data)
             if self.show_geysers:
@@ -104,6 +104,7 @@ class Minimap:
             thickness = 1
             cv2.putText(flipped, self.player_name, org, font, fontScale, color, thickness, cv2.LINE_AA)
             # cv2.imshow("Debug minimap", flipped)
+            # flipped = cv2.resize(flipped, (500,500), interpolation=cv2.INTER_NEAREST)
 
             # cv2.waitKey(1)
             return flipped

@@ -293,24 +293,34 @@ class Proxy:
         :param msg:
         :return:
         """
-        import random as rd
         response = sc_pb.Response()
         response.ParseFromString(msg)
-        if self.sender is None:
+        if self.visualize and self.sender is None:
+            counter = 1
+            while True:  # Gives SC2 a chance to start up. Repeatedly tries to connect to SC2 websocket until it
+                if counter > 2:
+                    self.visualize = False
+                    print("Server down")
+                    break
+                counter += 1
+                # succeeds
+                # await asyncio.sleep(0.01)
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                result = sock.connect_ex(("127.0.0.1", 5555))
+                if result == 0:
+                    break
             self.sender = ImageSender(connect_to="tcp://{}:5555".format('127.0.0.1'))
         if response.HasField('observation'):
             self._game_loops = response.observation.observation.game_loop
             if self.visualize:
-                if rd.random() > 0.9:
                     self.observation_loaded = True
-
                     self.mini_map.load_state(response)
 
-        elif self.visualize and response.HasField('game_info'):
+        elif self.visualize and not self.game_info_loaded and response.HasField('game_info'):
             self.game_info_loaded = True
             self.mini_map.load_game_info(response)
         
-        elif self.visualize and response.HasField('data'):
+        elif self.visualize and not  self.game_data_loaded and response.HasField('data'):
             self.game_data_loaded = True
             self.mini_map.load_game_data(response)
 
