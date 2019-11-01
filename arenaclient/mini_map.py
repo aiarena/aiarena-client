@@ -8,7 +8,7 @@ import random as rd
 class Minimap:
     def __init__(
             self,
-            map_scale=2,
+            map_scale=1,
             show_heightmap=True,
             show_ramps=False,
             show_vision_blockers=True,
@@ -102,6 +102,8 @@ class Minimap:
             color = (50, 194, 134)
             # Line thickness of 2 px
             thickness = 1
+            
+            flipped = cv2.resize(flipped, (500,500),cv2.INTER_NEAREST)
             cv2.putText(flipped, self.player_name, org, font, fontScale, color, thickness, cv2.LINE_AA)
             # cv2.imshow("Debug minimap", flipped)
             # flipped = cv2.resize(flipped, (500,500), interpolation=cv2.INTER_NEAREST)
