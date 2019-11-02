@@ -729,21 +729,21 @@ class Client:
             count = 0
 
             while count < self._config.ROUNDS_PER_RUN:
-                if self._config.CLEANUP_BETWEEN_ROUNDS:
-                    self.cleanup()
-                if self.run_next_match(count):
-                    count += 1
-                else:
-                    break
-
-                # if RUN_LOCAL:
-                #     with open('matchupList','r+') as ml:
-                #         head, tail = ml.read().split('\n', 1)
-                #         ml.write(tail)
+                try:
+                    if self._config.CLEANUP_BETWEEN_ROUNDS:
+                        self.cleanup()
+                    if self.run_next_match(count):
+                        count += 1
+                    else:
+                        break
+                except Exception as e:
+                    self._utl.printout(traceback.format_exc())
+                    self._utl.printout(f"arena-client encountered an uncaught exception: {e} Sleeping...")
+                    time.sleep(30)
 
         except Exception as e:
             self._utl.printout(traceback.format_exc())
-            self._utl.printout(f"arena-client encountered an uncaught exception: {e} Exiting...")
+            self._utl.printout(f"arena-client encountered an uncaught exception during startup: {e} Exiting...")
         finally:
             try:
                 if self._config.CLEANUP_BETWEEN_ROUNDS:
