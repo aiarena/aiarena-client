@@ -1,0 +1,59 @@
+<!doctype html>
+<html>
+<head>
+    <title>Match Runner</title>
+    <style>
+    body {
+        margin:0;
+        overflow: hidden;
+    }
+    img{
+        position: fixed;
+        top:0;
+        left:0;
+        width:100vw:
+        height: 100vh;
+
+        }
+    
+    </style>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script type="text/javascript">
+         $(function() {
+                 $('a#submit_settings').on('click', function() {
+                     $.ajax({
+                         url: "{{ url_for('get_bots')}}",
+                         type: "POST",
+                         data: {
+                             directory: $('#bot_directory_location').val()
+                         }
+         
+                     }).done(function(data) {
+                         console.log(data)
+                         var titelliste = data.Bots
+                         for (var i = 0; i < titelliste.length; i++) {
+                             var select = document.getElementById("Select");
+                             var option = document.createElement("option");
+                             option.text = titelliste[i];
+                             select.add(option);
+                         }
+                     });
+                     event.preventDefault();
+                 });
+             });
+             </script>
+  </head>
+  <body>
+    <h1>Live Feed</h1>
+    <img src="{{ url_for('video_feed') }}">
+    <h2>Settings</h2>
+    <a href="{{url_for('settings')}}">Settings</a>
+
+  </body>
+  
+</html>
+
+
+
+
+       

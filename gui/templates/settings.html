@@ -1,0 +1,176 @@
+<!doctype html>
+<html>
+   <head>
+      <title>Settings</title>
+      <style>
+         body {
+         margin:0;
+         overflow: hidden;
+         }
+         img{
+         position: fixed;
+         top:0;
+         left:0;
+         width:100vw:
+         height: 100vh;
+         }
+         .switch {
+         position: relative;
+         display: inline-block;
+         width: 30px;
+         height: 17px;
+         }
+         .switch input { 
+         opacity: 0;
+         width: 0;
+         height: 0;
+         }
+         .slider {
+         position: absolute;
+         cursor: pointer;
+         top: 0;
+         left: 0;
+         right: 0;
+         bottom: 0;
+         background-color: #ccc;
+         -webkit-transition: .4s;
+         transition: .4s;
+         }
+         .slider:before {
+         position: absolute;
+         content: "";
+         height: 13px;
+         width: 13px;
+         left: 2px;
+         bottom: 2px;
+         background-color: white;
+         -webkit-transition: .4s;
+         transition: .4s;
+         }
+         input:checked + .slider {
+         background-color: #86c232;
+         }
+         input:focus + .slider {
+         box-shadow: 0 0 1px #86c232;
+         }
+         input:checked + .slider:before {
+         -webkit-transform: translateX(13px);
+         -ms-transform: translateX(13px);
+         transform: translateX(13px);
+         }
+         /* Rounded sliders */
+         .slider.round {
+         border-radius: 9px;
+         }
+         .slider.round:before {
+         border-radius: 25%;
+         }
+      </style>
+      <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+      <script type="text/javascript">
+         $(function() {
+             $('a#bot_directory').on('click', function() {
+                 $.ajax({
+                     url: "{{ url_for('folder_dialog')}}",
+                     type: "GET"
+         
+                 }).done(function(data) {
+                     $("input#bot_directory_location").val(data)
+         
+                 });
+                 event.preventDefault();
+             });
+         });
+         
+             $(function() {
+                 $('a#directory').on('click', function() {
+                     $.ajax({
+                         url: "{{ url_for('folder_dialog')}}",
+                         type: "GET"
+         
+                     }).done(function(data) {
+                         $("input#directory_location").val(data)
+         
+                     });
+                     event.preventDefault();
+                 });
+             });
+         
+            $(function() {
+                 $('a#submit_settings').on('click', function() {
+                     $.ajax({
+                         url: "{{ url_for('handle_data')}}",
+                         type: "POST",
+                         data: {
+                             bots_directory: $('#bot_directory_location').val(),
+         
+                         }
+         
+                     })
+                 });
+             });
+         $(document).ready(function(){
+            $.ajax({
+                         url: "{{ url_for('get_settings')}}",
+                         type: "GET",
+                         dataType:"json"    
+                     }).done(function(data) {
+                         $("input#bot_directory_location_id").val(data.bot_directory_location)
+                         $("input#sc2_directory_location_id").val(data.sc2_directory_location)
+                         $("input#replay_directory_location_id").val(data.replay_directory_location)
+                         $("input#max_game_time_id").val(data.max_game_time)
+                         $("input#max_game_time_id").slider('refresh')
+                         $("ageOutputId").val([parseInt(data.max_game_time.value/22.4 / 60 / 60),
+                            parseInt(data.max_game_time/22.4 / 60 % 60),
+                            parseInt(data.max_game_time/22.4 % 60)
+                            ]
+                            .join(':')
+                            .replace(/\b(\d)\b/g, '0$1'))
+                         if (data.allow_debug == "On"){
+                            $("input#checkboxInputId").attr('checked', true)
+                         }
+                         else{
+                             $("input#checkboxInputId").attr('checked', false)
+                         }
+
+         
+                     });
+                     event.preventDefault();
+        // myFunction();
+        });
+      </script>
+   </head>
+   <body>
+   <a href="{{url_for('index')}}">Home</a><br>
+      <h1>Game Settings</h1>
+      <h2>Bots Location</h2>
+      <form action="{{ url_for('handle_data') }}" method="post">
+         <input type="text" id="bot_directory_location_id" name="bot_directory_location"></input>
+         <a href=# id="bot_directory"><button class='btn btn-default'>Browse</button></a>
+         <h2>Starcraft II Install Location</h2>
+         <input type="text" id="sc2_directory_location_id" name="sc2_directory_location"></input>
+         <a href="#" id="sc2_directory"><button class='btn btn-default'>Browse</button></a>
+         <h2>Replay Save Location</h2>
+         <input type="text" id="replay_directory_location_id" name="replay_directory_location"></input>
+         <a href="#" id="replay_directory"><button class='btn btn-default'>Browse</button></a>
+         <p>
+            <!-- Max Game Time: <input type="text" name="max_game_time" id="max_game_time"><br>-->
+            <!--Last name: <input type="max_game_time" name="max_game_time"><br>-->
+            Max Game Time: <input type="range" name="max_game_time" id="max_game_time_id" value="60486" min="1" max="432000" oninput="ageOutputId.value = [
+               parseInt(max_game_time_id.value/22.4 / 60 / 60),
+               parseInt(max_game_time_id.value/22.4 / 60 % 60),
+               parseInt(max_game_time_id.value/22.4 % 60)
+               ]
+               .join(':')
+               .replace(/\b(\d)\b/g, '0$1')">
+            <output name="ageOutputName" id="ageOutputId">00:45:00</output><br> <!--Not working from file update TODO: fix-->
+            Allow Debug: <label class="switch">
+            <input id="checkboxInputId" type="checkbox" name="allow_debug">
+            <span class="slider round"></span>
+            </label><br><br><br>
+            <button type="submit">Submit</button>
+      </form>
+      </p>
+      
+   </body>
+</html>
