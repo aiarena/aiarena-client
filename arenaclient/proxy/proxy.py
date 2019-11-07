@@ -48,7 +48,10 @@ class Proxy:
             disable_debug: bool = False,
             supervisor: Supervisor = None,
             max_frame_time: int = 125,
-            strikes: int = 10
+            strikes: int = 10,
+            visualize_port: int = 5555,
+            visualize: bool = False,
+            visualize_step_count: int =10
     ):
         self.average_time: float = 0
         self.previous_loop: int = 0
@@ -79,7 +82,13 @@ class Proxy:
         self.game_info_loaded = False
         self.sender = None
         self.game_data_loaded = False
-        self.visualize = True
+        self.visualize = visualize
+        self.visualize_port = visualize_port
+        self.visualize_step_count =visualize_step_count
+        if self.visualize and self.sender is None:
+            # self.kill_current_server()           
+            self.sender = ImageSender(connect_to=f"tcp://127.0.0.1:{self.visualize_port}", REQ_REP=False)
+        
 
     async def __request(self, request):
         """
@@ -285,7 +294,7 @@ class Proxy:
                 self.killed = True
                 return request.SerializeToString()
         return request.SerializeToString()
-
+    
     async def process_response(self, msg):
         """
         Uses responses from SC2 to populate self._game_loops instead of sending extra requests to SC2. Also calls
@@ -295,24 +304,10 @@ class Proxy:
         """
         response = sc_pb.Response()
         response.ParseFromString(msg)
-        if self.visualize and self.sender is None:
-            counter = 1
-            while True:  # Gives SC2 a chance to start up. Repeatedly tries to connect to SC2 websocket until it
-                if counter > 2:
-                    self.visualize = False
-                    print("Server down")
-                    break
-                counter += 1
-                # succeeds
-                # await asyncio.sleep(0.01)
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                result = sock.connect_ex(("127.0.0.1", 5555))
-                if result == 0:
-                    break
-            self.sender = ImageSender(connect_to="tcp://{}:5555".format('127.0.0.1'))
-        if response.HasField('observation'):
+       
+        if response.HasField('observation') :
             self._game_loops = response.observation.observation.game_loop
-            if self.visualize:
+            if self.visualize and (self._game_loops % self.visualize_step_count ==0 or self._game_loops < 10):
                     self.observation_loaded = True
                     self.mini_map.load_state(response)
 
@@ -325,13 +320,14 @@ class Proxy:
             self.mini_map.load_game_data(response)
 
         if self.visualize and self.game_info_loaded and self.observation_loaded and self.game_data_loaded:
-            self.mini_map.player_name = self.player_name
-            image = await self.mini_map.draw_map()
-            self.sender.send_image(self.player_name, image)
+            if (self._game_loops % self.visualize_step_count ==0 or self._game_loops < 10):
+                self.mini_map.player_name = self.player_name
+                image = self.mini_map.draw_map()
+                self.sender.send_image(self.player_name, image)
 
         if response.status > 3:
             await self.check_for_result()
-
+    
     async def websocket_handler(self, request, portconfig):
         """
         Handler for all requests. A client session is created for the bot and a connection to SC2 is made to forward

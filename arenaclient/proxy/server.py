@@ -86,7 +86,10 @@ class ConnectionHandler:
                     disable_debug=bool(self.supervisor.disable_debug),
                     supervisor=self.supervisor,
                     strikes=self.supervisor.strikes,
-                    max_frame_time=self.supervisor.max_frame_time
+                    max_frame_time=self.supervisor.max_frame_time,
+                    visualize=True, 
+                    visualize_port=5556
+                    
                 )
                 await proxy1.websocket_handler(request, self.portconfig)
 
@@ -104,7 +107,9 @@ class ConnectionHandler:
                     disable_debug=bool(self.supervisor.disable_debug),
                     supervisor=self.supervisor,
                     strikes=self.supervisor.strikes,
-                    max_frame_time=self.supervisor.max_frame_time
+                    max_frame_time=self.supervisor.max_frame_time,
+                    visualize=True, 
+                    visualize_port=5557
                 )
                 await proxy2.websocket_handler(request, self.portconfig)
 
@@ -121,7 +126,7 @@ class ConnectionHandler:
             else:
                 proxy2 = Proxy(game_created=True)
                 await proxy2.websocket_handler(request, self.portconfig)
-
+            
         return web.Response(text="OK")
 
 

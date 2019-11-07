@@ -65,7 +65,7 @@ class Minimap:
             "xelnaga": (170, 200, 100),
         }
 
-    async def draw_map(self):
+    def draw_map(self):
         try:
             if self.show_heightmap:
                 map_data = np.copy(self.heightmap)
