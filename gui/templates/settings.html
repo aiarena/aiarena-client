@@ -69,27 +69,41 @@
       <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
       <script type="text/javascript">
          $(function() {
-             $('a#bot_directory').on('click', function() {
+             $('a#bot_directory_id').on('click', function() {
                  $.ajax({
                      url: "{{ url_for('folder_dialog')}}",
                      type: "GET"
          
                  }).done(function(data) {
-                     $("input#bot_directory_location").val(data)
+                     $("input#bot_directory_location_id").val(data)
          
                  });
                  event.preventDefault();
              });
          });
          
-             $(function() {
-                 $('a#directory').on('click', function() {
+            $(function() {
+                 $('a#sc2_directory_id').on('click', function() {
                      $.ajax({
                          url: "{{ url_for('folder_dialog')}}",
                          type: "GET"
          
                      }).done(function(data) {
-                         $("input#directory_location").val(data)
+                         $("input#sc2_directory_location_id").val(data)
+         
+                     });
+                     event.preventDefault();
+                 });
+             });
+
+            $(function() {
+                 $('a#replay_directory_id').on('click', function() {
+                     $.ajax({
+                         url: "{{ url_for('folder_dialog')}}",
+                         type: "GET"
+         
+                     }).done(function(data) {
+                         $("input#replay_directory_location_id").val(data)
          
                      });
                      event.preventDefault();
@@ -119,7 +133,7 @@
                          $("input#sc2_directory_location_id").val(data.sc2_directory_location)
                          $("input#replay_directory_location_id").val(data.replay_directory_location)
                          $("input#max_game_time_id").val(data.max_game_time)
-                         $("input#max_game_time_id").slider('refresh')
+                         //$("input#max_game_time_id").slider('refresh')
                          $("ageOutputId").val([parseInt(data.max_game_time.value/22.4 / 60 / 60),
                             parseInt(data.max_game_time/22.4 / 60 % 60),
                             parseInt(data.max_game_time/22.4 % 60)
@@ -146,13 +160,13 @@
       <h2>Bots Location</h2>
       <form action="{{ url_for('handle_data') }}" method="post">
          <input type="text" id="bot_directory_location_id" name="bot_directory_location"></input>
-         <a href=# id="bot_directory"><button class='btn btn-default'>Browse</button></a>
+         <a href=# id="bot_directory_id"><button class='btn btn-default'>Browse</button></a>
          <h2>Starcraft II Install Location</h2>
          <input type="text" id="sc2_directory_location_id" name="sc2_directory_location"></input>
-         <a href="#" id="sc2_directory"><button class='btn btn-default'>Browse</button></a>
+         <a href="#" id="sc2_directory_id"><button class='btn btn-default'>Browse</button></a>
          <h2>Replay Save Location</h2>
          <input type="text" id="replay_directory_location_id" name="replay_directory_location"></input>
-         <a href="#" id="replay_directory"><button class='btn btn-default'>Browse</button></a>
+         <a href="#" id="replay_directory_id"><button class='btn btn-default'>Browse</button></a>
          <p>
             <!-- Max Game Time: <input type="text" name="max_game_time" id="max_game_time"><br>-->
             <!--Last name: <input type="max_game_time" name="max_game_time"><br>-->

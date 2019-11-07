@@ -182,6 +182,7 @@ def folder_dialog():
     root = tkinter.Tk()
     root.withdraw()
     dirname = filedialog.askdirectory(parent=root,initialdir="/",title='Please select a directory')
+    root.destroy()
     return Response(dirname)
 
 @app.route('/get_bots', methods=['POST'])
@@ -213,5 +214,5 @@ if __name__ == '__main__':
 	t.start()
 
 	# start the flask app
-	app.run(host='127.0.0.1', port=8000, debug=False,
+	app.run(host='0.0.0.0', port=8000, debug=False,
 			threaded=True, use_reloader=False)
