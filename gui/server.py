@@ -22,39 +22,40 @@ app = Flask(__name__)
 output_frame = None
 
 def detect_motion(frame_count):
-	global output_frame, lock
-	image_hub = imagezmq.ImageHub(open_port='tcp://127.0.0.1:5555')
+    global output_frame, lock
+    image_hub = imagezmq.ImageHub(open_port='tcp://127.0.0.1:5556', REQ_REP=False)
+    image_hub.connect('tcp://127.0.0.1:5557')
 
-	frame_dict = {}
-	last_active = {}
-	estimated_num_pis = 2
-	active_check_period = 10
-	active_check_seconds = estimated_num_pis * active_check_period
+    frame_dict = {}
+    last_active = {}
+    estimated_num_pis = 2
+    active_check_period = 10
+    active_check_seconds = estimated_num_pis * active_check_period
 
-	m_w = 2
-	m_h = 1
-	total = 0
-	while True:
-		(rpiName, frame) = image_hub.recv_image()
-		image_hub.send_reply(b'OK')
+    m_w = 2
+    m_h = 1
+    total = 0
+    while True:
+        (rpiName, frame) = image_hub.recv_image()
+        # image_hub.send_reply(b'OK')
 
-		# if rpiName not in last_active.keys():
-		# 	print("[INFO] receiving data from {}...".format(rpiName))
+        # if rpiName not in last_active.keys():
+        # 	print("[INFO] receiving data from {}...".format(rpiName))
 
-		# last_active[rpiName] = datetime.now()
+        # last_active[rpiName] = datetime.now()
 
-		# frame = imutils.resize(frame, width=800, height=800)
-		# frame = cv2.resize(frame, dsize=None, fx=2, fy=2)
-		(h, w) = frame.shape[:2]
-		frame_dict[rpiName] = frame
-		# if total > frame_count:
-		montages = build_montages(frame_dict.values(), (w, h), (m_w, m_h))
+        # frame = imutils.resize(frame, width=800, height=800)
+        # frame = cv2.resize(frame, dsize=None, fx=2, fy=2)
+        (h, w) = frame.shape[:2]
+        frame_dict[rpiName] = frame
+        # if total > frame_count:
+        montages = build_montages(frame_dict.values(), (w, h), (m_w, m_h))
 
-		# display the montage(s) on the screen
-		for (i, montage) in enumerate(montages):
-			with lock:
-				output_frame = montage
-			break
+        # display the montage(s) on the screen
+        for (i, montage) in enumerate(montages):
+            with lock:
+                output_frame = montage
+            break
 	# total +=1
 	# if (datetime.now() - lastActiveCheck).seconds > ACTIVE_CHECK_SECONDS:
 	# 	# loop over all previously active devices
