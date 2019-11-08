@@ -202,10 +202,16 @@ def run_local_game(games):
 
 @app.route('/run_games',methods=['POST'])
 def run_games():
-    games = ['loser_bot,T,python,loser_bot,T,python,AutomatonLE']
+    games = []
+    data = request.form.to_dict(flat=False)
+    for x in data['Bot1[]']:
+        for y in data['Bot2[]']:
+            game = f'{x},T,python,{y},T,python,AutomatonLE'
+            games.append(game)
+
     proc = Process(target=run_local_game, args=[games])
     proc.start()
-    return redirect("/")
+    return Response("Game Started")
 
 @app.route('/get_bots', methods=['GET'])
 def get_bots():

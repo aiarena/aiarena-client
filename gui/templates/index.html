@@ -48,6 +48,20 @@
 
              });
              });
+             $(function() {
+                 $('a#play_button').on('click', function() {
+                    $.ajax({
+                         url: "{{ url_for('run_games')}}",
+                         type: "POST",
+                         data:
+                        {
+                             "Bot1": $("#bot1").chosen().val(),
+                             "Bot2": $("#bot2").chosen().val()                         
+                        },       
+                    });
+                     event.preventDefault();
+             });
+             });
              </script>
   </head>
   <body>
@@ -59,14 +73,13 @@
     <div class="middle">
         <div class="container">
             <main class="content">
-            <form action="{{ url_for('run_games') }}" method="post">
                 <select class="chosen" multiple="true" style="width:400px;" id="bot1">
                 </select><br>
                 VS<br>
                 <select class="chosen" multiple="true" style="width:400px;" id="bot2">
                 </select><br>
-                <button type="submit">Submit</button>
-            </form>
+                <a href="#" id="play_button"><button class='btn btn-default'>Play</button></a>
+
                 <h2>Live Feed</h2>
                 <img src="{{ url_for('video_feed')}}">
             </main><!-- .content -->
