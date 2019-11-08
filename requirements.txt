@@ -9,3 +9,4 @@ aiodns>=1.1
 Brotli
 cchardet
 uvloop
+zmq
