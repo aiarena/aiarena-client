@@ -1,6 +1,6 @@
 from imutils import build_montages
 from datetime import datetime
-
+from multiprocessing import Process
 import imagezmq
 from flask import Response, request, redirect, jsonify
 from flask import Flask
@@ -13,6 +13,10 @@ import tkinter
 from tkinter import filedialog
 import cv2
 import json
+
+import arenaclient.default_local_config as config
+from arenaclient.client import Client
+from arenaclient.utl import Utl
 
 lock = threading.Lock()
 
@@ -186,9 +190,26 @@ def folder_dialog():
     root.destroy()
     return Response(dirname)
 
-@app.route('/get_bots', methods=['POST'])
+def run_local_game(games):
+    config.ROUNDS_PER_RUN = 1
+    config.REALTIME = True
+    for key in games:
+        with open(config.MATCH_SOURCE_CONFIG.MATCHES_FILE, "w+") as f:
+            f.write(key + os.linesep)
+        ac = Client(config)
+        ac.run()
+
+@app.route('/run_games',methods=['POST'])
+def run_games():
+    games = ['loser_bot,T,python,loser_bot,T,python,AutomatonLE']
+    proc = Process(target=run_local_game, args=[games])
+    proc.start()
+    return redirect("/")
+
+@app.route('/get_bots', methods=['GET'])
 def get_bots():
-    directory = request.form["directory"]
+    with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),'settings.json')) as f:
+        directory = json.load(f)['bot_directory_location']
     
     if not os.path.isdir(directory):
         return jsonify({"Error":"Please enter a directory"})

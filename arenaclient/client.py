@@ -475,7 +475,10 @@ class Client:
                 "MatchID": next_match_id,
                 "DisableDebug": "False",
                 "MaxFrameTime": self._config.MAX_FRAME_TIME,
-                "Strikes": self._config.STRIKES
+                "Strikes": self._config.STRIKES,
+                "RealTime": self._config.REALTIME,
+                "Visualize": self._config.VISUALIZE
+                
             }
         }
 
@@ -687,8 +690,10 @@ class Client:
                 )
                 if result == 0:
                     break
-
-            loop = asyncio.get_event_loop()
+            try:
+                loop = asyncio.get_event_loop()
+            except:
+                loop = asyncio.new_event_loop()
 
             result = loop.run_until_complete(
                 self.main(

@@ -43,7 +43,9 @@ class Proxy:
             disable_debug: bool = False,
             supervisor: Supervisor = None,
             max_frame_time: int = 125,
-            strikes: int = 10
+            strikes: int = 10,
+            real_time: bool = False,
+            visualize: bool = False
     ):
         self.average_time: float = 0
         self.previous_loop: int = 0
@@ -69,6 +71,8 @@ class Proxy:
         self.max_frame_time: int = max_frame_time
         self.strikes: int = strikes
         self.replay_saved: bool = False
+        self.real_time: bool = real_time
+        self.visualize: bool = visualize
 
     async def __request(self, request):
         """
@@ -158,8 +162,8 @@ class Proxy:
             except Exception as e:
                 logger.error(e)
 
-    @staticmethod
-    async def create_game(server, players, map_name):
+    
+    async def create_game(self, server, players, map_name):
         """
         Static method to send a create_game request to SC2 with the relevant options.
         :param server:
@@ -169,7 +173,7 @@ class Proxy:
         """
         logger.debug("Creating game...")
         map_name = map_name.replace(".SC2Replay", "").replace(" ", "")
-        response = await server.create_game(maps.get(map_name), players, realtime=False)
+        response = await server.create_game(maps.get(map_name), players, realtime=self.real_time)
         logger.debug("Game created")
         return response
 

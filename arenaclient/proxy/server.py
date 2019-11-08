@@ -86,7 +86,9 @@ class ConnectionHandler:
                     disable_debug=bool(self.supervisor.disable_debug),
                     supervisor=self.supervisor,
                     strikes=self.supervisor.strikes,
-                    max_frame_time=self.supervisor.max_frame_time
+                    max_frame_time=self.supervisor.max_frame_time,
+                    real_time = self.supervisor.real_time,
+                    visualize= self.supervisor.visualize
                 )
                 await proxy1.websocket_handler(request, self.portconfig)
 
@@ -104,7 +106,9 @@ class ConnectionHandler:
                     disable_debug=bool(self.supervisor.disable_debug),
                     supervisor=self.supervisor,
                     strikes=self.supervisor.strikes,
-                    max_frame_time=self.supervisor.max_frame_time
+                    max_frame_time=self.supervisor.max_frame_time,
+                    real_time = self.supervisor.real_time,
+                    visualize= self.supervisor.visualize
                 )
                 await proxy2.websocket_handler(request, self.portconfig)
 

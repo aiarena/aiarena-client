@@ -37,10 +37,20 @@ class Supervisor:
         self._game_time_formatted: str = ""
         self._disable_debug: bool = True
         self._ws = None
+        self._real_time: bool = False
+        self._visualize: bool = False
 
     @property
     def game_time(self):
         return self._game_time
+
+    @property
+    def real_time(self):
+        return self._real_time
+    
+    @property
+    def visualize(self):
+        return self._visualize
 
     @game_time.setter
     def game_time(self, value: float):
@@ -183,6 +193,9 @@ class Supervisor:
                             f"{self._match_id}_{self.player1}_vs_{self.player2}.SC2Replay",
                         )
                         self._disable_debug = config["DisableDebug"]
+                        self._real_time = config["RealTime"]
+                        self._visualize = config["Visualize"]
+
                     # self.config = config
 
                 except JSONDecodeError as e:

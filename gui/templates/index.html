@@ -2,13 +2,15 @@
 <html>
 <head>
     <title>Match Runner</title>
-    <style>
+    <meta name="keywords" content="" />
+	<meta name="description" content="" />
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/style.css') }}">
+    <!--style>
     body {
         margin:0;
         overflow: hidden;
     }
     img{
-        position: fixed;
         top:0;
         left:0;
         width:100vw:
@@ -16,39 +18,66 @@
 
         }
     
-    </style>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    </style-->
+    <!--script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdn.rawgit.com/harvesthq/chosen/gh-pages/chosen.jquery.min.js"></script>
+    <link href="https://cdn.rawgit.com/harvesthq/chosen/gh-pages/chosen.min.css" rel="stylesheet"/>
+
     <script type="text/javascript">
-         $(function() {
-                 $('a#submit_settings').on('click', function() {
+    jQuery(document).ready(function(){
+	jQuery(".chosen").data("placeholder","Select Frameworks...").chosen();
+    $(function() {
+
                      $.ajax({
                          url: "{{ url_for('get_bots')}}",
-                         type: "POST",
-                         data: {
-                             directory: $('#bot_directory_location').val()
-                         }
+                         type: "GET",
          
                      }).done(function(data) {
                          console.log(data)
                          var titelliste = data.Bots
                          for (var i = 0; i < titelliste.length; i++) {
-                             var select = document.getElementById("Select");
-                             var option = document.createElement("option");
+                             var selects = $('#bot1, #bot2');
+                            var option = document.createElement("option");
                              option.text = titelliste[i];
-                             select.add(option);
+                             selects.append(option);
+                             selects.trigger("chosen:updated"); 
                          }
                      });
                      event.preventDefault();
-                 });
+
+             });
              });
              </script>
   </head>
   <body>
-    <h1>Live Feed</h1>
-    <img src="{{ url_for('video_feed') }}"><br>
-    <h2>Settings</h2>
-    <a href="{{url_for('settings')}}">Settings</a>
+  <div class="wrapper">
+    <header class="header">
+    <img src="https://ai-arena.net/static/img/ai-arena-logo.png" alt="AI Arena Logo">
+	</header><!-- .header-->
 
+    <div class="middle">
+        <div class="container">
+            <main class="content">
+            <form action="{{ url_for('run_games') }}" method="post">
+                <select class="chosen" multiple="true" style="width:400px;" id="bot1">
+                </select><br>
+                VS<br>
+                <select class="chosen" multiple="true" style="width:400px;" id="bot2">
+                </select><br>
+                <button type="submit">Submit</button>
+            </form>
+                <h2>Live Feed</h2>
+                <img src="https://cdn.24.co.za/files/Cms/General/d/7937/06c132f7f4a4414287d6bef6f2bffd96.jpg">
+            </main><!-- .content -->
+		</div><!-- .container-->
+    <aside class="left-sidebar">
+        <a href="{{url_for('settings')}}">Settings</a><br>
+        AI Arena Login
+    </aside><!-- .left-sidebar -->
+
+    </div>
+  </div>
   </body>
   
 </html>
