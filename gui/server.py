@@ -192,7 +192,8 @@ def folder_dialog():
 
 def run_local_game(games):
     config.ROUNDS_PER_RUN = 1
-    config.REALTIME = True
+    config.REALTIME = False
+    config.VISUALIZE = True
     for key in games:
         with open(config.MATCH_SOURCE_CONFIG.MATCHES_FILE, "w+") as f:
             f.write(key + os.linesep)
