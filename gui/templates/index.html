@@ -27,6 +27,7 @@
     <script type="text/javascript">
     jQuery(document).ready(function(){
 	jQuery(".chosen").data("placeholder","Select Frameworks...").chosen();
+    $("#watch_id").hide();
     $(function() {
 
                      $.ajax({
@@ -74,6 +75,13 @@
              });
              $(function() {
                  $('a#play_button').on('click', function() {
+                     if ($("input#visualize_id").is(":checked")){
+                            
+                            $("#watch_id").show();
+                     }
+                     else{
+                        $("#watch_id").hide();
+                     }
                     $.ajax({
                          url: "{{ url_for('run_games')}}",
                          type: "POST",
@@ -81,7 +89,9 @@
                         {
                              "Bot1": $("#bot1").chosen().val(),
                              "Bot2": $("#bot2").chosen().val(),
-                             "Map": $("#map").chosen().val()                        
+                             "Map": $("#map").chosen().val(),
+                             "Realtime": $("input#realtime_id").is(":checked"),                   
+                             "Visualize": $("input#visualize_id").is(":checked")
                         },       
                     });
                      event.preventDefault();
@@ -106,10 +116,19 @@
                 </select><br><br>
                 <select class="chosen" multiple="true" style="width:400px;" id="map">
                 </select><br><br>
+                Visualize: <label class="switch">
+                <input id="visualize_id" type="checkbox" name="visualize">
+                <span class="slider round"></span>
+                </label><br><br>
+                Realtime: <label class="switch">
+                <input id="realtime_id" type="checkbox" name="realtime">
+                <span class="slider round"></span>
+                </label><br><br>
                 <a href="#" id="play_button"><button class='btn btn-default'>Play</button></a><br><br>
-
-                <h1>Live Feed</h1>
-                <a href="{{ url_for('watch') }}">Watch</a><br>
+                <div id="watch_id">
+                    <h1>Live Feed</h1>
+                    <a href="{{ url_for('watch') }}">Watch</a><br>
+                <div>
             </main><!-- .content -->
             <!--TODO: Add a results history table here-->
 		</div><!-- .container-->

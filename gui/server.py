@@ -2,7 +2,7 @@ import random
 from imutils import build_montages
 from datetime import datetime
 from multiprocessing import Process
-import imagezmq
+from arenaclient import imagezmq
 from flask import Response, request, redirect, jsonify
 from flask import Flask
 from flask import render_template
@@ -83,6 +83,7 @@ def detect_motion(frame_count):
         for (i, montage) in enumerate(montages):
             # with lock:
             output_frame = montage
+            
             # break
 	# total +=1
 	# if (datetime.now() - lastActiveCheck).seconds > ACTIVE_CHECK_SECONDS:
@@ -117,7 +118,8 @@ def generate():
 			# ensure the frame was successfully encoded
 			if not flag:
 				continue
-
+                # cv2.imshow("Minimap", output_frame)
+                # cv2.waitKey(1)
 		# yield the output frame in the byte format
 		yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +
 			   bytearray(encodedImage) + b'\r\n')
@@ -128,6 +130,7 @@ def save_settings_to_file(data):
     data['replay_directory_location'] = data.get('replay_directory_location', None)
     data['max_game_time'] = data.get('max_game_time', 60486)
     data['allow_debug'] = data.get('allow_debug', 'Off')
+    data['visualize'] = data.get('visualize', 'Off')
     file_settings = None
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)),'settings.json')
     if os.path.isfile(path):
@@ -199,10 +202,10 @@ def folder_dialog():
     root.destroy()
     return Response(dirname)
 
-def run_local_game(games):
+def run_local_game(games, data):
     config.ROUNDS_PER_RUN = 1
-    config.REALTIME = False
-    config.VISUALIZE = True
+    config.REALTIME = data.get("Realtime", 'false') == 'true'    
+    config.VISUALIZE = data.get("Visualize", 'false') == 'true' 
     for key in games:
         with open(config.MATCH_SOURCE_CONFIG.MATCHES_FILE, "w+") as f:
             f.write(key + os.linesep)
@@ -227,7 +230,7 @@ def run_games():
                 game = f'{x.bot},T,{x.type[0]},{y.bot},T,{y.type[0]},{maps}'
                 games.append(game)
 
-    proc = Process(target=run_local_game, args=[games])
+    proc = Process(target=run_local_game, args=[games,data])
     proc.start()
     return Response("Game Started")
 
@@ -278,9 +281,8 @@ def get_local_maps():
 def get_maps():
     return jsonify({'Maps':get_local_maps()})
 
-# check to see if this is the main thread of execution
-if __name__ == '__main__':
-	# construct the argument parser and parse command line arguments
+def run_server(host='0.0.0.0', port=8080):
+    # construct the argument parser and parse command line arguments
 
 	# start a thread that will perform motion detection
 	t = threading.Thread(target=detect_motion, args=(
@@ -289,5 +291,9 @@ if __name__ == '__main__':
 	t.start()
 
 	# start the flask app
-	app.run(host='0.0.0.0', port=8000, debug=False,
+	app.run(host=host, port=port, debug=False,
 			threaded=True, use_reloader=False)
+# check to see if this is the main thread of execution
+if __name__ == '__main__':
+    run_server()
+	
