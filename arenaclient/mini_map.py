@@ -149,7 +149,43 @@ class Minimap:
             )
         self.map_data = map_data
         return map_data
+    
+    def get_score(self):
+        score_image = np.ones((500,500,3))
+        i = 0
+        font = cv2.FONT_HERSHEY_SIMPLEX
 
+        x, y = 10, 40
+        font_size = 1
+        font_thickness = 1
+        color = (50, 194, 134)
+        wrapped_text = [
+            'Score: ' + str(self._state.score.score),
+            'Time: ' + f"{int((self._state.game_loop/22.4) // 60):02}:{int((self._state.game_loop/22.4) % 60):02}",
+            'Minerals: '+ str(self._state.common.minerals),
+            'Vespene: '+ str(self._state.common.vespene),
+            'Units Value: '+ str(self._state.score.total_value_units)
+            ]
+        for line in wrapped_text:
+            line = str(line)
+            textsize = cv2.getTextSize(line, font, font_size, font_thickness)[0]
+
+            gap = textsize[1] + 10
+
+            y = int((score_image.shape[0] + textsize[1]) / 2) + i * gap
+            x = int((score_image.shape[1] - textsize[0]) / 2)
+
+            cv2.putText(score_image, line, (x, y), font,
+                        font_size, 
+                        color, 
+                        font_thickness, 
+                        lineType = cv2.LINE_AA)
+            i +=1
+        return score_image
+        
+
+        print(self._state.game_loop/22.4)
+    
     def add_ramps(self, map_data):
         for r in self._game_info.map_ramps:
             ramp_point_radius = 0.5

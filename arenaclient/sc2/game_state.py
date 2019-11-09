@@ -112,14 +112,14 @@ class GameState:
         # self.alerts = self.observation.alerts
         # self.player_result = response_observation.player_result
         # self.chat = response_observation.chat
-        # self.common: Common = Common(self.observation.player_common)
+        self.common: Common = Common(self.observation.player_common)
 
         # Area covered by Pylons and Warpprisms
         # self.psionic_matrix: PsionicMatrix = PsionicMatrix.from_proto(self.observation_raw.player.power_sources)
-        # self.game_loop: int = self.observation.game_loop  # 22.4 per second on faster game speed
+        self.game_loop: int = self.observation.game_loop  # 22.4 per second on faster game speed
 
         # https://github.com/Blizzard/s2client-proto/blob/33f0ecf615aa06ca845ffe4739ef3133f37265a9/s2clientprotocol/score.proto#L31
-        # self.score: ScoreDetails = ScoreDetails(self.observation.score)
+        self.score: ScoreDetails = ScoreDetails(self.observation.score)
         # self.abilities = self.observation.abilities  # abilities of selected units
 
         # self._blipUnits = []

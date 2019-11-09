@@ -1,3 +1,4 @@
+import random
 from imutils import build_montages
 from datetime import datetime
 from multiprocessing import Process
@@ -17,13 +18,36 @@ import json
 import arenaclient.default_local_config as config
 from arenaclient.client import Client
 from arenaclient.utl import Utl
-
+from pathlib import Path
 lock = threading.Lock()
 
 # initialize a flask object
 app = Flask(__name__)
 
 output_frame = None
+class Bot():
+    def __init__(self,bot):
+        self.bot = bot
+        self.type = None
+ 
+        self.extract_bot_data()
+    @staticmethod
+    def find_values(id, json_repr):
+        results = []
+
+        def _decode_dict(a_dict):
+            try: results.append(a_dict[id])
+            except KeyError: pass
+            return a_dict
+
+        json.loads(json_repr, object_hook=_decode_dict)  # Return value ignored.
+        return results
+
+    def extract_bot_data(self):
+        settings = load_settings_from_file()  
+        self.settings = settings   
+        with open(os.path.join(settings['bot_directory_location'],self.bot,'ladderbots.json')) as f:
+            self.type = self.find_values('Type',f.read())
 
 def detect_motion(frame_count):
     global output_frame, lock
@@ -37,7 +61,7 @@ def detect_motion(frame_count):
     active_check_seconds = estimated_num_pis * active_check_period
 
     m_w = 2
-    m_h = 1
+    m_h = 4
     total = 0
     while True:
         (rpiName, frame) = image_hub.recv_image()
@@ -57,9 +81,9 @@ def detect_motion(frame_count):
 
         # display the montage(s) on the screen
         for (i, montage) in enumerate(montages):
-            with lock:
-                output_frame = montage
-            break
+            # with lock:
+            output_frame = montage
+            # break
 	# total +=1
 	# if (datetime.now() - lastActiveCheck).seconds > ACTIVE_CHECK_SECONDS:
 	# 	# loop over all previously active devices
@@ -132,26 +156,6 @@ def load_settings_from_file():
                 return {}
     else:
         return {}
-    data['bot_directory_location']=data.get('bot_directory_location', None)
-    data['sc2_directory_location'] = data.get('sc2_directory_location', None)
-    data['replay_directory_location'] = data.get('replay_directory_location', None)
-    data['max_game_time'] = data.get('max_game_time', 60486)
-    data['allow_debug'] = data.get('allow_debug', 'Off')
-    file_settings = None
-    path = os.path.join(os.path.dirname(os.path.realpath(__file__)),'settings.json')
-    if os.path.isfile(path):
-        with open(path,'r') as settings:
-            try:
-                file_settings = json.load(settings)
-                for x, y in data.items():
-                    if y:
-                        file_settings[x]=y                  
-                
-            except:
-                    pass
-    data = file_settings if file_settings else data
-    with open(path,'w+') as settings:
-        json.dump(data,settings)
 
 def load_default_settings():
     pass #TODO: get default values for settings.json if the file doesn't already exist
@@ -171,6 +175,10 @@ def video_feed():
 def settings():
     return render_template("settings.html")
 
+@app.route('/watch')
+def watch():
+    return render_template("watch.html")
+
 @app.route('/handle_data', methods=['POST'])
 def handle_data():
     data = request.form
@@ -181,6 +189,7 @@ def handle_data():
 @app.route('/get_settings', methods=['GET'])
 def get_settings():
     return jsonify(load_settings_from_file())
+
 
 @app.route('/folder_dialog')
 def folder_dialog():
@@ -203,11 +212,20 @@ def run_local_game(games):
 @app.route('/run_games',methods=['POST'])
 def run_games():
     games = []
+    
     data = request.form.to_dict(flat=False)
-    for x in data['Bot1[]']:
-        for y in data['Bot2[]']:
-            game = f'{x},T,python,{y},T,python,AutomatonLE'
-            games.append(game)
+    bot1 =data['Bot1[]']
+    bot2 =data['Bot2[]']
+    chosen_maps = data["Map[]"]
+    for maps in chosen_maps:
+        if maps == "Random":
+            maps = random.choice(get_local_maps())
+        for x in bot1:
+            x = Bot(x)
+            for y in bot2:                
+                y=Bot(y)
+                game = f'{x.bot},T,{x.type[0]},{y.bot},T,{y.type[0]},{maps}'
+                games.append(game)
 
     proc = Process(target=run_local_game, args=[games])
     proc.start()
@@ -231,6 +249,34 @@ def get_bots():
 
     # return Response(200)
     return jsonify(bot_json)
+def get_local_maps():
+    with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),'settings.json')) as f:
+        directory = json.load(f)['sc2_directory_location']
+    
+    if not os.path.isdir(directory):
+        return jsonify({"Error":"Please enter a directory"})
+    BASE = Path(directory).expanduser()
+           
+
+    if (BASE / "maps").exists():
+        MAPS = BASE / "maps"
+    else:
+        MAPS = BASE / "Maps"
+    map_json = {'Bots':[]}
+    maps = []
+    for mapdir in (p for p in MAPS.iterdir()):
+        if mapdir.is_dir():
+            for mapfile in (p for p in mapdir.iterdir() if p.is_file()):
+                if mapfile.suffix == ".SC2Map":
+                    maps.append(mapfile.stem)
+        elif mapdir.is_file():
+            if mapdir.suffix == ".SC2Map":
+                maps.append(mapdir.stem)
+    return maps
+
+@app.route('/get_maps', methods=['GET'])
+def get_maps():
+    return jsonify({'Maps':get_local_maps()})
 
 # check to see if this is the main thread of execution
 if __name__ == '__main__':

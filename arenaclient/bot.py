@@ -25,6 +25,12 @@ class Bot:
             "dotnetcore": [f"{bot_name}.dll", "DotNetCore"],
             "java": [f"{bot_name}.jar", "Java"],
             "nodejs": ["main.jar", "NodeJS"],
+            "Python":["run.py", "Python"],
+            "Wine":[f"{bot_name}.exe", "Wine"],
+            "BinaryCpp":[f"{bot_name}", "BinaryCpp"],
+            "DotNetCore":[f"{bot_name}.dll", "DotNetCore"],
+            "Java":[f"{bot_name}.jar", "Java"],
+            "NodeJS":["main.jar", "NodeJS"],
         }
         return BOT_TYPE_MAP[bot_type][0], BOT_TYPE_MAP[bot_type][1]
 

@@ -34,7 +34,6 @@
                          type: "GET",
          
                      }).done(function(data) {
-                         console.log(data)
                          var titelliste = data.Bots
                          for (var i = 0; i < titelliste.length; i++) {
                              var selects = $('#bot1, #bot2');
@@ -43,6 +42,31 @@
                              selects.append(option);
                              selects.trigger("chosen:updated"); 
                          }
+                     });
+                     event.preventDefault();
+
+             });
+                 $(function() {
+
+                     $.ajax({
+                         url: "{{ url_for('get_maps')}}",
+                         type: "GET",
+         
+                     }).done(function(data) {
+                         var titelliste = data.Maps
+                         var selects = $('#map');
+                         var option = document.createElement("option");
+                         option.text = 'Random'
+                         selects.append(option);
+                         selects.trigger("chosen:updated"); 
+                         for (var i = 0; i < titelliste.length; i++) {
+                            var selects = $('#map');
+                            var option = document.createElement("option");
+                             option.text = titelliste[i];
+                             selects.append(option);
+                             selects.trigger("chosen:updated"); 
+                         }
+
                      });
                      event.preventDefault();
 
@@ -56,7 +80,8 @@
                          data:
                         {
                              "Bot1": $("#bot1").chosen().val(),
-                             "Bot2": $("#bot2").chosen().val()                         
+                             "Bot2": $("#bot2").chosen().val(),
+                             "Map": $("#map").chosen().val()                        
                         },       
                     });
                      event.preventDefault();
@@ -73,16 +98,20 @@
     <div class="middle">
         <div class="container">
             <main class="content">
+                <h1>Bots</h1>
                 <select class="chosen" multiple="true" style="width:400px;" id="bot1">
-                </select><br>
-                VS<br>
+                </select><br><br>
+                VS<br><br>
                 <select class="chosen" multiple="true" style="width:400px;" id="bot2">
-                </select><br>
-                <a href="#" id="play_button"><button class='btn btn-default'>Play</button></a>
+                </select><br><br>
+                <select class="chosen" multiple="true" style="width:400px;" id="map">
+                </select><br><br>
+                <a href="#" id="play_button"><button class='btn btn-default'>Play</button></a><br><br>
 
-                <h2>Live Feed</h2>
-                <img src="{{ url_for('video_feed')}}">
+                <h1>Live Feed</h1>
+                <a href="{{ url_for('watch') }}">Watch</a><br>
             </main><!-- .content -->
+            <!--TODO: Add a results history table here-->
 		</div><!-- .container-->
     <aside class="left-sidebar">
         <a href="{{url_for('settings')}}">Settings</a><br>

@@ -8,8 +8,8 @@ import time
 import warnings
 from typing import Any
 from arenaclient.imagezmq import ImageSender
-
-
+import numpy as np
+import cv2
 import aiohttp
 import portpicker
 from s2clientprotocol import sc2api_pb2 as sc_pb
@@ -52,7 +52,7 @@ class Proxy:
             real_time: bool = False,
             visualize_port: int = 5555,
             visualize: bool = False,
-            visualize_step_count: int =10
+            visualize_step_count: int = 22
     ):
         self.average_time: float = 0
         self.previous_loop: int = 0
@@ -326,7 +326,9 @@ class Proxy:
             if (self._game_loops % self.visualize_step_count ==0 or self._game_loops < 10):
                 self.mini_map.player_name = self.player_name
                 image = self.mini_map.draw_map()
+                score = self.mini_map.get_score()
                 self.sender.send_image(self.player_name, image)
+                self.sender.send_image(self.player_name+' Score', score)
 
         if response.status > 3:
             await self.check_for_result()
@@ -466,7 +468,23 @@ class Proxy:
                             }
                     except ZeroDivisionError:
                         self.supervisor.average_frame_time = {self.player_name: 0}
+                    if self.visualize and self.sender:
+                        img = np.ones((500,500,3))
+                        font = cv2.FONT_HERSHEY_SIMPLEX
+                        org = (50, 50)
+                        # fontScale
+                        fontScale = 1
+                        # Blue color in BGR
+                        color = (50, 194, 134)
+                        # Line thickness of 2 px
+                        thickness = 1
+                        
+                        flipped = cv2.resize(img, (500,500),cv2.INTER_NEAREST)
+                        cv2.putText(flipped, self.player_name, org, font, fontScale, color, thickness, cv2.LINE_AA)
+                        if self._result:
+                            cv2.putText(flipped, str(self._result), (50,200),font, fontScale, color, thickness, cv2.LINE_AA)
 
+                        self.sender.send_image(self.player_name, flipped)
                     self.supervisor.result = dict({self.player_name: self._result})
 
                     await self.ws_c2p.close()
