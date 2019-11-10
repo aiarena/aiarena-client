@@ -19,16 +19,19 @@ import arenaclient.default_local_config as config
 from arenaclient.client import Client
 from arenaclient.utl import Utl
 from pathlib import Path
+import requests
+import zipfile
 lock = threading.Lock()
 
 # initialize a flask object
 app = Flask(__name__)
-
+AI_ARENA_URL = r'https://ai-arena.net:444/'
 output_frame = None
 class Bot():
-    def __init__(self,bot):
+    def __init__(self, bot):
         self.bot = bot
         self.type = None
+        self.settings = None
  
         self.extract_bot_data()
     @staticmethod
@@ -42,12 +45,42 @@ class Bot():
 
         json.loads(json_repr, object_hook=_decode_dict)  # Return value ignored.
         return results
+    
+    def download_bot(self):
+        self.bot = self.bot.replace(' (AI-Arena)','')
+        r = requests.get(
+                AI_ARENA_URL+f'api/bots/?format=json&name={self.bot}', headers={"Authorization": "Token " + self.settings['API_token']}
+            )
+        data = json.loads(r.text)
+        self.type = data['results'][0]['type']
+        if not os.path.isdir(os.path.join(self.settings['bot_directory_location'], self.bot)):
+            r = requests.get(
+                AI_ARENA_URL+f'api/bots/?format=json&name={self.bot}', headers={"Authorization": "Token " + self.settings['API_token']}
+            )
+            bot_zip = data['results'][0]['bot_zip']
+            r = requests.get(bot_zip, headers={"Authorization": "Token " + self.settings['API_token']}, stream=True)
 
+            bot_download_path = os.path.join(self.settings['bot_directory_location'], self.bot+ ".zip")
+            with open(bot_download_path, "wb") as bot_zip:
+                for chunk in r.iter_content(chunk_size=10*1024):
+                    bot_zip.write(chunk)
+                # bot_zip.write(r.content)
+        
+            # Extract to bot folder
+            with zipfile.ZipFile(bot_download_path, "r") as zip_ref:
+                zip_ref.extractall(os.path.join(self.settings['bot_directory_location'], self.bot))
+            os.remove(bot_download_path)
+    
     def extract_bot_data(self):
         settings = load_settings_from_file()  
-        self.settings = settings   
+        self.settings = settings
+        if ' (AI-Arena)' in self.bot:
+            self.download_bot()
+            return
+        
+
         with open(os.path.join(settings['bot_directory_location'],self.bot,'ladderbots.json')) as f:
-            self.type = self.find_values('Type',f.read())
+            self.type = self.find_values('Type',f.read())[0]
 
 def detect_motion(frame_count):
     global output_frame, lock
@@ -227,7 +260,7 @@ def run_games():
             x = Bot(x)
             for y in bot2:                
                 y=Bot(y)
-                game = f'{x.bot},T,{x.type[0]},{y.bot},T,{y.type[0]},{maps}'
+                game = f'{x.bot},T,{x.type},{y.bot},T,{y.type},{maps}'
                 games.append(game)
 
     proc = Process(target=run_local_game, args=[games,data])
@@ -252,6 +285,18 @@ def get_bots():
 
     # return Response(200)
     return jsonify(bot_json)
+
+@app.route('/get_arena_bots', methods=['GET'])
+def get_arena_bots():
+    data = load_settings_from_file()
+    token = data.get('API_token','')
+    if  token == '':
+        return "No token"
+    else:
+        r = requests.get(AI_ARENA_URL+r'api/bots/?&format=json&id=&user=&name=&created=&active=&in_match=&current_match=&plays_race=&type=&game_display_id=&bot_zip_updated=&bot_zip_publicly_downloadable=true', headers={"Authorization": "Token " + token})
+        return r.text
+        
+
 def get_local_maps():
     with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),'settings.json')) as f:
         directory = json.load(f)['sc2_directory_location']

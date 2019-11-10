@@ -17,3 +17,4 @@ laddermanager.pid
 .shutdown
 config.py
 run_tests.py
+gui/settings.json

@@ -33,11 +33,12 @@
                      $.ajax({
                          url: "{{ url_for('get_bots')}}",
                          type: "GET",
-         
+                        dataType: "json"
                      }).done(function(data) {
+                         console.log(data)
                          var titelliste = data.Bots
                          for (var i = 0; i < titelliste.length; i++) {
-                             var selects = $('#bot1, #bot2');
+                            var selects = $('#bot1, #bot2');
                             var option = document.createElement("option");
                              option.text = titelliste[i];
                              selects.append(option);
@@ -97,6 +98,39 @@
                      event.preventDefault();
              });
              });
+            $(function() {
+            $('input#arenabots_id').change(function () {
+                console.log('change')
+
+                if ($('input#arenabots_id').is(':checked')) {
+                    $(function() {
+
+                     $.ajax({
+                         url: "{{ url_for('get_arena_bots')}}",
+                         type: "GET",
+                         
+                        dataType: "json"
+         
+                     }).done(function(data) {
+                         var titelliste = data.results
+                         console.log(data)
+                         for (var i = 0; i < titelliste.length; i++) {
+                            var selects = $('#bot1, #bot2');
+                            var option = document.createElement("option");
+                            option.text = titelliste[i].name + ' (AI-Arena)';
+                            selects.append(option);
+                            selects.trigger("chosen:updated"); 
+                         }
+
+                     });
+                     event.preventDefault();
+
+                });
+                } else {
+                    console.log($('#arenabots_id').val() + ' is now unchecked');
+                }
+            });
+            });
              </script>
   </head>
   <body>
@@ -108,7 +142,11 @@
     <div class="middle">
         <div class="container">
             <main class="content">
-                <h1>Bots</h1>
+                <h1>Bots</h1><br>
+                Show AI-Arena bots: <label class="switch">
+                <input id="arenabots_id" type="checkbox" name="arenabots">
+                <span class="slider round"></span>
+                </label><br><br>
                 <select class="chosen" multiple="true" style="width:400px;" id="bot1">
                 </select><br><br>
                 VS<br><br>
