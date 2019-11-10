@@ -14,7 +14,7 @@ import tkinter
 from tkinter import filedialog
 import cv2
 import json
-
+from arenaclient.matches import FileMatchSource
 import arenaclient.default_local_config as config
 from arenaclient.client import Client
 from arenaclient.utl import Utl
@@ -27,6 +27,7 @@ lock = threading.Lock()
 app = Flask(__name__)
 AI_ARENA_URL = r'https://ai-arena.net:444/'
 output_frame = None
+
 class Bot():
     def __init__(self, bot):
         self.bot = bot
@@ -235,10 +236,24 @@ def folder_dialog():
     root.destroy()
     return Response(dirname)
 
+@app.route('/get_results',methods=['GET'])
+def get_results():
+    try:
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),'results.json'),'r') as f:
+            data= json.loads(f.read())
+            return jsonify(data.get('Results',[]))
+    except Exception as e:
+        return str(e)
+
+
 def run_local_game(games, data):
     config.ROUNDS_PER_RUN = 1
     config.REALTIME = data.get("Realtime", 'false') == 'true'    
     config.VISUALIZE = data.get("Visualize", 'false') == 'true' 
+    config.MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(		
+    matches_file=os.path.join(os.path.dirname(os.path.realpath(__file__)), "matches"),		
+    results_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'results.json'))
+
     for key in games:
         with open(config.MATCH_SOURCE_CONFIG.MATCHES_FILE, "w+") as f:
             f.write(key + os.linesep)

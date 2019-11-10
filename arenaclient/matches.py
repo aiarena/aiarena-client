@@ -1,6 +1,6 @@
 import json
 from enum import Enum
-
+from pathlib import Path
 from arenaclient.bot import Bot
 
 
@@ -210,10 +210,22 @@ class FileMatchSource(MatchSource):
                     result_json["TimeStamp"] = x["TimeStamp"]
         else:
             result_json["Result"] = result_type
+        
+        filename = Path(self._results_file)
+        filename.touch(exist_ok=True)  # will create file, if it exists will do nothing
 
-        with open(self._results_file, "w") as results_log:
-            json_object = dict({"Results": [result_json]})
-            results_log.write(json.dumps(json_object, indent=4))
+        with open(self._results_file, "r+") as results_log:
+            try:
+                results=json.loads(results_log.read())
+                result_list = results['Results']
+                result_list.append(result_json)
+                results_log.seek(0)
+                json_object = dict({"Results": result_list})
+                results_log.write(json.dumps(json_object, indent=4))
+            except:
+                results_log.seek(0)
+                json_object = dict({"Results": [result_json]})
+                results_log.write(json.dumps(json_object, indent=4))
 
 
 class MatchSourceFactory:
