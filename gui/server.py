@@ -21,6 +21,7 @@ from arenaclient.utl import Utl
 from pathlib import Path
 import requests
 import zipfile
+import hashlib
 lock = threading.Lock()
 
 # initialize a flask object
@@ -53,24 +54,35 @@ class Bot():
                 AI_ARENA_URL+f'api/bots/?format=json&name={self.bot}', headers={"Authorization": "Token " + self.settings['API_token']}
             )
         data = json.loads(r.text)
-        self.type = data['results'][0]['type']
-        if not os.path.isdir(os.path.join(self.settings['bot_directory_location'], self.bot)):
-            r = requests.get(
-                AI_ARENA_URL+f'api/bots/?format=json&name={self.bot}', headers={"Authorization": "Token " + self.settings['API_token']}
-            )
-            bot_zip = data['results'][0]['bot_zip']
-            r = requests.get(bot_zip, headers={"Authorization": "Token " + self.settings['API_token']}, stream=True)
 
-            bot_download_path = os.path.join(self.settings['bot_directory_location'], self.bot+ ".zip")
-            with open(bot_download_path, "wb") as bot_zip:
-                for chunk in r.iter_content(chunk_size=10*1024):
-                    bot_zip.write(chunk)
-                # bot_zip.write(r.content)
-        
-            # Extract to bot folder
-            with zipfile.ZipFile(bot_download_path, "r") as zip_ref:
-                zip_ref.extractall(os.path.join(self.settings['bot_directory_location'], self.bot))
-            os.remove(bot_download_path)
+        self.type = data['results'][0]['type']
+        md5_hash = data['results'][0]['bot_zip_md5hash']
+        if os.path.isdir(os.path.join(self.settings['bot_directory_location'], self.bot)):
+            path = Path(os.path.join(self.settings['bot_directory_location'],'Bot Zip Files'))
+            if not path.is_dir():
+                path.mkdir()
+            if Path(os.path.join(path,self.bot+'.zip')).exists():
+                with open(os.path.join(path, self.bot+'.zip'), "rb") as bot_zip:
+                    calculated_md5 = hashlib.md5(bot_zip.read()).hexdigest()
+                if md5_hash == calculated_md5:
+                    print('Do not download')
+                    return
+        r = requests.get(
+            AI_ARENA_URL+f'api/bots/?format=json&name={self.bot}', headers={"Authorization": "Token " + self.settings['API_token']}
+        )
+        bot_zip = data['results'][0]['bot_zip']
+        r = requests.get(bot_zip, headers={"Authorization": "Token " + self.settings['API_token']}, stream=True)
+            
+        bot_download_path = os.path.join(path, self.bot+ ".zip")
+        with open(bot_download_path, "wb") as bot_zip:
+            for chunk in r.iter_content(chunk_size=10*1024):
+                bot_zip.write(chunk)
+            # bot_zip.write(r.content)
+    
+        # Extract to bot folder
+        with zipfile.ZipFile(bot_download_path, "r") as zip_ref:
+            zip_ref.extractall(os.path.join(self.settings['bot_directory_location'], self.bot))
+            # os.remove(bot_download_path)
     
     def extract_bot_data(self):
         settings = load_settings_from_file()  

@@ -123,6 +123,7 @@
          
                  function generateDynamicTable(){
                      $(function() {
+                         console.log('Executing');
          
                           $.ajax({
                               url: "{{ url_for('get_results')}}",
@@ -209,7 +210,9 @@
                                 divContainer.innerHTML = "";
                                 divContainer.appendChild(table);
                                 
-                            }
+                            };
+                            setTimeout(generateDynamicTable, 30000);
+
                             });
                         });	
                  };
