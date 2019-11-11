@@ -1,6 +1,5 @@
 import random
 from imutils import build_montages
-from datetime import datetime
 from multiprocessing import Process
 from arenaclient import imagezmq
 from flask import Response, request, redirect, jsonify
@@ -8,8 +7,6 @@ from flask import Flask
 from flask import render_template
 import threading
 import os
-from pathlib import Path
-import imutils
 import tkinter
 from tkinter import filedialog
 import cv2
@@ -17,7 +14,6 @@ import json
 from arenaclient.matches import FileMatchSource
 import arenaclient.default_local_config as config
 from arenaclient.client import Client
-from arenaclient.utl import Utl
 from pathlib import Path
 import requests
 import zipfile
@@ -34,7 +30,7 @@ class Bot():
         self.bot = bot
         self.type = None
         self.settings = None
- 
+
         self.extract_bot_data()
     @staticmethod
     def find_values(id, json_repr):
@@ -47,7 +43,7 @@ class Bot():
 
         json.loads(json_repr, object_hook=_decode_dict)  # Return value ignored.
         return results
-    
+
     def download_bot(self):
         self.bot = self.bot.replace(' (AI-Arena)','')
         r = requests.get(
@@ -72,25 +68,25 @@ class Bot():
         )
         bot_zip = data['results'][0]['bot_zip']
         r = requests.get(bot_zip, headers={"Authorization": "Token " + self.settings['API_token']}, stream=True)
-            
+
         bot_download_path = os.path.join(path, self.bot+ ".zip")
         with open(bot_download_path, "wb") as bot_zip:
             for chunk in r.iter_content(chunk_size=10*1024):
                 bot_zip.write(chunk)
             # bot_zip.write(r.content)
-    
+
         # Extract to bot folder
         with zipfile.ZipFile(bot_download_path, "r") as zip_ref:
             zip_ref.extractall(os.path.join(self.settings['bot_directory_location'], self.bot))
             # os.remove(bot_download_path)
-    
+
     def extract_bot_data(self):
-        settings = load_settings_from_file()  
+        settings = load_settings_from_file()
         self.settings = settings
         if ' (AI-Arena)' in self.bot:
             self.download_bot()
             return
-        
+
 
         with open(os.path.join(settings['bot_directory_location'],self.bot,'ladderbots.json')) as f:
             self.type = self.find_values('Type',f.read())[0]
@@ -129,7 +125,7 @@ def detect_motion(frame_count):
         for (i, montage) in enumerate(montages):
             # with lock:
             output_frame = montage
-            
+
             # break
 	# total +=1
 	# if (datetime.now() - lastActiveCheck).seconds > ACTIVE_CHECK_SECONDS:
@@ -185,15 +181,15 @@ def save_settings_to_file(data):
                 file_settings = json.load(settings)
                 for x, y in data.items():
                     if y:
-                        file_settings[x]=y                  
-                
+                        file_settings[x]=y
+
             except:
                     pass
     data = file_settings if file_settings else data
     with open(path,'w+') as settings:
         print('write')
         json.dump(data,settings)
-    
+
 def load_settings_from_file():
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)),'settings.json')
     if os.path.isfile(path):
@@ -231,7 +227,7 @@ def watch():
 @app.route('/handle_data', methods=['POST'])
 def handle_data():
     data = request.form
-    
+
     save_settings_to_file(data.to_dict())
     return redirect("/")
 
@@ -260,10 +256,10 @@ def get_results():
 
 def run_local_game(games, data):
     config.ROUNDS_PER_RUN = 1
-    config.REALTIME = data.get("Realtime", 'false') == 'true'    
-    config.VISUALIZE = data.get("Visualize", 'false') == 'true' 
-    config.MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(		
-    matches_file=os.path.join(os.path.dirname(os.path.realpath(__file__)), "matches"),		
+    config.REALTIME = data.get("Realtime", 'false') == 'true'
+    config.VISUALIZE = data.get("Visualize", 'false') == 'true'
+    config.MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(
+    matches_file=os.path.join(os.path.dirname(os.path.realpath(__file__)), "matches"),
     results_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'results.json'))
 
     for key in games:
@@ -275,7 +271,7 @@ def run_local_game(games, data):
 @app.route('/run_games',methods=['POST'])
 def run_games():
     games = []
-    
+
     data = request.form.to_dict(flat=False)
     bot1 =data['Bot1[]']
     bot2 =data['Bot2[]']
@@ -285,7 +281,7 @@ def run_games():
             maps = random.choice(get_local_maps())
         for x in bot1:
             x = Bot(x)
-            for y in bot2:                
+            for y in bot2:
                 y=Bot(y)
                 game = f'{x.bot},T,{x.type},{y.bot},T,{y.type},{maps}'
                 games.append(game)
@@ -298,10 +294,10 @@ def run_games():
 def get_bots():
     with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),'settings.json')) as f:
         directory = json.load(f)['bot_directory_location']
-    
+
     if not os.path.isdir(directory):
         return jsonify({"Error":"Please enter a directory"})
-    
+
     if len(os.listdir(directory)) < 1:
         return jsonify({"Error":f"No bots found in {directory}"})
     bot_json = {'Bots':[]}
@@ -322,16 +318,16 @@ def get_arena_bots():
     else:
         r = requests.get(AI_ARENA_URL+r'api/bots/?&format=json&id=&user=&name=&created=&active=&in_match=&current_match=&plays_race=&type=&game_display_id=&bot_zip_updated=&bot_zip_publicly_downloadable=true', headers={"Authorization": "Token " + token})
         return r.text
-        
+
 
 def get_local_maps():
     with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),'settings.json')) as f:
         directory = json.load(f)['sc2_directory_location']
-    
+
     if not os.path.isdir(directory):
         return jsonify({"Error":"Please enter a directory"})
     BASE = Path(directory).expanduser()
-           
+
 
     if (BASE / "maps").exists():
         MAPS = BASE / "maps"
@@ -368,4 +364,4 @@ def run_server(host='0.0.0.0', port=8080):
 # check to see if this is the main thread of execution
 if __name__ == '__main__':
     run_server()
-	
+
