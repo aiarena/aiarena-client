@@ -19,3 +19,4 @@ config.py
 run_tests.py
 gui/settings.json
 results.json
+node_modules
