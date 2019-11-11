@@ -26,7 +26,7 @@ lock = threading.Lock()
 
 # initialize a flask object
 app = Flask(__name__)
-AI_ARENA_URL = r'https://ai-arena.net:444/'
+AI_ARENA_URL = r'https://ai-arena.net/'
 output_frame = None
 
 class Bot():
