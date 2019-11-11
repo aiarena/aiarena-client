@@ -3,7 +3,7 @@
 const electron = require('electron');
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
-const path = require('path');
+const dialog = electron.dialog
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser mainWindow.
@@ -25,13 +25,15 @@ var child = require('child_process').spawn('python', ['server.py'],{
     }
     console.log(data.toString());
   });
+
+
 function createWindow(){
 
 
     // Create the browser mainWindow
     mainWindow = new BrowserWindow({
-      minWidth: 600,
-      minHeight: 550,
+      minWidth: 900,
+      minHeight: 1600,
       show: false
     });
   
@@ -42,6 +44,7 @@ function createWindow(){
     mainWindow.once('ready-to-show', () => {
       mainWindow.show();
     });
+
   
     // Quit app when close
     mainWindow.on('closed', function(){
@@ -49,7 +52,12 @@ function createWindow(){
       // kill the server on exit
       child.unref();
     });
-    // (some more stuff, eg. dev tools) skipped... 
+    mainWindow.webContents.openDevTools();
+  };
+  exports.selectDirectory = function () {
+    dialog.showOpenDialog(mainWindow, {
+      properties: ['openDirectory']
+    })
   };
   
   var startUp = function(){

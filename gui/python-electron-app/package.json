@@ -14,8 +14,8 @@
     "electron": "^2.0.8"
   },
   "dependencies": {
-    "chosen-js": "^1.8.7",
     "jquery": "^3.4.1",
+
     "python-shell": "^0.5.0",
     "request-promise": "^4.2.5"
   }

@@ -68,61 +68,22 @@
       </style>
       <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
       <script type="text/javascript">
-         $(function() {
-             $('a#bot_directory_id').on('click', function() {
-                 $.ajax({
-                     url: "{{ url_for('folder_dialog')}}",
-                     type: "GET"
-         
-                 }).done(function(data) {
-                     $("input#bot_directory_location_id").val(data)
-         
-                 });
-                 event.preventDefault();
-             });
-         });
-         
-            $(function() {
-                 $('a#sc2_directory_id').on('click', function() {
-                     $.ajax({
-                         url: "{{ url_for('folder_dialog')}}",
-                         type: "GET"
-         
-                     }).done(function(data) {
-                         $("input#sc2_directory_location_id").val(data)
-         
-                     });
-                     event.preventDefault();
-                 });
-             });
+        jQuery(document).ready(function(){
+            const electron = require('electron')
+            const remote = electron.remote
+            const mainProcess = remote.require('./main')
+            document.querySelectorAll('.browse').forEach(item => {
+                console.log(1);
+            item.addEventListener('click',  _ => {
+            mainProcess.selectDirectory()
+            })
+            //item.val(path[0]);
 
-            $(function() {
-                 $('a#replay_directory_id').on('click', function() {
-                     $.ajax({
-                         url: "{{ url_for('folder_dialog')}}",
-                         type: "GET"
+            })
+        });
+        });
          
-                     }).done(function(data) {
-                         $("input#replay_directory_location_id").val(data)
          
-                     });
-                     event.preventDefault();
-                 });
-             });
-         
-            $(function() {
-                 $('a#submit_settings').on('click', function() {
-                     $.ajax({
-                         url: "{{ url_for('handle_data')}}",
-                         type: "POST",
-                         data: {
-                             bots_directory: $('#bot_directory_location').val(),
-         
-                         }
-         
-                     })
-                 });
-             });
          $(document).ready(function(){
             $.ajax({
                          url: "{{ url_for('get_settings')}}",
@@ -161,13 +122,13 @@
       <h2>Bots Location</h2>
       <form action="{{ url_for('handle_data') }}" method="post">
          <input type="text" id="bot_directory_location_id" name="bot_directory_location"></input>
-         <a href=# id="bot_directory_id"><button class='btn btn-default'>Browse</button></a>
+         <button type="button" id="bot_directory_id" class='browse'>Browse</button>
          <h2>Starcraft II Install Location</h2>
          <input type="text" id="sc2_directory_location_id" name="sc2_directory_location"></input>
-         <a href="#" id="sc2_directory_id"><button class='btn btn-default'>Browse</button></a>
+         <button type="button" id="sc2_directory_id" class='browse'>Browse</button>
          <h2>Replay Save Location</h2>
          <input type="text" id="replay_directory_location_id" name="replay_directory_location"></input>
-         <a href="#" id="replay_directory_id"><button class='btn btn-default'>Browse</button></a><br><br>
+         <button type="button" id="replay_directory_id" class='browse'>Browse</button><br><br>
          <h2>AI-Arena API Token</h2>
          <input id="API_token_id" type="text" name="API_token"></input>  <a href="https://ai-arena.net/profile/token/?" target="_blank">API Token Link</a><br><br>
          <p>

@@ -7,8 +7,6 @@ from flask import Flask
 from flask import render_template
 import threading
 import os
-import tkinter
-from tkinter import filedialog
 import cv2
 import json
 from arenaclient.matches import FileMatchSource
@@ -236,14 +234,6 @@ def get_settings():
     return jsonify(load_settings_from_file())
 
 
-@app.route('/folder_dialog')
-def folder_dialog():
-    root = tkinter.Tk()
-    root.withdraw()
-    dirname = filedialog.askdirectory(parent=root,initialdir="/",title='Please select a directory')
-    root.destroy()
-    return Response(dirname)
-
 @app.route('/get_results',methods=['GET'])
 def get_results():
     try:
@@ -257,7 +247,7 @@ def get_results():
 def run_local_game(games, data):
     config.ROUNDS_PER_RUN = 1
     config.REALTIME = data.get("Realtime", 'false') == 'true'
-    config.VISUALIZE = data.get("Visualize", 'false') == 'true'
+    config.VISUALIZE = True#data.get("Visualize", 'false') == 'true'
     config.MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(
     matches_file=os.path.join(os.path.dirname(os.path.realpath(__file__)), "matches"),
     results_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'results.json'))
