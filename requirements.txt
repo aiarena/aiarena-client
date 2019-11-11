@@ -10,7 +10,6 @@ typing==3.7.4.1
 aiodns>=1.1
 Brotli
 cchardet
-uvloop
 zmq
 opencv-contrib-python==4.1.1.26
-opencv-python==3.4.5
+opencv-python
