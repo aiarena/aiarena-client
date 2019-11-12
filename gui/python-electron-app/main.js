@@ -55,9 +55,10 @@ function createWindow(){
     mainWindow.webContents.openDevTools();
   };
   exports.selectDirectory = function () {
-    dialog.showOpenDialog(mainWindow, {
+    const filepath = dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory']
     })
+    return filepath;
   };
   
   var startUp = function(){

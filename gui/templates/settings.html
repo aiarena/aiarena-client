@@ -73,14 +73,12 @@
             const remote = electron.remote
             const mainProcess = remote.require('./main')
             document.querySelectorAll('.browse').forEach(item => {
-                console.log(1);
             item.addEventListener('click',  _ => {
-            mainProcess.selectDirectory()
+            var filepath = mainProcess.selectDirectory();
+            var element = document.getElementById(item.id.concat('_field'));
+            element.value=filepath[0];
             })
-            //item.val(path[0]);
-
             })
-        });
         });
          
          
@@ -90,9 +88,9 @@
                          type: "GET",
                          dataType:"json"    
                      }).done(function(data) {
-                         $("input#bot_directory_location_id").val(data.bot_directory_location)
-                         $("input#sc2_directory_location_id").val(data.sc2_directory_location)
-                         $("input#replay_directory_location_id").val(data.replay_directory_location)
+                         $("input#bot_directory_id_field").val(data.bot_directory_location)
+                         $("input#sc2_directory_id_field").val(data.sc2_directory_location)
+                         $("input#replay_directory_id_field").val(data.replay_directory_location)
                          $("input#API_token_id").val(data.API_token)
                          $("input#max_game_time_id").val(data.max_game_time)
                          //$("input#max_game_time_id").slider('refresh')
@@ -116,18 +114,18 @@
         });
       </script>
    </head>
-   <body>
+   <body style='background-image: url(/static/img/background.gif)'>
    <a href="{{url_for('index')}}">Home</a><br>
       <h1>Game Settings</h1>
       <h2>Bots Location</h2>
       <form action="{{ url_for('handle_data') }}" method="post">
-         <input type="text" id="bot_directory_location_id" name="bot_directory_location"></input>
+         <input type="text" id="bot_directory_id_field" name="bot_directory_location"></input>
          <button type="button" id="bot_directory_id" class='browse'>Browse</button>
          <h2>Starcraft II Install Location</h2>
-         <input type="text" id="sc2_directory_location_id" name="sc2_directory_location"></input>
+         <input type="text" id="sc2_directory_id_field" name="sc2_directory_location"></input>
          <button type="button" id="sc2_directory_id" class='browse'>Browse</button>
          <h2>Replay Save Location</h2>
-         <input type="text" id="replay_directory_location_id" name="replay_directory_location"></input>
+         <input type="text" id="replay_directory_id_field" name="replay_directory_location"></input>
          <button type="button" id="replay_directory_id" class='browse'>Browse</button><br><br>
          <h2>AI-Arena API Token</h2>
          <input id="API_token_id" type="text" name="API_token"></input>  <a href="https://ai-arena.net/profile/token/?" target="_blank">API Token Link</a><br><br>
