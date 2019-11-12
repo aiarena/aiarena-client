@@ -20,3 +20,6 @@ run_tests.py
 gui/settings.json
 results.json
 node_modules
+dist/
+build/
+arenaclient.egg-info
