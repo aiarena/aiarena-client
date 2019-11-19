@@ -132,7 +132,7 @@ class ConnectionHandler:
         return web.Response(text="OK")
 
 
-def main():
+def run_server():
     """
     Starts the proxy application on HOST and PORT, which defaults to '127.0.0.1' and 8765.
 
@@ -140,7 +140,11 @@ def main():
 
     :return:
     """
-    loop = asyncio.get_event_loop()
+    try:
+        loop = asyncio.get_event_loop()
+    except:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
     app = web.Application()
     app._loop = loop
     app["websockets"] = weakref.WeakSet()
@@ -150,4 +154,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    run_server()

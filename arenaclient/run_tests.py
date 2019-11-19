@@ -20,7 +20,6 @@ games = {
     'basic_bot,T,python,connect_timeout,T,python,AutomatonLE': "InitializationError",
     'basic_bot,T,python,crash_on_first_frame,T,python,AutomatonLE': "Player2Crash",
     'basic_bot,T,python,hang,T,python,AutomatonLE': "Player2Crash",
-    'basic_bot,T,python,too_slow_bot,T,python,AutomatonLE': "Player2TimeOut",
     'basic_bot,T,python,instant_crash,T,python,AutomatonLE': "InitializationError",
     'timeout_bot,T,python,timeout_bot,T,python,AutomatonLE': "Tie",
     'crash,T,python,basic_bot,T,python,AutomatonLE': "Player1Crash",
@@ -29,7 +28,6 @@ games = {
     'hang,T,python,basic_bot,T,python,AutomatonLE': "Player1Crash",
     'instant_crash,T,python,basic_bot,T,python,AutomatonLE': "Player1Crash",
     'loser_bot,T,python,basic_bot,T,python,AutomatonLE': "Player2Win",
-    'too_slow_bot,T,python,basic_bot,T,python,AutomatonLE': "Player1TimeOut",
     'basic_bot,T,python,loser_bot,T,python,AutomatonLE': "Player1Win",
 }
 

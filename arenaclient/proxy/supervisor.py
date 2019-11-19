@@ -215,6 +215,16 @@ class Supervisor:
 
             while not self._result or len(self._result) < 2:  # Wait for result from proxies.
                 counter += 1
+                if len(self._result) ==1:
+                    for x in self._result:
+                        for key, value in x.items():
+                            if value == 'Result.Crashed':
+                                if key == self.player1:
+                                    self._result.append({self.player2: 'Result.Victory'})
+                                else:
+                                    self._result.append({self.player1: 'Result.Victory'})
+                                break
+
                 if counter % 100 == 0:
                     await ws.send_str(json.dumps({"StillAlive": "True"}))
                 await asyncio.sleep(0.2)

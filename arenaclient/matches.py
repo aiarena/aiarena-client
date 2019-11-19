@@ -135,7 +135,7 @@ class FileMatchSource(MatchSource):
         return next_match
 
     def submit_result(self, match: FileMatch, result):
-        with open("results", "a+") as map_file:
+        with open("results", "w+") as map_file:
             map_file.write(str(result) + "\n\n")
 
         result_type = "Error"  # avoid error from this not being initialized

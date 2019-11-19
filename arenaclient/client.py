@@ -520,6 +520,11 @@ class Client:
                             }
                         }
                     )
+                    try:
+                        bot1_process.kill()
+                        bot2_process.kill()
+                    except:
+                        print(traceback.format_exc())
                     self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
                     await session.close()
                     break
@@ -707,6 +712,7 @@ class Client:
             )
 
             try:
+                proxy.kill()
                 os.kill(proxy.pid, signal.SIGTERM)
             except Exception as exception:
                 self._logger.debug(str(exception))
