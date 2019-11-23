@@ -1,0 +1,343 @@
+import random
+from aiohttp import web, ClientSession
+from aiohttp_jinja2 import render_template
+from imutils import build_montages
+from multiprocessing import Process
+from arenaclient import imagezmq
+# from flask import Response, request, redirect, web.json_response
+# from flask import Flask
+# from flask import render_template
+import threading
+import os
+import cv2
+import json
+from arenaclient.matches import FileMatchSource
+import arenaclient.default_local_config as config
+from arenaclient.client import Client
+from pathlib import Path
+import requests
+import zipfile
+import hashlib
+lock = threading.Lock()
+
+AI_ARENA_URL = r'https://ai-arena.net/'
+output_frame = None
+
+
+class Bot:
+    def __init__(self, bot):
+        self.bot = bot
+        self.type = None
+        self.settings = None
+
+        self.extract_bot_data()
+
+    @staticmethod
+    def find_values(dict_id, json_repr):
+        results = []
+
+        def _decode_dict(a_dict):
+            try:
+                results.append(a_dict[dict_id])
+            except KeyError:
+                pass
+            return a_dict
+
+        json.loads(json_repr, object_hook=_decode_dict)  # Return value ignored.
+        return results
+
+    def download_bot(self):
+        self.bot = self.bot.replace(' (AI-Arena)', '')
+        r = requests.get(
+            AI_ARENA_URL + f'api/bots/?format=json&name={self.bot}',
+            headers={"Authorization": "Token " + self.settings['API_token']}
+        )
+        data = json.loads(r.text)
+
+        self.type = data['results'][0]['type']
+        md5_hash = data['results'][0]['bot_zip_md5hash']
+        path = Path(os.path.join(self.settings['bot_directory_location'], 'Bot Zip Files'))
+        if os.path.isdir(os.path.join(self.settings['bot_directory_location'], self.bot)):
+            path = Path(os.path.join(self.settings['bot_directory_location'], 'Bot Zip Files'))
+            if not path.is_dir():
+                path.mkdir()
+            if Path(os.path.join(path, self.bot + '.zip')).exists():
+                with open(os.path.join(path, self.bot + '.zip'), "rb") as bot_zip:
+                    calculated_md5 = hashlib.md5(bot_zip.read()).hexdigest()
+                if md5_hash == calculated_md5:
+                    print('Do not download')
+                    return
+        bot_zip = data['results'][0]['bot_zip']
+        r = requests.get(bot_zip, headers={"Authorization": "Token " + self.settings['API_token']}, stream=True)
+
+        bot_download_path = os.path.join(path, self.bot + ".zip")
+        with open(bot_download_path, "wb") as bot_zip:
+            for chunk in r.iter_content(chunk_size=10 * 1024):
+                bot_zip.write(chunk)
+            # bot_zip.write(r.content)
+
+        # Extract to bot folder
+        with zipfile.ZipFile(bot_download_path, "r") as zip_ref:
+            zip_ref.extractall(os.path.join(self.settings['bot_directory_location'], self.bot))
+            # os.remove(bot_download_path)
+
+    def extract_bot_data(self):
+        settings_file = load_settings_from_file()
+        self.settings = settings_file
+        if ' (AI-Arena)' in self.bot:
+            self.download_bot()
+            return
+
+        with open(os.path.join(settings_file['bot_directory_location'], self.bot, 'ladderbots.json')) as f:
+            self.type = self.find_values('Type', f.read())[0]
+
+
+async def detect_motion():
+    global output_frame, lock
+    image_hub = imagezmq.ImageHub(open_port='tcp://127.0.0.1:5556', REQ_REP=False)
+    image_hub.connect('tcp://127.0.0.1:5557')
+
+    frame_dict = {}
+
+    m_w = 2
+    m_h = 2
+    while True:
+        (rpiName, frame) = image_hub.recv_image()
+
+        (h, w) = frame.shape[:2]
+        frame_dict[rpiName] = frame
+
+        montages = build_montages(frame_dict.values(), (w, h), (m_w, m_h))
+
+        # display the montage(s) on the screen
+        for (i, montage) in enumerate(montages):
+            # with lock:
+            output_frame = montage
+
+
+def generate():
+    # grab global references to the output frame and lock variables
+    global output_frame, lock
+
+    # loop over frames from the output stream
+    while True:
+        # wait until the lock is acquired
+        with lock:
+            # check if the output frame is available, otherwise skip
+            # the iteration of the loop
+            if output_frame is None:
+                continue
+
+            # encode the frame in JPEG format
+            (flag, encodedImage) = cv2.imencode(".jpg", output_frame)
+
+            # ensure the frame was successfully encoded
+            if not flag:
+                continue
+
+        # yield the output frame in the byte format
+        yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +
+               bytearray(encodedImage) + b'\r\n')
+
+
+def save_settings_to_file(data):
+    data['bot_directory_location'] = data.get('bot_directory_location', None)
+    data['sc2_directory_location'] = data.get('sc2_directory_location', None)
+    data['replay_directory_location'] = data.get('replay_directory_location', None)
+    data['max_game_time'] = data.get('max_game_time', 60486)
+    data['allow_debug'] = data.get('allow_debug', 'Off')
+    data['visualize'] = data.get('visualize', 'Off')
+    file_settings = None
+    path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'settings.json')
+    if os.path.isfile(path):
+        with open(path, 'r') as settings_file:
+            try:
+                file_settings = json.load(settings_file)
+                for x, y in data.items():
+                    if y:
+                        file_settings[x] = y
+
+            except:
+                pass
+    data = file_settings if file_settings else data
+    with open(path, 'w+') as settings_file:
+        print('write')
+        json.dump(data, settings_file)
+
+
+def load_settings_from_file():
+    path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'settings.json')
+    if os.path.isfile(path):
+        with open(path, 'r') as settings_file:
+            try:
+                data = json.loads(settings_file.read())
+                return data
+            except:
+                return {}
+    else:
+        return {}
+
+
+def load_default_settings():
+    pass  # TODO: get default values for settings.json if the file doesn't already exist
+
+# View functions
+
+
+async def index(request):
+    context = {}
+    return render_template("index.html", request, context)
+
+
+async def settings(request):
+    context = {}
+    return render_template("settings.html", request, context)
+
+
+async def watch(request):
+    context = {}
+    return render_template("watch.html", request, context)
+
+
+async def clear_results(request):
+    with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results.json'), 'w') as f:
+        data = json.loads('{}')
+        data['Results'] = []
+        f.write(json.dumps(data))
+    return web.Response(text="OK")
+
+
+async def handle_data(request):
+    data = await request.post()
+    settings_data = {}
+    for key in data:
+        settings_data[key] = data.getone(key)
+
+    save_settings_to_file(settings_data)
+    location = request.app.router['index'].url_for()
+    raise web.HTTPFound(location=location)
+
+
+async def get_settings(request):
+    return web.json_response(load_settings_from_file())
+
+
+async def get_results(request):
+    try:
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results.json'), 'r') as f:
+            data = json.loads(f.read())
+            return web.json_response(data.get('Results', []))
+    except Exception as e:
+        return str(e)
+
+
+def run_local_game(games, data):
+    config.BOTS_DIRECTORY = load_settings_from_file()['bot_directory_location']
+    config.ROUNDS_PER_RUN = 1
+    config.REALTIME = data.get("Realtime", False)
+    config.VISUALIZE = data.get("Visualize", False)
+    config.MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(
+        matches_file=os.path.join(os.path.dirname(os.path.realpath(__file__)), "matches"),
+        results_file=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results.json'))
+
+    for key in games:
+        with open(config.MATCH_SOURCE_CONFIG.MATCHES_FILE, "w+") as f:
+            f.write(key + os.linesep)
+        ac = Client(config)
+        ac.run()
+
+
+async def run_games(request):
+    games = []
+
+    data = await request.post()
+    game_data = {}
+
+    # data = form.to_dict(flat=False)
+    bot1_list = data.getall('Bot1[]')
+    bot2_list = data.getall('Bot2[]')
+    chosen_maps = data.getall("Map[]")
+    iterations = int(data['Iterations'][0])
+
+    for x in range(iterations):
+        for maps in chosen_maps:
+            if maps == "Random":
+                maps = random.choice(get_local_maps())
+            for bot1 in bot1_list:
+                bot1 = Bot(bot1)
+                for bot2 in bot2_list:
+                    bot2 = Bot(bot2)
+                    game = f'{bot1.bot},T,{bot1.type},{bot2.bot},T,{bot2.type},{maps}'
+                    games.append(game)
+    game_data['Visualize'] = data.get("Visualize", "false") == "true"
+    game_data['Realtime'] = data.get('Realtime', 'false') == 'true'
+
+    process = Process(target=run_local_game, args=[games, game_data])
+    process.start()
+    # # return web.json_response(games)
+    if len(games) == 1:
+        return web.Response(text="Game started")
+    else:
+        return web.Response(text="Games started")
+
+
+async def get_bots(request):
+    with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'settings.json')) as f:
+        directory = json.load(f)['bot_directory_location']
+
+    if not os.path.isdir(directory):
+        return web.json_response({"Error": "Please enter a directory"})
+
+    if len(os.listdir(directory)) < 1:
+        return web.json_response({"Error": f"No bots found in {directory}"})
+    bot_json = {'Bots': []}
+    for x in os.listdir(directory):
+        path = os.path.join(directory, x)
+        if os.path.isfile(os.path.join(path, 'ladderbots.json')):
+            bot_json['Bots'].append(x)
+
+    return web.json_response(bot_json)
+
+
+async def get_arena_bots(request):
+    r = web.Response()
+    data = load_settings_from_file()
+    token = data.get('API_token', '')
+    if token == '':
+        return "No token"
+    else:
+        async with ClientSession() as session:
+            async with session.get(AI_ARENA_URL + r'api/bots/?&format=json&bot_zip_publicly_downloadable=true',
+                                   headers={"Authorization": "Token " + token}) as resp:
+                r.body = await resp.text()
+
+        return r
+
+
+def get_local_maps():
+    with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'settings.json')) as f:
+        directory = json.load(f)['sc2_directory_location']
+
+    if not os.path.isdir(directory):
+        return web.json_response({"Error": "Please enter a directory"})
+    BASE = Path(directory).expanduser()
+
+    if (BASE / "maps").exists():
+        MAPS = BASE / "maps"
+    else:
+        MAPS = BASE / "Maps"
+    maps = []
+    for mapdir in (p for p in MAPS.iterdir()):
+        if mapdir.is_dir():
+            for mapfile in (p for p in mapdir.iterdir() if p.is_file()):
+                if mapfile.suffix == ".SC2Map":
+                    maps.append(mapfile.stem)
+        elif mapdir.is_file():
+            if mapdir.suffix == ".SC2Map":
+                maps.append(mapdir.stem)
+    return maps
+
+
+
+async def get_maps(request):
+    return web.json_response({'Maps': get_local_maps()})

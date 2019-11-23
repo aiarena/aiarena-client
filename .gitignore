@@ -23,3 +23,4 @@ node_modules
 dist/
 build/
 arenaclient.egg-info
+settings.json

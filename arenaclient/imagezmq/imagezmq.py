@@ -1,3 +1,4 @@
+import zmq.asyncio as zmqa
 import zmq
 import numpy as np
 import cv2
@@ -63,7 +64,7 @@ class ImageSender():
         self.send_image = self.send_image_pubsub
         self.send_jpg   = self.send_jpg_pubsub
 
-    def send_image(self, msg, image):
+    async def send_image(self, msg, image):
         """ This is a placeholder. This method will be set to either a REQ/REP
         or PUB/SUB sending method, depending on REQ_REP option value.
         Arguments:
@@ -74,7 +75,7 @@ class ImageSender():
         """
         pass
 
-    def send_image_reqrep(self, msg, image):
+    async def send_image_reqrep(self, msg, image):
         """Sends OpenCV image and msg to hub computer in REQ/REP mode
         Arguments:
           msg: text message or image name.
@@ -85,15 +86,15 @@ class ImageSender():
 
         if image.flags['C_CONTIGUOUS']:
             # if image is already contiguous in memory just send it
-            self.zmq_socket.send_array(image, msg, copy=False)
+            await self.zmq_socket.send_array(image, msg, copy=False)
         else:
             # else make it contiguous before sending
             image = np.ascontiguousarray(image)
-            self.zmq_socket.send_array(image, msg, copy=False)
-        hub_reply = self.zmq_socket.recv()  # receive the reply message
+            await self.zmq_socket.send_array(image, msg, copy=False)
+        hub_reply = await self.zmq_socket.recv()  # receive the reply message
         return hub_reply
 
-    def send_image_pubsub(self, msg, image):
+    async def send_image_pubsub(self, msg, image):
         """Sends OpenCV image and msg hub computer in PUB/SUB mode. If
         there is no hub computer subscribed to this socket, then image and msg
         are discarded.
@@ -106,13 +107,13 @@ class ImageSender():
 
         if image.flags['C_CONTIGUOUS']:
             # if image is already contiguous in memory just send it
-            self.zmq_socket.send_array(image, msg, copy=False)
+            await self.zmq_socket.send_array(image, msg, copy=False)
         else:
             # else make it contiguous before sending
             image = np.ascontiguousarray(image)
-            self.zmq_socket.send_array(image, msg, copy=False)
+            await self.zmq_socket.send_array(image, msg, copy=False)
 
-    def send_jpg(self, msg, jpg_buffer):
+    async def send_jpg(self, msg, jpg_buffer):
         """This is a placeholder. This method will be set to either a REQ/REP
         or PUB/SUB sending method, depending on REQ_REP option value.
         Arguments:
@@ -122,7 +123,7 @@ class ImageSender():
           A text reply from hub in REQ/REP mode or nothing in PUB/SUB mode.
         """
 
-    def send_jpg_reqrep(self, msg, jpg_buffer):
+    async def send_jpg_reqrep(self, msg, jpg_buffer):
         """Sends msg text and jpg buffer to hub computer in REQ/REP mode.
         Arguments:
           msg: image name or message text.
@@ -131,11 +132,11 @@ class ImageSender():
           A text reply from hub.
         """
 
-        self.zmq_socket.send_jpg(msg, jpg_buffer, copy=False)
-        hub_reply = self.zmq_socket.recv()  # receive the reply message
+        await self.zmq_socket.send_jpg(msg, jpg_buffer, copy=False)
+        hub_reply = await self.zmq_socket.recv()  # receive the reply message
         return hub_reply
 
-    def send_jpg_pubsub(self, msg, jpg_buffer):
+    async def send_jpg_pubsub(self, msg, jpg_buffer):
         """Sends msg text and jpg buffer to hub computer in PUB/SUB mode. If
         there is no hub computer subscribed to this socket, then image and msg
         are discarded.
@@ -146,7 +147,7 @@ class ImageSender():
           Nothing; there is no reply from the hub computer in PUB/SUB mode.
         """
 
-        self.zmq_socket.send_jpg(msg, jpg_buffer, copy=False)
+        await self.zmq_socket.send_jpg(msg, jpg_buffer, copy=False)
 
 
 class ImageHub():
@@ -216,7 +217,7 @@ class ImageHub():
             self.zmq_socket.subscribe(b'')
         return
 
-    def recv_image(self, copy=False):
+    async def recv_image(self, copy=False):
         """Receives OpenCV image and text msg.
         Arguments:
           copy: (optional) zmq copy flag.
@@ -225,10 +226,10 @@ class ImageHub():
           image: OpenCV image.
         """
 
-        msg, image = self.zmq_socket.recv_array(copy=False)
+        msg, image = await self.zmq_socket.recv_array(copy=False)
         return msg, image
 
-    def recv_jpg(self, copy=False):
+    async def recv_jpg(self, copy=False):
         """Receives text msg, jpg buffer.
         Arguments:
           copy: (optional) zmq copy flag
@@ -237,25 +238,25 @@ class ImageHub():
           jpg_buffer: bytestring jpg compressed image
         """
 
-        msg, jpg_buffer = self.zmq_socket.recv_jpg(copy=False)
+        msg, jpg_buffer = await self.zmq_socket.recv_jpg(copy=False)
         return msg, jpg_buffer
 
-    def send_reply(self, reply_message=b'OK'):
+    async def send_reply(self, reply_message=b'OK'):
         """Sends the zmq REP reply message.
         Arguments:
           reply_message: reply message text, often just string 'OK'
         """
-        self.zmq_socket.send(reply_message)
+        await self.zmq_socket.send(reply_message)
 
 
-class SerializingSocket(zmq.Socket):
+class SerializingSocket(zmqa.Socket):
     """Numpy array serialization methods.
     Modelled on PyZMQ serialization examples.
     Used for sending / receiving OpenCV images, which are Numpy arrays.
     Also used for sending / receiving jpg compressed OpenCV images.
     """
 
-    def send_array(self, A, msg='NoName', flags=0, copy=True, track=False):
+    async def send_array(self, A, msg='NoName', flags=0, copy=True, track=False):
         """Sends a numpy array with metadata and text message.
         Sends a numpy array with the metadata necessary for reconstructing
         the array (dtype,shape). Also sends a text msg, often the array or
@@ -273,10 +274,10 @@ class SerializingSocket(zmq.Socket):
             dtype=str(A.dtype),
             shape=A.shape,
         )
-        self.send_json(md, flags | zmq.SNDMORE)
+        await self.send_json(md, flags | zmq.SNDMORE)
         return self.send(A, flags, copy=copy, track=track)
 
-    def send_jpg(self,
+    async def send_jpg(self,
                  msg='NoName',
                  jpg_buffer=b'00',
                  flags=0,
@@ -294,10 +295,10 @@ class SerializingSocket(zmq.Socket):
         """
 
         md = dict(msg=msg, )
-        self.send_json(md, flags | zmq.SNDMORE)
+        await self.send_json(md, flags | zmq.SNDMORE)
         return self.send(jpg_buffer, flags, copy=copy, track=track)
 
-    def recv_array(self, flags=0, copy=True, track=False):
+    async def recv_array(self, flags=0, copy=True, track=False):
         """Receives a numpy array with metadata and text message.
         Receives a numpy array with the metadata necessary
         for reconstructing the array (dtype,shape).
@@ -311,12 +312,12 @@ class SerializingSocket(zmq.Socket):
           A: numpy array or OpenCV image reconstructed with dtype and shape.
         """
 
-        md = self.recv_json(flags=flags)
-        msg = self.recv(flags=flags, copy=copy, track=track)
+        md = await self.recv_json(flags=flags)
+        msg = await self.recv(flags=flags, copy=copy, track=track)
         A = np.frombuffer(msg, dtype=md['dtype'])
         return (md['msg'], A.reshape(md['shape']))
 
-    def recv_jpg(self, flags=0, copy=True, track=False):
+    async def recv_jpg(self, flags=0, copy=True, track=False):
         """Receives a jpg buffer and a text msg.
         Receives a jpg bytestring of an OpenCV image.
         Also receives a text msg, often the image name.
@@ -329,10 +330,10 @@ class SerializingSocket(zmq.Socket):
           jpg_buffer: bytestring, containing jpg image.
         """
 
-        md = self.recv_json(flags=flags)  # metadata text
-        jpg_buffer = self.recv(flags=flags, copy=copy, track=track)
+        md = await self.recv_json(flags=flags)  # metadata text
+        jpg_buffer = await self.recv(flags=flags, copy=copy, track=track)
         return (md['msg'], jpg_buffer)
 
 
-class SerializingContext(zmq.Context):
+class SerializingContext(zmqa.Context):
     _socket_class = SerializingSocket

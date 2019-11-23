@@ -3,8 +3,9 @@ import json
 import logging
 import os
 from json import JSONDecodeError
-
+from arenaclient.proxy.lib import Timer
 import aiohttp
+from imutils import build_montages
 
 logger = logging.getLogger(__name__)
 logger.setLevel(10)
@@ -20,6 +21,7 @@ class Supervisor:
     """
 
     def __init__(self):
+        self.images = {}
         self._pids: list = []
         self._average_frame_time: list = []
         self._map: str = ""
@@ -157,6 +159,37 @@ class Supervisor:
         :return:
         """
         await self._ws.send_json(message)
+    
+    async def build_montage(self):
+        m_w = 2
+        m_h = 2
+        h = w = 500
+        images = [y for x in self.images.values() for y in x.values()]
+        
+        montages = build_montages(images, (w, h), (m_w, m_h))
+
+        # display the montage(s) on the screen
+        for (i, montage) in enumerate(montages):
+            # with lock:
+            return montage
+    
+    async def results_checker(self, args=None):
+        if len(self._result) == 1:
+            for x in self._result:
+                for key, value in x.items():
+                    if value == 'Result.Crashed':
+                        if key == self.player1:
+                            self._result.append({self.player2: 'Result.Victory'})
+                        else:
+                            self._result.append({self.player1: 'Result.Victory'})
+                        break
+    
+    async def cleanup(self, request):
+        logger.debug("Discarding supervisor")
+        request.app["websockets"].discard(self._ws)
+        for ws in request.app["websockets"]:
+            await ws.close()
+        logger.debug("Websocket connection closed")
 
     async def websocket_handler(self, request):
         """
@@ -169,6 +202,14 @@ class Supervisor:
         ws = aiohttp.web.WebSocketResponse()
         self._ws = ws
         await ws.prepare(request)
+        if len(request.app["websockets"]) > 0:
+            ws_to_close = []
+            for x in request.app["websockets"]:
+                logger.error("Too many supervisors.")
+                await x.close()
+                ws_to_close.append(x)
+            for x in ws_to_close:
+                request.app["websockets"].discard(x)
         request.app["websockets"].add(ws)
 
         await ws.send_json({"Status": "Connected"})
@@ -195,7 +236,8 @@ class Supervisor:
                         self._disable_debug = config["DisableDebug"]
                         self._real_time = config["RealTime"]
                         self._visualize = config["Visualize"]
-
+                        self.images[self.player1] = {}
+                        self.images[self.player2] = {}
                     # self.config = config
 
                 except JSONDecodeError as e:
@@ -215,14 +257,11 @@ class Supervisor:
 
             while not self._result or len(self._result) < 2:  # Wait for result from proxies.
                 counter += 1
-                if len(self._result) ==1:
+                if len(self._result) == 1:
                     for x in self._result:
                         for key, value in x.items():
                             if value == 'Result.Crashed':
-                                if key == self.player1:
-                                    self._result.append({self.player2: 'Result.Victory'})
-                                else:
-                                    self._result.append({self.player1: 'Result.Victory'})
+                                Timer(40, self.results_checker, args=[])
                                 break
 
                 if counter % 100 == 0:
@@ -262,8 +301,6 @@ class Supervisor:
             )
             await ws.send_json(dict({"AverageFrameTime": self.average_frame_time}))
             await ws.send_json(dict({"Status": "Complete"}))
-
-        for ws in request.app["websockets"]:
-            await ws.close()
-        logger.debug("Websocket connection closed")
-        return ws
+            break
+        await self.cleanup(request)
+        return self._ws

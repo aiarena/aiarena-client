@@ -14,6 +14,7 @@ assert config.RUN_LOCAL, "RUN_LOCAL config value must must be set to True to run
 
 utl = Utl(config)
 
+iterations = 1
 games = {
     'loser_bot,T,python,loser_bot,T,python,AutomatonLE': "Tie",
     'basic_bot,T,python,crash,T,python,AutomatonLE': "Player2Crash",
@@ -23,7 +24,7 @@ games = {
     'basic_bot,T,python,instant_crash,T,python,AutomatonLE': "InitializationError",
     'timeout_bot,T,python,timeout_bot,T,python,AutomatonLE': "Tie",
     'crash,T,python,basic_bot,T,python,AutomatonLE': "Player1Crash",
-    'connect_timeout,T,python,basic_bot,T,python,AutomatonLE': "Player1Crash",
+    'connect_timeout,T,python,basic_bot,T,python,AutomatonLE': "InitializationError",
     'crash_on_first_frame,T,python,basic_bot,T,python,AutomatonLE': "Player1Crash",
     'hang,T,python,basic_bot,T,python,AutomatonLE': "Player1Crash",
     'instant_crash,T,python,basic_bot,T,python,AutomatonLE': "Player1Crash",
@@ -32,27 +33,30 @@ games = {
 }
 
 ORIGINAL_MAX_GAME_TIME = config.MAX_GAME_TIME
-for key, value in games.items():
+with open('test_results.txt','w+') as f: # Clear results file
+    f.write('')
+for it in range(iterations):
+    for key, value in games.items():
 
-    with open(config.MATCH_SOURCE_CONFIG.MATCHES_FILE, "w+") as f:
-        f.write(key + os.linesep)
-    if key == 'loser_bot,T,python,loser_bot,T,python,AutomatonLE':
-        config.MAX_GAME_TIME = 1000
-    else:
-        config.MAX_GAME_TIME = ORIGINAL_MAX_GAME_TIME
+        with open(config.MATCH_SOURCE_CONFIG.MATCHES_FILE, "w+") as f:
+            f.write(key + os.linesep)
+        if key == 'loser_bot,T,python,loser_bot,T,python,AutomatonLE':
+            config.MAX_GAME_TIME = 1000
+        else:
+            config.MAX_GAME_TIME = ORIGINAL_MAX_GAME_TIME
 
-    ac = Client(config)
-    ac.run()
+        ac = Client(config)
+        ac.run()
 
-    try:
-        with open(config.MATCH_SOURCE_CONFIG.RESULTS_FILE, "r") as f:
-            result = json.load(f)
-        test_result = f"Result ({str(result['Results'][0]['Result'])}) matches expected result ({value}):" + \
-                      str(result["Results"][0]["Result"] == value)
-        utl.printout(test_result)
-        with open('test_results.txt', 'a+') as f:
-            f.write(str(key) + '\t' + str(test_result) + '\n')
-    except FileNotFoundError:
-        utl.printout("Test failed: Results file not found")
-    except KeyError:
-        utl.printout("Test failed: Result not found in file")
+        try:
+            with open(config.MATCH_SOURCE_CONFIG.RESULTS_FILE, "r") as f:
+                result = json.load(f)
+            test_result = f"Result ({str(result['Results'][0]['Result'])}) matches expected result ({value}):" + \
+                        str(result["Results"][0]["Result"] == value)
+            utl.printout(test_result)
+            with open('test_results.txt', 'a+') as f:
+                f.write(str(key) + '\t' + str(test_result) + '\n')
+        except FileNotFoundError:
+            utl.printout("Test failed: Results file not found")
+        except KeyError:
+            utl.printout("Test failed: Result not found in file")

@@ -363,7 +363,7 @@ class Client:
         for directory in os.listdir(self._config.BOTS_DIRECTORY):
             shutil.rmtree(os.path.join(self._config.BOTS_DIRECTORY, directory))
 
-        self._logger.debug(f"Killing current server")
+        # self._logger.debug(f"Killing current server")
         self.kill_current_server()
 
     def start_bot(self, bot_name, bot_data, opponent_id):
@@ -459,210 +459,246 @@ class Client:
         :param next_match_id:
         :return:
         """
-        result = []
-        session = aiohttp.ClientSession()
-        ws = await session.ws_connect(
-            f"http://{self._config.SC2_PROXY['HOST']}:{str(self._config.SC2_PROXY['PORT'])}/sc2api",
-            headers=dict({"Supervisor": "true"}),
-        )
-        json_config = {
-            "Config": {
-                "Map": map_name,
-                "MaxGameTime": self._config.MAX_GAME_TIME,
-                "Player1": bot_0_name,
-                "Player2": bot_1_name,
-                "ReplayPath": self._config.REPLAYS_DIRECTORY,
-                "MatchID": next_match_id,
-                "DisableDebug": "False",
-                "MaxFrameTime": self._config.MAX_FRAME_TIME,
-                "Strikes": self._config.STRIKES,
-                "RealTime": self._config.REALTIME,
-                "Visualize": self._config.VISUALIZE
-                
+        try:
+            result = []
+            bot1_process = None
+            bot2_process = None
+            session = aiohttp.ClientSession()
+            ws = await session.ws_connect(
+                f"http://{self._config.SC2_PROXY['HOST']}:{str(self._config.SC2_PROXY['PORT'])}/sc2api",
+                headers=dict({"Supervisor": "true"}),
+            )
+            json_config = {
+                "Config": {
+                    "Map": map_name,
+                    "MaxGameTime": self._config.MAX_GAME_TIME,
+                    "Player1": bot_0_name,
+                    "Player2": bot_1_name,
+                    "ReplayPath": self._config.REPLAYS_DIRECTORY,
+                    "MatchID": next_match_id,
+                    "DisableDebug": "False",
+                    "MaxFrameTime": self._config.MAX_FRAME_TIME,
+                    "Strikes": self._config.STRIKES,
+                    "RealTime": self._config.REALTIME,
+                    "Visualize": self._config.VISUALIZE
+                    
+                }
             }
-        }
 
-        await ws.send_str(json.dumps(json_config))
+            await ws.send_str(json.dumps(json_config))
 
-        while True:
-            msg = await ws.receive()
-            if msg.type == aiohttp.WSMsgType.CLOSED:
-                result.append(
-                    {
-                        "Result": {
-                            bot_0_name: "InitializationError",
-                            bot_1_name: "InitializationError",
-                        }
-                    }
-                )
-                await session.close()
-                break
-            msg = msg.json()
-            if msg.get("Status", None) == "Connected":
-                self._logger.debug(f"Starting bots...")
-                bot1_process = self.start_bot(
-                    bot_0_name, bot_0_data, opponent_id=bot_1_data.get("botID", 123)
-                )  # todo opponent_id
-
-                msg = await ws.receive_json()
-
-                if msg.get("Bot", None) == "Connected":
-                    bot2_process = self.start_bot(
-                        bot_1_name, bot_1_data, opponent_id=bot_0_data.get("botID", 321)
-                    )  # todo opponent_id
-                else:
-                    self._logger.debug(f"Bot2 crash")
-                    result.append(
-                        {
-                            "Result": {
-                                bot_0_name: "InitializationError",
-                                bot_1_name: "InitializationError",
+            while True:
+                msg = await ws.receive()
+                if msg.type == aiohttp.WSMsgType.CLOSED:
+                    if not result:
+                        result.append(
+                            {
+                                "Result": {
+                                    bot_0_name: "InitializationError",
+                                    bot_1_name: "InitializationError",
+                                }
                             }
-                        }
-                    )
-                    try:
-                        bot1_process.kill()
-                        bot2_process.kill()
-                    except:
-                        print(traceback.format_exc())
-                    self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
+                        )
                     await session.close()
                     break
-                msg = await ws.receive_json()
-
-                if msg.get("Bot", None) == "Connected":
-                    self._logger.debug(f"Changing PGID")
-                    for x in [bot1_process.pid, bot2_process.pid]:
-                        self._utl.move_pid(x)
-
+                if msg.type == aiohttp.WSMsgType.ERROR:
+                    self._logger.error(msg)
                 else:
-                    self._logger.debug(f"Bot2 crash")
-                    result.append(
-                        {
-                            "Result": {
-                                bot_0_name: "InitializationError",
-                                bot_1_name: "InitializationError",
-                            }
-                        }
-                    )
-                    self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
-                    await session.close()
-                    break
-                self._logger.debug(f"checking if bot is okay")
+                    msg = msg.json()
+                    if msg.get("Status", None) == "Connected":
+                        
+                        self._logger.debug(f"Starting bots...")
+                        bot1_process = self.start_bot(
+                            bot_0_name, bot_0_data, opponent_id=bot_1_data.get("botID", 123)
+                        )  # todo opponent_id
 
-                if bot1_process.poll():
-                    self._logger.debug(f"Bot1 crash")
-                    result.append(
-                        {
-                            "Result": {
-                                bot_0_name: "InitializationError",
-                                bot_1_name: "InitializationError",
-                            }
-                        }
-                    )
-                    self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
-                    await session.close()
-                    break
+                        msg = await ws.receive_json()
 
-                else:
-                    await ws.send_str(json.dumps({"Bot1": True}))
-
-                if bot2_process.poll():
-                    self._logger.debug(f"Bot2 crash")
-                    result.append(
-                        {
-                            "Result": {
-                                bot_0_name: "InitializationError",
-                                bot_1_name: "InitializationError",
-                            }
-                        }
-                    )
-                    self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
-                    await session.close()
-                    break
-
-                else:
-                    await ws.send_str(json.dumps({"Bot2": True}))
-
-            if msg.get("PID", None):
-                self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])  # Terminate bots first
-                self._utl.pid_cleanup(msg["PID"])  # Terminate SC2 processes
-
-            if msg.get("Result", None):
-                result.append(msg)
-
-            if msg.get("GameTime", None):
-                result.append(msg)
-
-            if msg.get("AverageFrameTime", None):
-                result.append(msg)
-
-            if msg.get("Error", None):
-                self._utl.printout(msg)
-                await session.close()
-                break
-
-            if msg.get("StillAlive", None):
-                if bot1_process.poll():
-                    self._utl.printout("Bot1 Init Error")
-                    await session.close()
-                    # if not self._utl.check_pid(bot1_process.pid) and not len(result) >0:
-                    result.append(
-                        {
-                            "Result": {
-                                bot_0_name: "InitializationError",
-                                bot_1_name: "InitializationError",
-                            }
-                        }
-                    )
-                    self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
-                if bot2_process.poll():
-                    self._utl.printout("Bot2 Init Error")
-                    await session.close()
-                    # if not self._utl.check_pid(bot2_process.pid) and not len(result) >0:
-                    result.append(
-                        {
-                            "Result": {
-                                bot_0_name: "InitializationError",
-                                bot_1_name: "InitializationError",
-                            }
-                        }
-                    )
-
-            if msg.get("Status", None) == "Complete":
-                result.append(
-                    dict(
-                        {
-                            "TimeStamp": datetime.datetime.utcnow().strftime(
-                                "%d-%m-%Y %H-%M-%SUTC"
+                        if msg.get("Bot", None) == "Connected":
+                            bot2_process = self.start_bot(
+                                bot_1_name, bot_1_data, opponent_id=bot_0_data.get("botID", 321)
+                            )  # todo opponent_id
+                        else:
+                            self._logger.debug(f"Bot2 crash")
+                            result.append(
+                                {
+                                    "Result": {
+                                        bot_0_name: "InitializationError",
+                                        bot_1_name: "InitializationError",
+                                    }
+                                }
                             )
-                        }
-                    )
-                )
-                await session.close()
-                break
-        if not result:
-            result.append({"Result": {"InitializationError"}})
+                            try:
+                                if bot1_process:
+                                    bot1_process.kill()
+                                
+                                if bot2_process:
+                                    bot2_process.kill()
+                            except:
+                                print(traceback.format_exc())
+                            # self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
+                            await session.close()
+                            break
+                        msg = await ws.receive_json()
+
+                        if msg.get("Bot", None) == "Connected":
+                            self._logger.debug(f"Changing PGID")
+                            for x in [bot1_process.pid, bot2_process.pid]:
+                                self._utl.move_pid(x)
+
+                        else:
+                            self._logger.debug(f"Bot2 crash")
+                            result.append(
+                                {
+                                    "Result": {
+                                        bot_0_name: "InitializationError",
+                                        bot_1_name: "InitializationError",
+                                    }
+                                }
+                            )
+                            self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
+                            await session.close()
+                            break
+                        self._logger.debug(f"checking if bot is okay")
+
+                        if bot1_process.poll():
+                            self._logger.debug(f"Bot1 crash")
+                            result.append(
+                                {
+                                    "Result": {
+                                        bot_0_name: "InitializationError",
+                                        bot_1_name: "InitializationError",
+                                    }
+                                }
+                            )
+                            self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
+                            await session.close()
+                            break
+
+                        else:
+                            await ws.send_str(json.dumps({"Bot1": True}))
+
+                        if bot2_process.poll():
+                            self._logger.debug(f"Bot2 crash")
+                            result.append(
+                                {
+                                    "Result": {
+                                        bot_0_name: "InitializationError",
+                                        bot_1_name: "InitializationError",
+                                    }
+                                }
+                            )
+                            self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
+                            await session.close()
+                            break
+
+                        else:
+                            await ws.send_str(json.dumps({"Bot2": True}))
+
+                    if msg.get("PID", None):
+                        self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])  # Terminate bots first
+                        self._utl.pid_cleanup(msg["PID"])  # Terminate SC2 processes
+
+                    if msg.get("Result", None):
+                        result.append(msg)
+
+                    if msg.get("GameTime", None):
+                        result.append(msg)
+
+                    if msg.get("AverageFrameTime", None):
+                        result.append(msg)
+
+                    if msg.get("Error", None):
+                        self._utl.printout(msg)
+                        await session.close()
+                        break
+
+                    if msg.get("StillAlive", None):
+                        if bot1_process.poll():
+                            self._utl.printout("Bot1 Init Error")
+                            await session.close()
+                            # if not self._utl.check_pid(bot1_process.pid) and not len(result) >0:
+                            result.append(
+                                {
+                                    "Result": {
+                                        bot_0_name: "InitializationError",
+                                        bot_1_name: "InitializationError",
+                                    }
+                                }
+                            )
+                            self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
+                        if bot2_process.poll():
+                            self._utl.printout("Bot2 Init Error")
+                            await session.close()
+                            # if not self._utl.check_pid(bot2_process.pid) and not len(result) >0:
+                            result.append(
+                                {
+                                    "Result": {
+                                        bot_0_name: "InitializationError",
+                                        bot_1_name: "InitializationError",
+                                    }
+                                }
+                            )
+
+                    if msg.get("Status", None) == "Complete":
+                        result.append(
+                            dict(
+                                {
+                                    "TimeStamp": datetime.datetime.utcnow().strftime(
+                                        "%d-%m-%Y %H-%M-%SUTC"
+                                    )
+                                }
+                            )
+                        )
+                        await session.close()
+                        break
+                
+        except:
+            print(str(traceback.format_exc()))
+            self._logger.error(str(traceback.format_exc()))
+            result= "Error"
+        finally:
+            if session:
+                try:
+                    await session.close()
+                except:
+                    print(str(traceback.format_exc()))
+            if not result:
+                 result.append({"Result": {"InitializationError"}})
+            self._logger.debug(str(result))
+            try:
+                if bot1_process:
+                    bot1_process.kill()
+                if bot2_process:
+                    bot2_process.kill()
+            except:
+                print(traceback.format_exc())
         return result
 
-    def kill_current_server(self):
+    def kill_current_server(self, server=False):
         """
         Kills all the processes running on the match runner's port. Also kills any SC2 processes if they are still running.
 
         :return:
         """
-        # return None
+        #return None
         try:
             if self._config.SYSTEM == "Linux":
                 self._utl.printout("Killing SC2")
                 os.system("pkill -f SC2_x64")
-                os.system("lsof -ti tcp:8765 | xargs kill")
+                if server:
+                    os.system("lsof -ti tcp:8765 | xargs kill")
             for process in psutil.process_iter():
-                for conns in process.connections(kind="inet"):
-                    if conns.laddr.port == self._config.SC2_PROXY["PORT"]:
-                        process.send_signal(signal.SIGTERM)
+                if server:
+                    for conns in process.connections(kind="inet"):
+                        if conns.laddr.port == self._config.SC2_PROXY["PORT"]:
+                            process.send_signal(signal.SIGTERM)
                 if process.name() == "SC2_x64.exe":
-                    process.send_signal(signal.SIGTERM)
+                    try:
+                        process.send_signal(signal.SIGTERM)
+                    except psutil.AccessDenied:
+                        pass
+
 
         except:
             pass
@@ -682,19 +718,25 @@ class Client:
         """
         try:
             self._utl.printout(f"Starting game - Round {match_count}")
+            self._utl.printout(f"{bot_0_name} vs {bot_1_name}")
             self.kill_current_server()
-            proxy = subprocess.Popen(
-                self._config.PYTHON + " ./proxy/server.py", cwd=self._config.WORKING_DIRECTORY, shell=True
-            )
-
-            while True:
+            # proxy = subprocess.Popen(
+            #     self._config.PYTHON + " ./proxy/server.py", cwd=self._config.WORKING_DIRECTORY, shell=True
+            # )
+            counter = 0
+            while counter <= 100:
                 time.sleep(1)
+                counter += 1
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 result = sock.connect_ex(
                     (self._config.SC2_PROXY["HOST"], self._config.SC2_PROXY["PORT"])
                 )
                 if result == 0:
                     break
+                if counter == 100:
+                    self._logger.error("Server is not running.")
+                    raise
+
             try:
                 loop = asyncio.get_event_loop()
             except:
@@ -711,13 +753,14 @@ class Client:
                 )
             )
 
-            try:
-                proxy.kill()
-                os.kill(proxy.pid, signal.SIGTERM)
-            except Exception as exception:
-                self._logger.debug(str(exception))
+            # try:
+            #     proxy.kill()
+            #     os.kill(proxy.pid, signal.SIGTERM)
+            # except Exception as exception:
+            #     self._logger.debug(str(exception))
         except Exception as e:
-            self._logger.error(str(e))
+            self._logger.error(str(traceback.format_exc()))
+            # print(traceback.format_exc())
             # todo: usually result is a list
             # todo: ideally this should always be the same variable type
             result = "Error"
@@ -756,6 +799,7 @@ class Client:
             self._utl.printout(traceback.format_exc())
             self._utl.printout(f"arena-client encountered an uncaught exception: {e} Exiting...")
         finally:
+            self.kill_current_server(server=False)
             try:
                 if self._config.CLEANUP_BETWEEN_ROUNDS:
                     self.cleanup()
