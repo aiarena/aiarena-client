@@ -238,7 +238,7 @@ def run_server():
     args, unknown = parser.parse_known_args()
     print(args.frontend)
 
-    frontend = args.frontend.lower() == "true"
+    run_frontend = args.frontend.lower() == "true"
     try:
         loop = asyncio.get_event_loop()
     except:
@@ -252,7 +252,7 @@ def run_server():
     app["websockets"] = weakref.WeakSet()
     connection = ConnectionHandler()
     app.router.add_route("GET", "/sc2api", connection.websocket_handler)
-    if frontend:
+    if run_frontend:
         print('launching with frontend')
         # t = threading.Thread(target=frontend.detect_motion)
         # t.daemon = True
