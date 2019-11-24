@@ -1,5 +1,6 @@
 import json
 import os
+import asyncio
 
 import arenaclient.default_test_config as config
 
@@ -33,30 +34,34 @@ games = {
 }
 
 ORIGINAL_MAX_GAME_TIME = config.MAX_GAME_TIME
-with open('test_results.txt','w+') as f: # Clear results file
-    f.write('')
-for it in range(iterations):
-    for key, value in games.items():
+async def run_tests():
+    with open('test_results.txt','w+') as f: # Clear results file
+        f.write('')
 
-        with open(config.MATCH_SOURCE_CONFIG.MATCHES_FILE, "w+") as f:
-            f.write(key + os.linesep)
-        if key == 'loser_bot,T,python,loser_bot,T,python,AutomatonLE':
-            config.MAX_GAME_TIME = 1000
-        else:
-            config.MAX_GAME_TIME = ORIGINAL_MAX_GAME_TIME
+    for it in range(iterations):
+        for key, value in games.items():
 
-        ac = Client(config)
-        ac.run()
+            with open(config.MATCH_SOURCE_CONFIG.MATCHES_FILE, "w+") as f:
+                f.write(key + os.linesep)
+            if key == 'loser_bot,T,python,loser_bot,T,python,AutomatonLE':
+                config.MAX_GAME_TIME = 1000
+            else:
+                config.MAX_GAME_TIME = ORIGINAL_MAX_GAME_TIME
 
-        try:
-            with open(config.MATCH_SOURCE_CONFIG.RESULTS_FILE, "r") as f:
-                result = json.load(f)
-            test_result = f"Result ({str(result['Results'][0]['Result'])}) matches expected result ({value}):" + \
-                        str(result["Results"][0]["Result"] == value)
-            utl.printout(test_result)
-            with open('test_results.txt', 'a+') as f:
-                f.write(str(key) + '\t' + str(test_result) + '\n')
-        except FileNotFoundError:
-            utl.printout("Test failed: Results file not found")
-        except KeyError:
-            utl.printout("Test failed: Result not found in file")
+            ac = Client(config)
+            await ac.run()
+
+            try:
+                with open(config.MATCH_SOURCE_CONFIG.RESULTS_FILE, "r") as f:
+                    result = json.load(f)
+                test_result = f"Result ({str(result['Results'][0]['Result'])}) matches expected result ({value}):" + \
+                            str(result["Results"][0]["Result"] == value)
+                utl.printout(test_result)
+                with open('test_results.txt', 'a+') as f:
+                    f.write(str(key) + '\t' + str(test_result) + '\n')
+            except FileNotFoundError:
+                utl.printout("Test failed: Results file not found")
+            except KeyError:
+                utl.printout("Test failed: Result not found in file")
+
+asyncio.get_event_loop().run_until_complete(run_tests())

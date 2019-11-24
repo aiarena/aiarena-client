@@ -71,27 +71,31 @@ class ConnectionHandler:
         await resp.prepare(request)
         
         while True:
-            await asyncio.sleep(0.1)
-            if self.supervisor and self.supervisor.images is not None:
-                output_frame = await self.supervisor.build_montage()
-                
-                # await ws.send_bytes(self.supervisor.image)
-            else:
-                await asyncio.sleep(1)
-                output_frame = np.ones((500, 500, 3), dtype=np.uint8)
+            try:
+                await asyncio.sleep(0.1)
+                if self.supervisor and self.supervisor.images is not None:
+                    output_frame = await self.supervisor.build_montage()
+                    
+                    # await ws.send_bytes(self.supervisor.image)
+                else:
+                    await asyncio.sleep(0.1)
+                    output_frame = np.ones((500, 500, 3), dtype=np.uint8)
 
-            if output_frame is None:
-                output_frame = np.ones((500, 500, 3), dtype=np.uint8)
+                if output_frame is None:
+                    output_frame = np.ones((500, 500, 3), dtype=np.uint8)
 
-            # encode the frame in JPEG format
-            (flag, encodedImage) = cv2.imencode(".jpg", output_frame)
-            with MultipartWriter('image/jpeg', boundary=boundary) as mpwriter:
-                data = encodedImage.tostring()
-                mpwriter.append(data, {
-                    'Content-Type': 'image/jpeg'
-                })
-                # asyncio.create_task( mpwriter.write(response, close_boundary=False))
-                await mpwriter.write(resp, close_boundary=False)
+                # encode the frame in JPEG format
+                (flag, encodedImage) = cv2.imencode(".jpg", output_frame)
+                with MultipartWriter('image/jpeg', boundary=boundary) as mpwriter:
+                    data = encodedImage.tostring()
+                    mpwriter.append(data, {
+                        'Content-Type': 'image/jpeg'
+                    })
+                    # asyncio.create_task( mpwriter.write(response, close_boundary=False))
+                    await mpwriter.write(resp, close_boundary=False)
+            
+            except asyncio.CancelledError:
+                pass
                 
         # while True:
         #     if self.supervisor and self.supervisor.image:
@@ -229,9 +233,12 @@ def run_server():
     parser = argparse.ArgumentParser()
 
     # TODO: Change default to false
-    parser.add_argument("-f", "--frontend", type=bool, nargs="?", help="Start server with frontend", default=True)
-    args, unknown = parser.parse_known_args()
+    parser.add_argument("-f", "--frontend", type=str, nargs="?", help="Start server with frontend", default="true")
 
+    args, unknown = parser.parse_known_args()
+    print(args.frontend)
+
+    frontend = args.frontend.lower() == "true"
     try:
         loop = asyncio.get_event_loop()
     except:
@@ -239,18 +246,18 @@ def run_server():
         asyncio.set_event_loop(loop)
     app = web.Application()
     app.shutdown()
-    app.router.add_static('/static', 'static')
+    app.router.add_static('/static', 'proxy/static')
     app._loop = loop
     # app._client_max_size = 3
     app["websockets"] = weakref.WeakSet()
     connection = ConnectionHandler()
     app.router.add_route("GET", "/sc2api", connection.websocket_handler)
-    if args.frontend:
+    if frontend:
         print('launching with frontend')
-        t = threading.Thread(target=frontend.detect_motion)
-        t.daemon = True
-        t.start()
-        aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader('templates'))
+        # t = threading.Thread(target=frontend.detect_motion)
+        # t.daemon = True
+        # t.start()
+        aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader('proxy/templates'))
         app['static_root_url'] = '/static'
         routes = [
             web.get("/", frontend.index, name='index'),
@@ -271,7 +278,8 @@ def run_server():
     on_start()
     try:
         web.run_app(app, host=HOST, port=PORT)  # HOST and PORT can be set using environment variables
-    except KeyboardInterrupt:
+    except Exception as e:
+        print(e)
         app.shutdown()
 
 

@@ -37,7 +37,7 @@ class Client:
         self._logger.setLevel(self._config.LOGGING_LEVEL)
 
 
-    def run_next_match(self, match_count: int):
+    async def run_next_match(self, match_count: int):
         """
         Retrieve the next match from the ai-arena website API. Runs the match, and posts the result to the ai-arena
         website.
@@ -52,7 +52,7 @@ class Client:
             if match is None:
                 return True  # return True here, else we could end up in an infinite loop
             self._utl.printout(f"Next match: {match.id}")
-            result = self.run_match(
+            result = await self.run_match(
                 match_count,
                 match.map_name,
                 match.bot1_name, match.bot2_name,
@@ -121,7 +121,7 @@ class Client:
             # bot_0_game_display_id = bot_0_data['botID']
             # bot_1_game_display_id = bot_1_data['botID']
 
-            result = self.run_match(
+            result = await self.run_match(
                 match_count, map_name, bot_0_name, bot_1_name, bot_0_data, bot_1_data, next_match_id
             )
             # self._utl.printout(result)
@@ -703,7 +703,7 @@ class Client:
         except:
             pass
 
-    def run_match(self, match_count, map_name, bot_0_name, bot_1_name, bot_0_data, bot_1_data, next_match_id):
+    async def run_match(self, match_count, map_name, bot_0_name, bot_1_name, bot_0_data, bot_1_data, next_match_id):
         """
         Runs the current match and returns the result.
 
@@ -737,13 +737,8 @@ class Client:
                     self._logger.error("Server is not running.")
                     raise
 
-            try:
-                loop = asyncio.get_event_loop()
-            except:
-                loop = asyncio.new_event_loop()
 
-            result = loop.run_until_complete(
-                self.main(
+            result = await self.main(
                     map_name,
                     bot_0_name,
                     bot_1_name,
@@ -751,23 +746,14 @@ class Client:
                     bot_1_data,
                     next_match_id
                 )
-            )
-
-            # try:
-            #     proxy.kill()
-            #     os.kill(proxy.pid, signal.SIGTERM)
-            # except Exception as exception:
-            #     self._logger.debug(str(exception))
+        
         except Exception as e:
             self._logger.error(str(traceback.format_exc()))
-            # print(traceback.format_exc())
-            # todo: usually result is a list
-            # todo: ideally this should always be the same variable type
             result = "Error"
 
         return result
 
-    def run(self):
+    async def run(self):
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
         try:
             self._utl.printout(f'Arena Client started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')
@@ -785,7 +771,7 @@ class Client:
             while count < self._config.ROUNDS_PER_RUN:
                 if self._config.CLEANUP_BETWEEN_ROUNDS:
                     self.cleanup()
-                if self.run_next_match(count):
+                if await self.run_next_match(count):
                     count += 1
                 else:
                     break

@@ -4,9 +4,6 @@ from aiohttp_jinja2 import render_template
 from imutils import build_montages
 from multiprocessing import Process
 from arenaclient import imagezmq
-# from flask import Response, request, redirect, web.json_response
-# from flask import Flask
-# from flask import render_template
 import threading
 import os
 import cv2
@@ -15,10 +12,11 @@ from arenaclient.matches import FileMatchSource
 import arenaclient.default_local_config as config
 from arenaclient.client import Client
 from pathlib import Path
+from platform import system
 import requests
 import zipfile
 import hashlib
-lock = threading.Lock()
+import asyncio
 
 AI_ARENA_URL = r'https://ai-arena.net/'
 output_frame = None
@@ -83,12 +81,12 @@ class Bot:
 
     def extract_bot_data(self):
         settings_file = load_settings_from_file()
-        self.settings = settings_file
+        self.settings = convert_wsl_paths(settings_file)
         if ' (AI-Arena)' in self.bot:
             self.download_bot()
             return
 
-        with open(os.path.join(settings_file['bot_directory_location'], self.bot, 'ladderbots.json')) as f:
+        with open(os.path.join(self.settings['bot_directory_location'], self.bot, 'ladderbots.json')) as f:
             self.type = self.find_values('Type', f.read())[0]
 
 
@@ -217,9 +215,27 @@ async def handle_data(request):
     location = request.app.router['index'].url_for()
     raise web.HTTPFound(location=location)
 
+def convert_wsl_paths(json_data):
+    json_data_modified = {}
+    
+    if system()=="Windows":
+        
+        for x,y in json_data.items():
+            replaced_string = y.replace('/mnt/c','C:')
+            json_data_modified[x] = replaced_string
+            json_data_modified[x] = replaced_string.replace('/mnt/d','D:')
+    
+    if system() =="Linux":
+        
+        for x,y in json_data.items():
+            replaced_string = y.replace('C:','/mnt/c')
+            json_data_modified[x] = replaced_string
+            json_data_modified[x] = replaced_string.replace('D:','/mnt/d')
+    return json_data_modified
+
 
 async def get_settings(request):
-    return web.json_response(load_settings_from_file())
+    return web.json_response(convert_wsl_paths(load_settings_from_file()))
 
 
 async def get_results(request):
@@ -231,8 +247,10 @@ async def get_results(request):
         return str(e)
 
 
-def run_local_game(games, data):
-    config.BOTS_DIRECTORY = load_settings_from_file()['bot_directory_location']
+async def run_local_game(games, data):
+    if system() =='Windows':
+        config.PYTHON ='python'
+    config.BOTS_DIRECTORY = convert_wsl_paths(load_settings_from_file())['bot_directory_location']
     config.ROUNDS_PER_RUN = 1
     config.REALTIME = data.get("Realtime", False)
     config.VISUALIZE = data.get("Visualize", False)
@@ -244,7 +262,7 @@ def run_local_game(games, data):
         with open(config.MATCH_SOURCE_CONFIG.MATCHES_FILE, "w+") as f:
             f.write(key + os.linesep)
         ac = Client(config)
-        ac.run()
+        await ac.run()
 
 
 async def run_games(request):
@@ -272,9 +290,8 @@ async def run_games(request):
     game_data['Visualize'] = data.get("Visualize", "false") == "true"
     game_data['Realtime'] = data.get('Realtime', 'false') == 'true'
 
-    process = Process(target=run_local_game, args=[games, game_data])
-    process.start()
-    # # return web.json_response(games)
+    asyncio.create_task(run_local_game(games, game_data))
+
     if len(games) == 1:
         return web.Response(text="Game started")
     else:
@@ -283,7 +300,7 @@ async def run_games(request):
 
 async def get_bots(request):
     with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'settings.json')) as f:
-        directory = json.load(f)['bot_directory_location']
+        directory = convert_wsl_paths(json.load(f))['bot_directory_location']
 
     if not os.path.isdir(directory):
         return web.json_response({"Error": "Please enter a directory"})
@@ -316,7 +333,7 @@ async def get_arena_bots(request):
 
 def get_local_maps():
     with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'settings.json')) as f:
-        directory = json.load(f)['sc2_directory_location']
+        directory = convert_wsl_paths(json.load(f))['sc2_directory_location']
 
     if not os.path.isdir(directory):
         return web.json_response({"Error": "Please enter a directory"})

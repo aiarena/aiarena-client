@@ -301,6 +301,6 @@ class Supervisor:
             )
             await ws.send_json(dict({"AverageFrameTime": self.average_frame_time}))
             await ws.send_json(dict({"Status": "Complete"}))
-            break
+            # break
         await self.cleanup(request)
         return self._ws

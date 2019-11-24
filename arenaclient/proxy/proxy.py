@@ -27,6 +27,7 @@ warnings.simplefilter("ignore", ResourceWarning)
 warnings.simplefilter("ignore", ConnectionResetError)
 warnings.simplefilter("ignore", RuntimeWarning)
 warnings.simplefilter("ignore", AssertionError)
+warnings.simplefilter("ignore",asyncio.CancelledError)
 
 
 class Proxy:
@@ -89,11 +90,6 @@ class Proxy:
         self.visualize_port = visualize_port
         self.visualize_step_count = visualize_step_count
         self.process = None
-        # if self.visualize and self.sender is None:
-        #     # self.kill_current_server()
-        #     self.sender = ImageSender(connect_to=f"tcp://127.0.0.1:{self.visualize_port}", REQ_REP=False)
-        # if self.render and self.sender is None:
-        #     self.sender = ImageSender(connect_to=f"tcp://127.0.0.1:{self.visualize_port}", REQ_REP=False)
         
     async def clean_up(self):
         try:
@@ -443,7 +439,7 @@ class Proxy:
                 logger.debug("Player:" + str(self.player_name))
                 logger.debug("Joining game")
                 logger.debug(r"Connecting proxy")
-                try:
+                try:                
                     async for msg in self.ws_c2p:
                         await self.check_time()  # Check for ties
                         if msg.data is None:
@@ -469,7 +465,7 @@ class Proxy:
 
                         if self.no_of_strikes > self.strikes:  # Bot exceeded max_frame_time, surrender on behalf of bot
                             logger.debug(f'{self.player_name} exceeded {self.max_frame_time} ms, {self.no_of_strikes} '
-                                         f'times in a row')
+                                        f'times in a row')
 
                             self._surrender = True
                             self._result = "Result.Timeout"
@@ -511,7 +507,6 @@ class Proxy:
                     logger.error(str(e))
                     print(traceback.format_exc())
                 finally:
-
                     if not self._result:  # bot crashed, leave instead.
                         logger.debug("Bot crashed")
                         self._result = "Result.Crashed"
