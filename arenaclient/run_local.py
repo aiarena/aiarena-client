@@ -1,4 +1,3 @@
-import json
 import os
 
 import arenaclient.default_local_config as config

@@ -149,7 +149,8 @@ class Utl:
 
     def move_pid(self, pid):
         """
-        Move the pid to another process group to avoid the bot killing the ai-arena client when closing. (CPP API specific)
+        Move the pid to another process group to avoid the bot killing the ai-arena client when closing.
+        (CPP API specific)
 
         :param pid:
         :return:

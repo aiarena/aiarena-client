@@ -34,8 +34,10 @@ games = {
 }
 
 ORIGINAL_MAX_GAME_TIME = config.MAX_GAME_TIME
+
+
 async def run_tests():
-    with open('test_results.txt','w+') as f: # Clear results file
+    with open('test_results.txt', 'w+') as f:  # Clear results file
         f.write('')
 
     for it in range(iterations):
@@ -55,7 +57,7 @@ async def run_tests():
                 with open(config.MATCH_SOURCE_CONFIG.RESULTS_FILE, "r") as f:
                     result = json.load(f)
                 test_result = f"Result ({str(result['Results'][0]['Result'])}) matches expected result ({value}):" + \
-                            str(result["Results"][0]["Result"] == value)
+                              str(result["Results"][0]["Result"] == value)
                 utl.printout(test_result)
                 with open('test_results.txt', 'a+') as f:
                     f.write(str(key) + '\t' + str(test_result) + '\n')

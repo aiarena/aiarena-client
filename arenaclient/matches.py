@@ -46,11 +46,11 @@ class HttpApiMatchSource(MatchSource):
         A representation of a match sourced from the AI Arena Website HTTP API.
         """
 
-        def __init__(self, id, bot1, bot2, map):
-            self.id = id
+        def __init__(self, id_num, bot1, bot2, map_name):
+            self.id = id_num
             self.bot1 = bot1
             self.bot2 = bot2
-            self.map = map
+            self.map = map_name
 
     def next_match(self):
         raise NotImplementedError()
@@ -78,10 +78,10 @@ class FileMatchSource(MatchSource):
         A representation of a match sourced from a file.
         """
 
-        def __init__(self, id, file_line):
+        def __init__(self, id_num, file_line):
             match_values = file_line.split(FileMatchSource.MATCH_FILE_VALUE_SEPARATOR)
 
-            self.id = id
+            self.id = id_num
 
             # Bot 1
             self.bot1_name = match_values[0]
@@ -216,7 +216,7 @@ class FileMatchSource(MatchSource):
 
         with open(self._results_file, "r+") as results_log:
             try:
-                results=json.loads(results_log.read())
+                results = json.loads(results_log.read())
                 result_list = results['Results']
                 result_list.append(result_json)
                 results_log.seek(0)

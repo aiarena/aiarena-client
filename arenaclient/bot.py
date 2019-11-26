@@ -18,21 +18,21 @@ class Bot:
 
     @staticmethod
     def map_to_type(bot_name, bot_type):
-        BOT_TYPE_MAP = {
+        bot_type_map = {
             "python": ["run.py", "Python"],
             "cppwin32": [f"{bot_name}.exe", "Wine"],
             "cpplinux": [f"{bot_name}", "BinaryCpp"],
             "dotnetcore": [f"{bot_name}.dll", "DotNetCore"],
             "java": [f"{bot_name}.jar", "Java"],
             "nodejs": ["main.jar", "NodeJS"],
-            "Python":["run.py", "Python"],
-            "Wine":[f"{bot_name}.exe", "Wine"],
-            "BinaryCpp":[f"{bot_name}", "BinaryCpp"],
-            "DotNetCore":[f"{bot_name}.dll", "DotNetCore"],
-            "Java":[f"{bot_name}.jar", "Java"],
-            "NodeJS":["main.jar", "NodeJS"],
+            "Python": ["run.py", "Python"],
+            "Wine": [f"{bot_name}.exe", "Wine"],
+            "BinaryCpp": [f"{bot_name}", "BinaryCpp"],
+            "DotNetCore": [f"{bot_name}.dll", "DotNetCore"],
+            "Java": [f"{bot_name}.jar", "Java"],
+            "NodeJS": ["main.jar", "NodeJS"],
         }
-        return BOT_TYPE_MAP[bot_type][0], BOT_TYPE_MAP[bot_type][1]
+        return bot_type_map[bot_type][0], bot_type_map[bot_type][1]
 
     def __init__(self, config, data):
         self._config = config

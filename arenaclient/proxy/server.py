@@ -3,7 +3,6 @@ import asyncio
 import logging
 import os
 import signal
-import threading
 import traceback
 import weakref
 
@@ -22,7 +21,6 @@ except ModuleNotFoundError:
     pass
 
 from arenaclient.proxy.lib import Timer
-from arenaclient.proxy.port_config import Portconfig
 from arenaclient.proxy.proxy import Proxy
 from arenaclient.proxy.supervisor import Supervisor
 
@@ -39,7 +37,6 @@ class ConnectionHandler:
 
     def __init__(self):
         self.connected_clients: int = 0
-        self.port_config: Portconfig = None
         self.supervisor: Supervisor = None
         self.t1: Timer = None
         self.t2: Timer = None
@@ -85,7 +82,7 @@ class ConnectionHandler:
                     output_frame = np.ones((500, 500, 3), dtype=np.uint8)
 
                 # encode the frame in JPEG format
-                (flag, encodedImage) = cv2.imencode(".jpg", output_frame)
+                _, encodedImage = cv2.imencode(".jpg", output_frame)
                 with MultipartWriter('image/jpeg', boundary=boundary) as mpwriter:
                     data = encodedImage.tostring()
                     mpwriter.append(data, {
@@ -96,22 +93,6 @@ class ConnectionHandler:
             
             except asyncio.CancelledError:
                 pass
-                
-        # while True:
-        #     if self.supervisor and self.supervisor.image:
-        #         output_frame = self.supervisor.image
-                
-        #         # await ws.send_bytes(self.supervisor.image)
-        #     else:
-        #         output_frame = np.ones((500,500,3),dtype=np.uint8).tobytes()
-        #         # await ws.send_bytes(np.ones((500,500,3),dtype=np.uint8).tobytes())
-        #         # asyncio.sleep(10)
-        #         # continue
-        #     await resp.drain()
-        #     # await ws.write(b'')
-
-        return resp
-
 
     async def websocket_handler(self, request):
         """
@@ -129,9 +110,6 @@ class ConnectionHandler:
 
         elif self.supervisor is not None:
             logger.debug("Connecting bot with supervisor")
-            if not self.port_config:
-                # Needs to figure out the ports for both bots at the same time
-                self.port_config = Portconfig()
             if len(request.app["websockets"]) == 1:  # Only supervisor is connected
 
                 logger.debug("First bot connecting")
@@ -153,10 +131,9 @@ class ConnectionHandler:
                     max_frame_time=self.supervisor.max_frame_time,
                     real_time=self.supervisor.real_time,
                     visualize=self.supervisor.visualize,
-                    visualize_port=5556
 
                 )
-                await proxy1.websocket_handler(request, self.port_config)
+                await proxy1.websocket_handler(request)
 
             elif len(request.app["websockets"]) == 2:  # Supervisor and bot 1 connected.
                 logger.debug("Second bot connecting")
@@ -175,23 +152,19 @@ class ConnectionHandler:
                     max_frame_time=self.supervisor.max_frame_time,
                     real_time=self.supervisor.real_time,
                     visualize=self.supervisor.visualize,
-                    visualize_port=5557
                 )
-                await proxy2.websocket_handler(request, self.port_config)
+                await proxy2.websocket_handler(request)
 
         else:  # TODO: Implement this for devs running without a supervisor
             raise NotImplementedError
             logger.debug("Connecting bot without supervisor")
-            if not self.port_config:
-                # Needs to figure out the ports for both bots at the same time
-                self.port_config = Portconfig()
             self.connected_clients += 1
             if self.connected_clients == 1:
                 proxy1 = Proxy(game_created=False)
-                await proxy1.websocket_handler(request, self.port_config)
+                await proxy1.websocket_handler(request)
             else:
                 proxy2 = Proxy(game_created=True)
-                await proxy2.websocket_handler(request, self.port_config)
+                await proxy2.websocket_handler(request)
         if self.t1:
             self.t1.cancel()
 
@@ -235,7 +208,7 @@ def run_server():
     # TODO: Change default to false
     parser.add_argument("-f", "--frontend", type=str, nargs="?", help="Start server with frontend", default="true")
 
-    args, unknown = parser.parse_known_args()
+    args, _ = parser.parse_known_args()
     print(args.frontend)
 
     run_frontend = args.frontend.lower() == "true"
@@ -245,8 +218,8 @@ def run_server():
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
     app = web.Application()
-    app.shutdown()
-    app.router.add_static('/static', 'proxy/static')
+    # app.shutdown()
+    app.router.add_static('/static', os.path.join(os.path.dirname(__file__), 'static'))
     app._loop = loop
     # app._client_max_size = 3
     app["websockets"] = weakref.WeakSet()
@@ -254,10 +227,7 @@ def run_server():
     app.router.add_route("GET", "/sc2api", connection.websocket_handler)
     if run_frontend:
         print('launching with frontend')
-        # t = threading.Thread(target=frontend.detect_motion)
-        # t.daemon = True
-        # t.start()
-        aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader('proxy/templates'))
+        aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')))
         app['static_root_url'] = '/static'
         routes = [
             web.get("/", frontend.index, name='index'),
@@ -285,6 +255,7 @@ def run_server():
 
 if __name__ == "__main__":
     run_server()
+
 
 
 

@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 import json
 import logging
@@ -35,7 +34,6 @@ class Client:
         self._logger = logging.getLogger(__name__)
         self._logger.addHandler(self._config.LOGGING_HANDLER)
         self._logger.setLevel(self._config.LOGGING_LEVEL)
-
 
     async def run_next_match(self, match_count: int):
         """
@@ -99,7 +97,8 @@ class Client:
             try:
                 r = requests.get(map_url)
             except Exception as download_exception:
-                self._utl.printout(f"ERROR: Failed to download map {map_name} at URL {map_url}. Error {download_exception}")
+                self._utl.printout(f"ERROR: Failed to download map {map_name} at URL {map_url}. "
+                                   f"Error {download_exception}")
                 time.sleep(30)
                 return False
 
@@ -142,8 +141,6 @@ class Client:
         :return:
         """
         self.kill_current_server()
-        # quick hack to avoid these going uninitialized
-        # todo: remove these and actually fix the issue
         game_time: int = 0
         bot1_avg_step_time: float = 0
         bot2_avg_step_time: float = 0
@@ -207,9 +204,6 @@ class Client:
                             item[bot_2_name] for item in x['AverageFrameTime'] if item.get(bot_2_name, None))
                     except StopIteration:
                         bot2_avg_step_time = 0
-
-                if x.get("TimeStamp", None):
-                    time_stamp = x["TimeStamp"]
 
         else:
             result = lm_result
@@ -371,6 +365,7 @@ class Client:
         Start the bot with the correct arguments.
 
         :param bot_data:
+        :param bot_name:
         :param opponent_id:
         :return:
         """
@@ -427,8 +422,6 @@ class Client:
                         shell=True,
                         preexec_fn=os.setpgrp,
                     )
-                if process.errors:
-                    self._logger.debug("Error: " + process.errors)
                 return process
             else:
                 with open(os.path.join(bot_path, "data", "stderr.log"), "w+") as out:
@@ -440,8 +433,6 @@ class Client:
                         shell=True,
                         creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
                     )
-                if process.errors:
-                    self._logger.debug("Error: " + process.errors)
                 return process
         except Exception as exception:
             self._utl.printout(exception)
@@ -656,7 +647,7 @@ class Client:
         except:
             print(str(traceback.format_exc()))
             self._logger.error(str(traceback.format_exc()))
-            result= "Error"
+            result = "Error"
         finally:
             if session:
                 try:
@@ -664,7 +655,7 @@ class Client:
                 except:
                     print(str(traceback.format_exc()))
             if not result:
-                 result.append({"Result": {"InitializationError"}})
+                result.append({"Result": {"InitializationError"}})
             self._logger.debug(str(result))
             try:
                 if bot1_process:
@@ -677,11 +668,12 @@ class Client:
 
     def kill_current_server(self, server=False):
         """
-        Kills all the processes running on the match runner's port. Also kills any SC2 processes if they are still running.
+        Kills all the processes running on the match runner's port. Also kills any SC2 processes if
+        they are still running.
 
         :return:
         """
-        #return None
+        # return None
         try:
             if self._config.SYSTEM == "Linux":
                 self._utl.printout("Killing SC2")
@@ -698,7 +690,6 @@ class Client:
                         process.send_signal(signal.SIGTERM)
                     except psutil.AccessDenied:
                         pass
-
 
         except:
             pass
@@ -737,7 +728,6 @@ class Client:
                     self._logger.error("Server is not running.")
                     raise
 
-
             result = await self.main(
                     map_name,
                     bot_0_name,
@@ -747,7 +737,7 @@ class Client:
                     next_match_id
                 )
         
-        except Exception as e:
+        except Exception:
             self._logger.error(str(traceback.format_exc()))
             result = "Error"
 

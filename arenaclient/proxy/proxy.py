@@ -27,7 +27,7 @@ warnings.simplefilter("ignore", ResourceWarning)
 warnings.simplefilter("ignore", ConnectionResetError)
 warnings.simplefilter("ignore", RuntimeWarning)
 warnings.simplefilter("ignore", AssertionError)
-warnings.simplefilter("ignore",asyncio.CancelledError)
+warnings.simplefilter("ignore", asyncio.CancelledError)
 
 
 class Proxy:
@@ -50,7 +50,6 @@ class Proxy:
             max_frame_time: int = 125,
             strikes: int = 10,
             real_time: bool = False,
-            visualize_port: int = 5555,
             visualize: bool = False,
             visualize_step_count: int = 22
     ):
@@ -78,16 +77,14 @@ class Proxy:
         self.max_frame_time: int = max_frame_time
         self.strikes: int = strikes
         self.replay_saved: bool = False
-        
+        self.disable_debug: bool = disable_debug
         self.real_time: bool = real_time
         self.visualize: bool = visualize
         self.render: bool = False 
         self.mini_map = Minimap()
         self.observation_loaded = False
         self.game_info_loaded = False
-        self.sender = None
         self.game_data_loaded = False
-        self.visualize_port = visualize_port
         self.visualize_step_count = visualize_step_count
         self.process = None
         
@@ -297,7 +294,7 @@ class Proxy:
                 self.joined = True
                 return request.SerializeToString()
 
-            if request.HasField("debug"):
+            if self.disable_debug and request.HasField("debug"):
                 return False
             if request.HasField('data'):
                 request.data.unit_type_id = True
@@ -350,19 +347,15 @@ class Proxy:
         if response.HasField('observation'):
             self._game_loops = response.observation.observation.game_loop
             if self.render:
-                render_data = response.observation.observation.render_data
-
-                map_size = render_data.map.size
-                map_data = render_data.map.data
-
-                map_width, map_height = map_size.x, map_size.y
-                data_buffer = np.frombuffer(map_data, np.uint8)
-                data_numpy = data_buffer.reshape(map_height, map_width, 3)
-                # im_rgb = cv2.cvtColor(data_numpy, cv2.COLOR_BGR2RGB)
-                # img = cv2.resize(im_rgb,(800,600),interpolation=cv2.INTER_CUBIC)
-                # flipped = cv2.resize(data_numpy, (800,600),cv2.INTER_NEAREST)
-                # self.supervisor.image = data_numpy.tobytes()
-                # await self.sender.send_image(self.player_name, data_numpy)
+                raise NotImplemented
+                # render_data = response.observation.observation.render_data
+                #
+                # map_size = render_data.map.size
+                # map_data = render_data.map.data
+                #
+                # map_width, map_height = map_size.x, map_size.y
+                # data_buffer = np.frombuffer(map_data, np.uint8)
+                # data_numpy = data_buffer.reshape(map_height, map_width, 3)
 
             if self.visualize and (self._game_loops % self.visualize_step_count == 0 or self._game_loops < 10):
                 self.observation_loaded = True
@@ -387,12 +380,11 @@ class Proxy:
         if response.status > 3:
             await self.check_for_result()
     
-    async def websocket_handler(self, request, portconfig):
+    async def websocket_handler(self, request):
         """
         Handler for all requests. A client session is created for the bot and a connection to SC2 is made to forward
         all requests and responses.
         :param request:
-        :param portconfig:
         :return:
         """
         logger.debug("Launching SC2")
@@ -422,11 +414,11 @@ class Proxy:
 
             while True:  # Gives SC2 a chance to start up. Repeatedly tries to connect to SC2 websocket until it
                 # succeeds
-                await asyncio.sleep(1)
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 result = sock.connect_ex(("127.0.0.1", self.port))
                 if result == 0:
                     break
+                await asyncio.sleep(0.5)
             logger.debug("Connecting to SC2")
 
             async with session.ws_connect(url, max_msg_size=0) as ws_p2s:  # Connects to SC2 instance
@@ -465,7 +457,7 @@ class Proxy:
 
                         if self.no_of_strikes > self.strikes:  # Bot exceeded max_frame_time, surrender on behalf of bot
                             logger.debug(f'{self.player_name} exceeded {self.max_frame_time} ms, {self.no_of_strikes} '
-                                        f'times in a row')
+                                         f'times in a row')
 
                             self._surrender = True
                             self._result = "Result.Timeout"

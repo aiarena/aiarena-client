@@ -1,12 +1,7 @@
 import random
 from aiohttp import web, ClientSession
 from aiohttp_jinja2 import render_template
-from imutils import build_montages
-from multiprocessing import Process
-from arenaclient import imagezmq
-import threading
 import os
-import cv2
 import json
 from arenaclient.matches import FileMatchSource
 import arenaclient.default_local_config as config
@@ -55,8 +50,10 @@ class Bot:
         self.type = data['results'][0]['type']
         md5_hash = data['results'][0]['bot_zip_md5hash']
         path = Path(os.path.join(self.settings['bot_directory_location'], 'Bot Zip Files'))
+        if not path.is_dir():
+            path.mkdir()
+
         if os.path.isdir(os.path.join(self.settings['bot_directory_location'], self.bot)):
-            path = Path(os.path.join(self.settings['bot_directory_location'], 'Bot Zip Files'))
             if not path.is_dir():
                 path.mkdir()
             if Path(os.path.join(path, self.bot + '.zip')).exists():
@@ -88,54 +85,6 @@ class Bot:
 
         with open(os.path.join(self.settings['bot_directory_location'], self.bot, 'ladderbots.json')) as f:
             self.type = self.find_values('Type', f.read())[0]
-
-
-async def detect_motion():
-    global output_frame, lock
-    image_hub = imagezmq.ImageHub(open_port='tcp://127.0.0.1:5556', REQ_REP=False)
-    image_hub.connect('tcp://127.0.0.1:5557')
-
-    frame_dict = {}
-
-    m_w = 2
-    m_h = 2
-    while True:
-        (rpiName, frame) = image_hub.recv_image()
-
-        (h, w) = frame.shape[:2]
-        frame_dict[rpiName] = frame
-
-        montages = build_montages(frame_dict.values(), (w, h), (m_w, m_h))
-
-        # display the montage(s) on the screen
-        for (i, montage) in enumerate(montages):
-            # with lock:
-            output_frame = montage
-
-
-def generate():
-    # grab global references to the output frame and lock variables
-    global output_frame, lock
-
-    # loop over frames from the output stream
-    while True:
-        # wait until the lock is acquired
-        with lock:
-            # check if the output frame is available, otherwise skip
-            # the iteration of the loop
-            if output_frame is None:
-                continue
-
-            # encode the frame in JPEG format
-            (flag, encodedImage) = cv2.imencode(".jpg", output_frame)
-
-            # ensure the frame was successfully encoded
-            if not flag:
-                continue
-
-        # yield the output frame in the byte format
-        yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +
-               bytearray(encodedImage) + b'\r\n')
 
 
 def save_settings_to_file(data):
@@ -215,22 +164,23 @@ async def handle_data(request):
     location = request.app.router['index'].url_for()
     raise web.HTTPFound(location=location)
 
+
 def convert_wsl_paths(json_data):
     json_data_modified = {}
     
-    if system()=="Windows":
+    if system() == "Windows":
         
-        for x,y in json_data.items():
-            replaced_string = y.replace('/mnt/c','C:')
+        for x, y in json_data.items():
+            replaced_string = y.replace('/mnt/c', 'C:')
             json_data_modified[x] = replaced_string
-            json_data_modified[x] = replaced_string.replace('/mnt/d','D:')
+            json_data_modified[x] = replaced_string.replace('/mnt/d', 'D:')
     
-    if system() =="Linux":
+    if system() == "Linux":
         
-        for x,y in json_data.items():
-            replaced_string = y.replace('C:','/mnt/c')
+        for x, y in json_data.items():
+            replaced_string = y.replace('C:', '/mnt/c')
             json_data_modified[x] = replaced_string
-            json_data_modified[x] = replaced_string.replace('D:','/mnt/d')
+            json_data_modified[x] = replaced_string.replace('D:', '/mnt/d')
     return json_data_modified
 
 
@@ -248,8 +198,8 @@ async def get_results(request):
 
 
 async def run_local_game(games, data):
-    if system() =='Windows':
-        config.PYTHON ='python'
+    if system() == 'Windows':
+        config.PYTHON = 'python'
     config.BOTS_DIRECTORY = convert_wsl_paths(load_settings_from_file())['bot_directory_location']
     config.ROUNDS_PER_RUN = 1
     config.REALTIME = data.get("Realtime", False)
@@ -337,23 +287,22 @@ def get_local_maps():
 
     if not os.path.isdir(directory):
         return web.json_response({"Error": "Please enter a directory"})
-    BASE = Path(directory).expanduser()
+    base_dir = Path(directory).expanduser()
 
-    if (BASE / "maps").exists():
-        MAPS = BASE / "maps"
+    if (base_dir / "maps").exists():
+        maps_dir = base_dir / "maps"
     else:
-        MAPS = BASE / "Maps"
+        maps_dir = base_dir / "Maps"
     maps = []
-    for mapdir in (p for p in MAPS.iterdir()):
+    for mapdir in (p for p in maps_dir.iterdir()):
         if mapdir.is_dir():
             for mapfile in (p for p in mapdir.iterdir() if p.is_file()):
-                if mapfile.suffix == ".SC2Map":
+                if mapfile.suffix == ".SC2Map" and mapfile.stem not in maps:
                     maps.append(mapfile.stem)
         elif mapdir.is_file():
-            if mapdir.suffix == ".SC2Map":
+            if mapdir.suffix == ".SC2Map" and mapdir.stem not in maps:
                 maps.append(mapdir.stem)
-    return maps
-
+    return sorted(maps)
 
 
 async def get_maps(request):
