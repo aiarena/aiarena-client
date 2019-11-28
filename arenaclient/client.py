@@ -11,7 +11,7 @@ import time
 import traceback
 import zipfile
 from pathlib import Path
-
+import hashlib
 import aiohttp
 import psutil
 import requests
@@ -34,6 +34,10 @@ class Client:
         self._logger = logging.getLogger(__name__)
         self._logger.addHandler(self._config.LOGGING_HANDLER)
         self._logger.setLevel(self._config.LOGGING_LEVEL)
+
+    def get_opponent_id(self, bot_name):
+        hexdigest = hashlib.md5(bot_name.encode("utf-8")).hexdigest()
+        return hexdigest[0::2]
 
     async def run_next_match(self, match_count: int):
         """
@@ -117,8 +121,6 @@ class Client:
 
             bot_0_name, bot_0_data = bot_0.get_bot_data()
             bot_1_name, bot_1_data = bot_1.get_bot_data()
-            # bot_0_game_display_id = bot_0_data['botID']
-            # bot_1_game_display_id = bot_1_data['botID']
 
             result = await self.run_match(
                 match_count, map_name, bot_0_name, bot_1_name, bot_0_data, bot_1_data, next_match_id
@@ -500,15 +502,16 @@ class Client:
                         
                         self._logger.debug(f"Starting bots...")
                         bot1_process = self.start_bot(
-                            bot_0_name, bot_0_data, opponent_id=bot_1_data.get("botID", 123)
+                            bot_0_name, bot_0_data, opponent_id=bot_1_data.get("botID", self.get_opponent_id(bot_0_name))
                         )  # todo opponent_id
-
+                        print(self.get_opponent_id(bot_0_name))
                         msg = await ws.receive_json()
 
                         if msg.get("Bot", None) == "Connected":
                             bot2_process = self.start_bot(
-                                bot_1_name, bot_1_data, opponent_id=bot_0_data.get("botID", 321)
+                                bot_1_name, bot_1_data, opponent_id=bot_0_data.get("botID", self.get_opponent_id(bot_1_name))
                             )  # todo opponent_id
+                            print(self.get_opponent_id(bot_1_name))
                         else:
                             self._logger.debug(f"Bot2 crash")
                             result.append(

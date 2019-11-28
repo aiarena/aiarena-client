@@ -48,7 +48,9 @@
    <header class="header">
          <img src="{{  static('img/ai-arena-logo.png') }}" alt="AI Arena Logo">
     </header>
-   <a href="{{ url('index')}}">Home</a><br>
+    <div class="middle">
+        <div class="container">
+            <main class="content">
       <h1>Settings</h1><br><br>
       <label>Bots Location</label><br>
       <form action="{{ url('handle_data') }}" method="post" enctype="application/x-www-form-urlencoded">
@@ -78,6 +80,14 @@
             <br>
             <button class="btn btn-default" type="submit">Submit</button>
       </form>
-      
+                  </main>
+        </div>
+    <aside class="left-sidebar">
+        <a href="{{url('index')}}">Home</a><br><br><br>
+        <a href="{{ url('settings') }}">Settings</a><br>
+        <a href="{{ url('watch') }}">Watch</a><br><br><br>
+    </aside><!-- .left-sidebar -->
+       
+</div>
    </body>
 </html>
