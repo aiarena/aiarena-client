@@ -157,14 +157,8 @@ class ConnectionHandler:
 
         else:  # TODO: Implement this for devs running without a supervisor
             raise NotImplementedError
-            logger.debug("Connecting bot without supervisor")
-            self.connected_clients += 1
-            if self.connected_clients == 1:
-                proxy1 = Proxy(game_created=False)
-                await proxy1.websocket_handler(request)
-            else:
-                proxy2 = Proxy(game_created=True)
-                await proxy2.websocket_handler(request)
+
+
         if self.t1:
             self.t1.cancel()
 

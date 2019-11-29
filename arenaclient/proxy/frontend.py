@@ -171,16 +171,14 @@ def convert_wsl_paths(json_data):
     if system() == "Windows":
         
         for x, y in json_data.items():
-            replaced_string = y.replace('/mnt/c', 'C:')
+            replaced_string = y.replace('/mnt/c', 'C:').replace('/mnt/d', 'D:')
             json_data_modified[x] = replaced_string
-            json_data_modified[x] = replaced_string.replace('/mnt/d', 'D:')
     
     if system() == "Linux":
         
         for x, y in json_data.items():
-            replaced_string = y.replace('C:', '/mnt/c')
+            replaced_string = y.replace('C:', '/mnt/c').replace('D:', '/mnt/d')
             json_data_modified[x] = replaced_string
-            json_data_modified[x] = replaced_string.replace('D:', '/mnt/d')
     return json_data_modified
 
 

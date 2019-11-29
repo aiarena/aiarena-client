@@ -160,7 +160,6 @@ class Client:
 
                     elif temp_results[bot_2_name] == "Result.Crashed":
                         result = "Player2Crash"
-                        # result_json['Winner']=bot_0
 
                     elif temp_results[bot_1_name] == "Result.Timeout":
                         result = "Player1TimeOut"
@@ -170,19 +169,13 @@ class Client:
 
                     elif temp_results[bot_1_name] == "Result.Victory":
                         result = "Player1Win"
-                        # result_json['Winner']=bot_1_name
 
                     elif temp_results[bot_1_name] == "Result.Defeat":
                         result = "Player2Win"
-                        # result_json['Winner']=bot_1
 
-                    elif temp_results[bot_2_name] == "Result.Crashed":
-                        result = "Player2Crash"
-                        # result_json['Winner']=bot_0
 
                     elif temp_results[bot_1_name] == "Result.Tie":
                         result = "Tie"
-                        # result_json['Winner']='Tie'
 
                     else:
                         result = "InitializationError"
@@ -190,7 +183,6 @@ class Client:
                         bot1_avg_step_time = 0
                         bot2_avg_step_time = 0
 
-                    # result_json['Result'] = result
 
                 if x.get("GameTime", None):
                     game_time = x["GameTime"]
@@ -258,7 +250,6 @@ class Client:
 
         # client logs
         proxy_tmp = os.path.join(self._config.TEMP_PATH, "proxy.log")
-        # supervisor_tmp = os.path.join(self._config.TEMP_PATH, "supervisor.log")
         client_tmp = os.path.join(self._config.TEMP_PATH, "client.log")
 
         if os.path.isfile("proxy.log"):
@@ -266,10 +257,6 @@ class Client:
         else:
             Path(proxy_tmp).touch()
 
-        # if os.path.isfile("supervisor.log"):
-        #     shutil.move("supervisor.log", supervisor_tmp)
-        # else:
-        #     Path(supervisor_tmp).touch()
 
         if os.path.isfile("client.log"):
             shutil.move("client.log", client_tmp)
@@ -279,7 +266,6 @@ class Client:
         arenaclient_log_zip = os.path.join(self._config.TEMP_PATH, "arenaclient_log.zip")
         zip_file = zipfile.ZipFile(arenaclient_log_zip, "w")
         zip_file.write(proxy_tmp, compress_type=zipfile.ZIP_DEFLATED)
-        # zip_file.write(supervisor_tmp, compress_type=zipfile.ZIP_DEFLATED)
         zip_file.write(client_tmp, compress_type=zipfile.ZIP_DEFLATED)
         zip_file.close()
 
