@@ -776,7 +776,7 @@ class Client:
 
         except Exception as e:
             self._utl.printout(traceback.format_exc())
-            self._utl.printout(f"arena-client encountered an uncaught exception: {e} Exiting...")
+            self._utl.printout(f"arena-client encountered an uncaught exception during startup: {e} Exiting...")
         finally:
             self.kill_current_server(server=False)
             try:
