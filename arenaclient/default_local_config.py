@@ -1,28 +1,26 @@
-##########################################################
-#                                                        #
-# DEFAULT TEST CONFIG                                    #
-#                                                        #
-# !!!! DO NOT UPDATE THIS FILE WITH LOCAL SETTINGS !!!!  #
-# Create a test_config.py file to override config values #
-#                                                        #
-##########################################################
+#########################################################
+#                                                       #
+# DEFAULT CONFIG                                        #
+#                                                       #
+# !!!! DO NOT UPDATE THIS FILE WITH LOCAL SETTINGS !!!! #
+# Create a config.py file to override config values     #
+#                                                       #
+#########################################################
 import logging
 import os
 import platform
 from urllib import parse
-
 from arenaclient.matches import FileMatchSource
 
 # GERERAL
-ARENA_CLIENT_ID = "aiarenaclient_test"
-API_TOKEN = ""
-ROUNDS_PER_RUN = 1
+ARENA_CLIENT_ID = "aiarenaclient_000"
+API_TOKEN = "12345"
+ROUNDS_PER_RUN = 5
 SHUT_DOWN_AFTER_RUN = True
 USE_PID_CHECK = False
-DEBUG_MODE = True
-PYTHON = "python"
-RUN_LOCAL = True  # todo: this will be superseded by the MATCH_SOURCE_CONFIG type
-TEST_MODE = True
+DEBUG_MODE = False
+PYTHON = "python3.7"
+RUN_LOCAL = True
 CLEANUP_BETWEEN_ROUNDS = False
 SYSTEM = platform.system()
 SC2_PROXY = {"HOST": "127.0.0.1", "PORT": 8765}
@@ -38,11 +36,11 @@ WORKING_DIRECTORY = LOCAL_PATH  # same for now
 LOG_FILE = os.path.join(WORKING_DIRECTORY, "client.log")
 REPLAYS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "replays")
 BOTS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "bots")
+VISUALIZE = False
 
-
-MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(
-    matches_file=os.path.join(WORKING_DIRECTORY, "matches"),
-    results_file=os.path.join(WORKING_DIRECTORY, "results")
+MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(		
+    matches_file=os.path.join(WORKING_DIRECTORY, "matches"),		
+    results_file=os.path.join(WORKING_DIRECTORY, "results")		
 )
 
 # WEBSITE
@@ -57,12 +55,12 @@ MAX_GAME_TIME = 60486
 MAX_FRAME_TIME = 1000
 STRIKES = 10
 REALTIME = False
-VISUALIZE = False
+
 # Override values with environment specific config
 try:
-    from arenaclient.test_config import *
+    from local_config import *
 except ImportError as e:
-    if e.name == "arenaclient.test_config":
+    if e.name == "local_config":
         pass
     else:
         raise

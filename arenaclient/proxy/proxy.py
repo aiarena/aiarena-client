@@ -6,14 +6,18 @@ import tempfile
 import time
 import warnings
 from typing import Any
-
+import numpy as np
+import cv2
 import aiohttp
 import portpicker
 from s2clientprotocol import sc2api_pb2 as sc_pb
+import traceback
 
 from arenaclient.proxy.lib import Bot, Controller, Paths, Result
 from arenaclient.proxy import maps
 from arenaclient.proxy.supervisor import Supervisor
+
+from arenaclient.mini_map import Minimap
 
 logger = logging.getLogger(__name__)
 logger.setLevel(10)
@@ -23,6 +27,7 @@ warnings.simplefilter("ignore", ResourceWarning)
 warnings.simplefilter("ignore", ConnectionResetError)
 warnings.simplefilter("ignore", RuntimeWarning)
 warnings.simplefilter("ignore", AssertionError)
+warnings.simplefilter("ignore", asyncio.CancelledError)
 
 
 class Proxy:
@@ -43,7 +48,10 @@ class Proxy:
             disable_debug: bool = False,
             supervisor: Supervisor = None,
             max_frame_time: int = 125,
-            strikes: int = 10
+            strikes: int = 10,
+            real_time: bool = False,
+            visualize: bool = False,
+            visualize_step_count: int = 22
     ):
         self.average_time: float = 0
         self.previous_loop: int = 0
@@ -69,6 +77,43 @@ class Proxy:
         self.max_frame_time: int = max_frame_time
         self.strikes: int = strikes
         self.replay_saved: bool = False
+        self.disable_debug: bool = disable_debug
+        self.real_time: bool = real_time
+        self.visualize: bool = visualize
+        self.render: bool = False 
+        self.mini_map = Minimap()
+        self.observation_loaded = False
+        self.game_info_loaded = False
+        self.game_data_loaded = False
+        self.visualize_step_count = visualize_step_count
+        self.process = None
+        
+    async def clean_up(self):
+        try:
+            if self.process is not None:
+                if self.process.poll() is None:
+                    for _ in range(3):
+                        self.process.terminate()
+                        time.sleep(0.5)
+                        if self.process.poll() is not None:
+                            break
+                    else:
+                        self.process.kill()
+                        self.process.wait()
+                        logger.error("KILLED")
+        except:
+            print(traceback.format_exc())
+            pass
+        try:
+            self.ws_c2p.close()
+        except:
+            print(traceback.format_exc())
+            pass
+        try:
+            self.ws_p2s.close()
+        except:
+            print(traceback.format_exc())
+            pass
 
     async def __request(self, request):
         """
@@ -80,19 +125,25 @@ class Proxy:
             await self.ws_p2s.send_bytes(request.SerializeToString())
         except TypeError:
             logger.debug("Cannot send: SC2 Connection already closed.")
+            print(traceback.format_exc())
 
         response = sc_pb.Response()
         try:
             response_bytes = await self.ws_p2s.receive_bytes()
         except TypeError:
             logger.exception("Cannot receive: SC2 Connection already closed.")
+            print(traceback.format_exc())
+        
         except asyncio.CancelledError:
+            print(traceback.format_exc())
             try:
                 await self.ws_p2s.receive_bytes()
             except asyncio.CancelledError:
+                print(traceback.format_exc())
                 logger.error("Requests must not be cancelled multiple times")
 
         except Exception as e:
+            print(traceback.format_exc())
             logger.error(str(e))
         response.ParseFromString(response_bytes)
         return response
@@ -156,10 +207,10 @@ class Proxy:
                     )
 
             except Exception as e:
+                print(traceback.format_exc())
                 logger.error(e)
 
-    @staticmethod
-    async def create_game(server, players, map_name):
+    async def create_game(self, server, players, map_name):
         """
         Static method to send a create_game request to SC2 with the relevant options.
         :param server:
@@ -169,7 +220,7 @@ class Proxy:
         """
         logger.debug("Creating game...")
         map_name = map_name.replace(".SC2Replay", "").replace(" ", "")
-        response = await server.create_game(maps.get(map_name), players, realtime=False)
+        response = await server.create_game(maps.get(map_name), players, realtime=self.real_time)
         logger.debug("Game created")
         return response
 
@@ -214,7 +265,7 @@ class Proxy:
             logger.debug(f"Requesting replay from server")
             result = await self._execute(save_replay=sc_pb.RequestSaveReplay())
             if len(result.save_replay.data) > 10:
-                with open(self.replay_name, "wb") as f:
+                with open(self.replay_name, "wb+") as f:
                     f.write(result.save_replay.data)
                 logger.debug(f"Saved replay as " + str(self.replay_name))
             self.replay_saved = True
@@ -234,11 +285,23 @@ class Proxy:
             if not self.joined and str(request).startswith("join_game"):
                 request.join_game.player_name = self.player_name
                 request.join_game.options.raw_affects_selection = True
+                if self.render:
+                    request.join_game.options.render.resolution.x = 250
+                    request.join_game.options.render.resolution.y = 250
+                    request.join_game.options.render.minimap_resolution.x = 50
+                    request.join_game.options.render.minimap_resolution.y = 50
+               
                 self.joined = True
                 return request.SerializeToString()
 
-            if request.HasField("debug"):
+            if self.disable_debug and request.HasField("debug"):
                 return False
+            if request.HasField('data'):
+                request.data.unit_type_id = True
+                request.data.upgrade_id = True
+                request.data.buff_id = True
+                request.data.effect_id = True
+                request.data.ability_id = True
             
             if request.HasField("leave_game"):
                 logger.debug(f'{self.player_name} has issued a LeaveGameRequest')
@@ -248,6 +311,7 @@ class Proxy:
 
         except Exception as e:
             logger.debug(f"Exception{e}")
+            print(traceback.format_exc())
 
         if self._result:
             try:
@@ -258,6 +322,7 @@ class Proxy:
                         self.player_name: self.average_time / self._game_loops
                     }
             except ZeroDivisionError:
+                print(traceback.format_exc())
                 self.supervisor.average_frame_time = {self.player_name: 0}
             self.supervisor.game_time = self._game_loops
             self.supervisor.game_time_seconds = self._game_time_seconds
@@ -268,7 +333,7 @@ class Proxy:
                 self.killed = True
                 return request.SerializeToString()
         return request.SerializeToString()
-
+    
     async def process_response(self, msg):
         """
         Uses responses from SC2 to populate self._game_loops instead of sending extra requests to SC2. Also calls
@@ -278,54 +343,87 @@ class Proxy:
         """
         response = sc_pb.Response()
         response.ParseFromString(msg)
+       
         if response.HasField('observation'):
             self._game_loops = response.observation.observation.game_loop
+            if self.render:
+                raise NotImplemented
+                # render_data = response.observation.observation.render_data
+                #
+                # map_size = render_data.map.size
+                # map_data = render_data.map.data
+                #
+                # map_width, map_height = map_size.x, map_size.y
+                # data_buffer = np.frombuffer(map_data, np.uint8)
+                # data_numpy = data_buffer.reshape(map_height, map_width, 3)
+
+            if self.visualize and (self._game_loops % self.visualize_step_count == 0 or self._game_loops < 10):
+                self.observation_loaded = True
+                self.mini_map.load_state(response)
+
+        elif self.visualize and not self.game_info_loaded and response.HasField('game_info'):
+            self.game_info_loaded = True
+            self.mini_map.load_game_info(response)
+        
+        elif self.visualize and not self.game_data_loaded and response.HasField('data'):
+            self.game_data_loaded = True
+            self.mini_map.load_game_data(response)
+
+        if self.visualize and self.game_info_loaded and self.observation_loaded and self.game_data_loaded:
+            if self._game_loops % self.visualize_step_count == 0 or self._game_loops < 10:
+                self.mini_map.player_name = self.player_name
+                image = self.mini_map.draw_map()
+                score = self.mini_map.get_score()
+                self.supervisor.images[self.player_name]['image'] = image
+                self.supervisor.images[self.player_name]['score'] = score
+
         if response.status > 3:
             await self.check_for_result()
-
-    async def websocket_handler(self, request, portconfig):
+    
+    async def websocket_handler(self, request):
         """
         Handler for all requests. A client session is created for the bot and a connection to SC2 is made to forward
         all requests and responses.
         :param request:
-        :param portconfig:
         :return:
         """
+        logger.debug("Launching SC2")
+        self.process = self._launch("127.0.0.1", False)
         logger.debug("Starting client session")
         start_time = time.monotonic()
         async with aiohttp.ClientSession() as session:
             logger.debug("Websocket client connection starting")
-            self.ws_c2p = aiohttp.web.WebSocketResponse(receive_timeout=40, max_msg_size=0)  # Set to 40 to detect internal bot crashes
+
+            # Set to 40 to detect internal bot crashes
+            self.ws_c2p = aiohttp.web.WebSocketResponse(receive_timeout=40, max_msg_size=0)
             await self.ws_c2p.prepare(request)
             request.app["websockets"].add(self.ws_c2p)  # Add bot client to WeakSet for use in detecting amount of
             # clients connected
-
-            logger.debug("Launching SC2")
 
             players = [
                 Bot(None, None, name=self.player_name),
                 Bot(None, None, name=self.opponent_name),
             ]
 
-            process = self._launch("127.0.0.1", False)  # This populates self.port
+            # This populates self.port
 
-            self.supervisor.pids = process.pid  # Add SC2 to supervisor pid list for use in cleanup
+            self.supervisor.pids = self.process.pid  # Add SC2 to supervisor pid list for use in cleanup
 
             url = "ws://localhost:" + str(self.port) + "/sc2api"
             logger.debug("Websocket connection: " + str(url))
 
             while True:  # Gives SC2 a chance to start up. Repeatedly tries to connect to SC2 websocket until it
                 # succeeds
-                await asyncio.sleep(1)
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 result = sock.connect_ex(("127.0.0.1", self.port))
                 if result == 0:
                     break
+                await asyncio.sleep(0.5)
             logger.debug("Connecting to SC2")
 
             async with session.ws_connect(url, max_msg_size=0) as ws_p2s:  # Connects to SC2 instance
                 self.ws_p2s = ws_p2s
-                c = Controller(self.ws_p2s, process)
+                c = Controller(self.ws_p2s, self.process)
                 if not self.created_game:
                     await self.create_game(c, players, self.map_name)
                     self.created_game = True
@@ -333,7 +431,7 @@ class Proxy:
                 logger.debug("Player:" + str(self.player_name))
                 logger.debug("Joining game")
                 logger.debug(r"Connecting proxy")
-                try:
+                try:                
                     async for msg in self.ws_c2p:
                         await self.check_time()  # Check for ties
                         if msg.data is None:
@@ -382,8 +480,10 @@ class Proxy:
                                     except (
                                             asyncio.CancelledError,
                                             asyncio.TimeoutError,
+                                            Exception
                                     ) as e:
                                         logger.error(str(e))
+                                        print(traceback.format_exc())
                                     await self.ws_c2p.send_bytes(data_p2s)  # Forward response to bot
                                 start_time = time.monotonic()  # Start the frame timer.
                             elif msg.type == aiohttp.WSMsgType.CLOSED:
@@ -397,8 +497,8 @@ class Proxy:
 
                 except Exception as e:
                     logger.error(str(e))
+                    print(traceback.format_exc())
                 finally:
-
                     if not self._result:  # bot crashed, leave instead.
                         logger.debug("Bot crashed")
                         self._result = "Result.Crashed"
@@ -406,6 +506,7 @@ class Proxy:
                         if await self.save_replay():
                             await self._execute(leave_game=sc_pb.RequestLeaveGame())
                     except Exception:
+                        print(traceback.format_exc())
                         logger.debug("Can't save replay, SC2 already closed")
                     try:
                         if {
@@ -416,9 +517,42 @@ class Proxy:
                             }
                     except ZeroDivisionError:
                         self.supervisor.average_frame_time = {self.player_name: 0}
+                    if self.visualize and False:  # TODO: fix for new visualization
+                        img = np.ones((500, 500, 3))
+                        font = cv2.FONT_HERSHEY_SIMPLEX
+                        org = (50, 50)
+                        font_scale = 1
+                        color = (50, 194, 134)
+                        thickness = 1
+                        
+                        flipped = cv2.resize(img, (500, 500), cv2.INTER_NEAREST)
+                        cv2.putText(flipped, self.player_name, org, font, font_scale, color, thickness, cv2.LINE_AA)
+                        if self._result:
+                            cv2.putText(flipped, str(self._result), (50, 200), font, font_scale, color, thickness,
+                                        cv2.LINE_AA)
 
                     self.supervisor.result = dict({self.player_name: self._result})
 
                     await self.ws_c2p.close()
+                    await self.ws_p2s.close()
+
+                    await ws_p2s.close()
+
+                    logger.debug("Discarding proxy")
+                    request.app["websockets"].discard(self.ws_c2p)
+                    await session.close()
+
                     logger.debug("Disconnected")
+                    logger.debug("Killing SC2")
+                    if self.process is not None:
+                        if self.process.poll() is None:
+                            for _ in range(3):
+                                self.process.terminate()
+                                time.sleep(0.5)
+                                if self.process.poll() is not None:
+                                    break
+                            else:
+                                self.process.kill()
+                                self.process.wait()
+                    
                     return self.ws_p2s

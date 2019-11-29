@@ -1,6 +1,6 @@
 import json
 from enum import Enum
-
+from pathlib import Path
 from arenaclient.bot import Bot
 
 
@@ -46,11 +46,11 @@ class HttpApiMatchSource(MatchSource):
         A representation of a match sourced from the AI Arena Website HTTP API.
         """
 
-        def __init__(self, id, bot1, bot2, map):
-            self.id = id
+        def __init__(self, id_num, bot1, bot2, map_name):
+            self.id = id_num
             self.bot1 = bot1
             self.bot2 = bot2
-            self.map = map
+            self.map = map_name
 
     def next_match(self):
         raise NotImplementedError()
@@ -78,10 +78,10 @@ class FileMatchSource(MatchSource):
         A representation of a match sourced from a file.
         """
 
-        def __init__(self, id, file_line):
+        def __init__(self, id_num, file_line):
             match_values = file_line.split(FileMatchSource.MATCH_FILE_VALUE_SEPARATOR)
 
-            self.id = id
+            self.id = id_num
 
             # Bot 1
             self.bot1_name = match_values[0]
@@ -135,7 +135,7 @@ class FileMatchSource(MatchSource):
         return next_match
 
     def submit_result(self, match: FileMatch, result):
-        with open("results", "a+") as map_file:
+        with open("results", "w+") as map_file:
             map_file.write(str(result) + "\n\n")
 
         result_type = "Error"  # avoid error from this not being initialized
@@ -210,10 +210,22 @@ class FileMatchSource(MatchSource):
                     result_json["TimeStamp"] = x["TimeStamp"]
         else:
             result_json["Result"] = result_type
+        
+        filename = Path(self._results_file)
+        filename.touch(exist_ok=True)  # will create file, if it exists will do nothing
 
-        with open(self._results_file, "w") as results_log:
-            json_object = dict({"Results": [result_json]})
-            results_log.write(json.dumps(json_object, indent=4))
+        with open(self._results_file, "r+") as results_log:
+            try:
+                results = json.loads(results_log.read())
+                result_list = results['Results']
+                result_list.append(result_json)
+                results_log.seek(0)
+                json_object = dict({"Results": result_list})
+                results_log.write(json.dumps(json_object, indent=4))
+            except:
+                results_log.seek(0)
+                json_object = dict({"Results": [result_json]})
+                results_log.write(json.dumps(json_object, indent=4))
 
 
 class MatchSourceFactory:

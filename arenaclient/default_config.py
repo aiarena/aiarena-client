@@ -47,12 +47,14 @@ SC2_BINARY = os.path.join(SC2_HOME, "Versions/Base75689/SC2_x64")
 MAX_GAME_TIME = 60486
 MAX_FRAME_TIME = 1000
 STRIKES = 10
+REALTIME = False
+VISUALIZE = False
 
 # Override values with environment specific config
 try:
-    from config import *
+    from arenaclient.config import *
 except ImportError as e:
-    if e.name == "config":
+    if e.name == "arenaclient.config":
         pass
     else:
         raise

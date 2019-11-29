@@ -96,15 +96,6 @@ class Protocol:
 
         return response
 
-    async def ping(self):
-        result = await self._execute(ping=sc_pb.RequestPing())
-        return result
-
-    async def quit(self):
-        try:
-            await self._execute(quit=sc_pb.RequestQuit())
-        except ConnectionAlreadyClosed:
-            pass
 
 
 class AbstractPlayer:
@@ -156,12 +147,7 @@ class ProtocolError(Exception):
     """
     python-sc2 class. https://github.com/Dentosal/python-sc2/
     """
-    @property
-    def is_game_over_error(self) -> bool:
-        return self.args[0] in [
-            "['Game has already ended']",
-            "['Not supported if game has already ended']",
-        ]
+    pass
 
 
 class ConnectionAlreadyClosed(ProtocolError):
@@ -176,9 +162,6 @@ class Controller(Protocol):
         super().__init__(ws)
         self.__process = process
 
-    @property
-    def running(self):
-        return self.__process._process is not None
 
     async def create_game(self, game_map, players, realtime, random_seed=None):
         assert isinstance(realtime, bool)
@@ -228,11 +211,6 @@ CWD = {"Windows": "Support64", "Darwin": None, "Linux": None, "WineLinux": "Supp
 PF = os.environ.get("SC2PF", platform.system())
 
 
-def get_env():
-    # TODO: Linux env conf from: https://github.com/deepmind/pysc2/blob/master/pysc2/run_configs/platforms.py
-    return None
-
-
 def latest_executeble(versions_dir):
     latest = max((int(p.name[4:]), p) for p in versions_dir.iterdir() if p.is_dir() and p.name.startswith("Base"))
     version, path = latest
@@ -269,8 +247,6 @@ class _MetaPaths(type):
             self.EXECUTABLE = latest_executeble(self.BASE / "Versions")
             self.CWD = self.BASE / CWD[PF] if CWD[PF] else None
 
-            self.REPLAYS = self.BASE / "Replays"
-
             if (self.BASE / "maps").exists():
                 self.MAPS = self.BASE / "maps"
             else:
@@ -292,7 +268,7 @@ class Paths(metaclass=_MetaPaths):
     """
 
 
+# noinspection PyArgumentList
 PlayerType = enum.Enum("PlayerType", sc_pb.PlayerType.items())
 Status = enum.Enum("Status", sc_pb.Status.items())
 Result = enum.Enum("Result", sc_pb.Result.items())
-ChatChannel = enum.Enum("ChatChannel", sc_pb.ActionChat.Channel.items())

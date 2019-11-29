@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>Watch</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link rel="stylesheet" type="text/css" href="{{  static('styles/style.css') }}">
+</head>
+
+<body style='background-image: url(/static/img/background.gif);'>
+    <header class="header">
+        <img src="{{  static('img/ai-arena-logo.png') }}" alt="AI Arena Logo">
+    </header>
+    <div class="middle">
+        <div class="container">
+            <main class="content">
+                <img src="{{ url('video_feed')}}" style="display: block;margin-left: auto;margin-right: auto;width: auto; max-height: 100%;">
+            </main>
+        </div>
+        <aside class="left-sidebar">
+            <a href="{{url('index')}}">Home</a>
+            <br>
+            <br>
+            <br>
+            <a href="{{ url('settings') }}">Settings</a>
+            <br>
+            <a href="{{ url('watch') }}">Watch</a>
+            <br>
+            <br>
+            <br>
+        </aside>
+        <!-- .left-sidebar -->
+
+    </div>
+
+</body>
