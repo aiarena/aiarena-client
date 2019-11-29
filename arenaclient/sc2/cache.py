@@ -1,5 +1,6 @@
 from functools import wraps
 
+
 def property_cache_forever(f):
     @wraps(f)
     def inner(self):

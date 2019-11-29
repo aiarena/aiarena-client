@@ -34,7 +34,8 @@ class Bot:
         }
         return bot_type_map[bot_type][0], bot_type_map[bot_type][1]
 
-    def __init__(self, config, data):
+    def __init__(self, config, bot_id, name, game_display_id, bot_zip, bot_zip_md5hash, bot_data, bot_data_md5hash,
+                 plays_race, bot_type):
         self._config = config
 
         self._logger = logging.getLogger(__name__)
@@ -43,15 +44,26 @@ class Bot:
 
         self._utl = Utl(self._config)
 
-        self.id = data["id"]
-        self.name = data["name"]
-        self.game_display_id = data["game_display_id"]
-        self.bot_zip = data["bot_zip"]
-        self.bot_zip_md5hash = data["bot_zip_md5hash"]
-        self.bot_data = data["bot_data"]
-        self.bot_data_md5hash = data["bot_data_md5hash"]
-        self.plays_race = data["plays_race"]
-        self.type = data["type"]
+        self.id = bot_id
+        self.name = name
+        self.game_display_id = game_display_id
+        self.bot_zip = bot_zip
+        self.bot_zip_md5hash = bot_zip_md5hash
+        self.bot_data = bot_data
+        self.bot_data_md5hash = bot_data_md5hash
+        self.plays_race = plays_race
+        self.type = bot_type
+
+    @property
+    def bot_json(self):
+        bot_mapped_type = Bot.map_to_type(self.name, self.type)
+
+        return {
+            "Race": Bot.RACE_MAP[self.plays_race],
+            "FileName": bot_mapped_type[0],
+            "Type": bot_mapped_type[1],
+            "botID": self.id,
+        }
 
     def get_bot_file(self):
         """
@@ -62,7 +74,7 @@ class Bot:
         self._utl.printout(f"Downloading bot {self.name}")
         # Download bot and save to .zip
         r = requests.get(
-            self.bot_zip, headers={"Authorization": "Token " + self._config.API_TOKEN}
+            self.bot_zip, headers={"Authorization": "Token " + self._config.MATCH_SOURCE_CONFIG.API_TOKEN}
         )
         bot_download_path = os.path.join(self._config.TEMP_PATH, self.name + ".zip")
         with open(bot_download_path, "wb") as bot_zip:
@@ -108,7 +120,7 @@ class Bot:
         self._utl.printout(f"Downloading bot data for {self.name}")
         # Download bot data and save to .zip
         r = requests.get(
-            self.bot_data, headers={"Authorization": "Token " + self._config.API_TOKEN}
+            self.bot_data, headers={"Authorization": "Token " + self._config.MATCH_SOURCE_CONFIG.API_TOKEN}
         )
         bot_data_path = os.path.join(self._config.TEMP_PATH, self.name + "-data.zip")
         with open(bot_data_path, "wb") as bot_data_zip:
@@ -127,19 +139,13 @@ class Bot:
             )
             return False
 
-    def get_bot_data(self):
-        """
-        Get the bot's config from the ai-arena website and returns a config dictionary.
 
-        :return: bot_name
-        :return: bot_data
-        """
-        bot_mapped_type = self.map_to_type(self.name, self.type)
+class BotFactory:
+    @staticmethod
+    def from_api_data(config, data):
+        return Bot(config, data["id"], data["name"], data["game_display_id"], data["bot_zip"], data["bot_zip_md5hash"],
+                   data["bot_data"], data["bot_data_md5hash"], data["plays_race"], data["type"])
 
-        bot_data = {
-            "Race": self.RACE_MAP[self.plays_race],
-            "FileName": bot_mapped_type[0],
-            "Type": bot_mapped_type[1],
-            "botID": self.game_display_id,
-        }
-        return self.name, bot_data
+    @staticmethod
+    def from_values(config, bot_id, bot_name, bot_race, bot_type):
+        return Bot(config, bot_id, bot_name, bot_id, None, None, None, None, bot_race, bot_type)

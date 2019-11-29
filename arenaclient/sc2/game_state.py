@@ -21,6 +21,7 @@ class Common:
         assert attr in self.ATTRIBUTES, f"'{attr}' is not a valid attribute"
         return int(getattr(self._proto, attr))
 
+
 class GameState:
     def __init__(self, response_observation):
         # self.response_observation = response_observation

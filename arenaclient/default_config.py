@@ -9,12 +9,13 @@
 import logging
 import os
 import platform
-from urllib import parse
 
 # GERERAL
+from arenaclient.matches import FileMatchSource
+
 ARENA_CLIENT_ID = "aiarenaclient_000"
 API_TOKEN = "12345"
-ROUNDS_PER_RUN = 5
+ROUNDS_PER_RUN = 5  # Set to -1 to ignore this
 SHUT_DOWN_AFTER_RUN = True
 USE_PID_CHECK = False
 DEBUG_MODE = True
@@ -36,10 +37,10 @@ LOG_FILE = os.path.join(WORKING_DIRECTORY, "client.log")
 REPLAYS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "replays")
 BOTS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "bots")
 
-# WEBSITE
-BASE_WEBSITE_URL = "https://ai-arena.net"
-API_MATCHES_URL = parse.urljoin(BASE_WEBSITE_URL, "/api/arenaclient/matches/")
-API_RESULTS_URL = parse.urljoin(BASE_WEBSITE_URL, "/api/arenaclient/results/")
+MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(
+    matches_file=os.path.join(WORKING_DIRECTORY, "matches"),
+    results_file=os.path.join(WORKING_DIRECTORY, "results")
+)
 
 # STARCRAFT
 SC2_HOME = "/home/aiarena/StarCraftII/"

@@ -22,7 +22,7 @@ class Unit:
         self.cache = {}
 
     @property
-    def is_structure(self) -> bool: #keep
+    def is_structure(self) -> bool:
         """ Checks if the unit is a structure. """
         return Attribute.Structure.value in self._type_data.attributes
 

@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class PixelMap:
     def __init__(self, proto):
         self._proto = proto

@@ -97,7 +97,6 @@ class Protocol:
         return response
 
 
-
 class AbstractPlayer:
     """
     python-sc2 class. https://github.com/Dentosal/python-sc2/
@@ -161,7 +160,6 @@ class Controller(Protocol):
     def __init__(self, ws, process):
         super().__init__(ws)
         self.__process = process
-
 
     async def create_game(self, game_map, players, realtime, random_seed=None):
         assert isinstance(realtime, bool)

@@ -82,9 +82,9 @@ class ConnectionHandler:
                     output_frame = np.ones((500, 500, 3), dtype=np.uint8)
 
                 # encode the frame in JPEG format
-                _, encodedImage = cv2.imencode(".jpg", output_frame)
+                _, encoded_image = cv2.imencode(".jpg", output_frame)
                 with MultipartWriter('image/jpeg', boundary=boundary) as mpwriter:
-                    data = encodedImage.tostring()
+                    data = encoded_image.tostring()
                     mpwriter.append(data, {
                         'Content-Type': 'image/jpeg'
                     })
@@ -157,7 +157,6 @@ class ConnectionHandler:
 
         else:  # TODO: Implement this for devs running without a supervisor
             raise NotImplementedError
-
 
         if self.t1:
             self.t1.cancel()

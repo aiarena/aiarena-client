@@ -5,12 +5,14 @@ import asyncio
 import arenaclient.default_test_config as config
 
 from arenaclient.client import Client
+from arenaclient.matches import MatchSourceType
 from arenaclient.utl import Utl
 
 # Sanity check the config and remind people to check their config
 assert config.TEST_MODE, "LOCAL_TEST_MODE config value must must be set to True to run tests." + os.linesep \
                          + "IMPORTANT: Are you configured properly for tests?"
-assert config.RUN_LOCAL, "RUN_LOCAL config value must must be set to True to run tests." + os.linesep \
+assert config.MATCH_SOURCE_CONFIG.TYPE == MatchSourceType.FILE, "MatchSourceType must be set to FILE to run tests." \
+                                                                + os.linesep \
                          + "IMPORTANT: Are you configured properly for tests?"
 
 utl = Utl(config)

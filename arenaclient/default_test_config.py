@@ -21,7 +21,6 @@ SHUT_DOWN_AFTER_RUN = True
 USE_PID_CHECK = False
 DEBUG_MODE = True
 PYTHON = "python"
-RUN_LOCAL = True  # todo: this will be superseded by the MATCH_SOURCE_CONFIG type
 TEST_MODE = True
 CLEANUP_BETWEEN_ROUNDS = False
 SYSTEM = platform.system()
@@ -51,8 +50,6 @@ API_MATCHES_URL = parse.urljoin(BASE_WEBSITE_URL, "/api/arenaclient/matches/")
 API_RESULTS_URL = parse.urljoin(BASE_WEBSITE_URL, "/api/arenaclient/results/")
 
 # STARCRAFT
-SC2_HOME = "/home/aiarena/StarCraftII/"
-SC2_BINARY = os.path.join(SC2_HOME, "Versions/Base75689/SC2_x64")
 MAX_GAME_TIME = 60486
 MAX_FRAME_TIME = 1000
 STRIKES = 10

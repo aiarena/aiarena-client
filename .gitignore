@@ -1,7 +1,6 @@
 *.log
 *.pyc
 *.stdout
-*.txt
 .vscode
 .vs
 .idea/
@@ -24,3 +23,4 @@ dist/
 build/
 arenaclient.egg-info
 settings.json
+arenaclient/test_results.txt

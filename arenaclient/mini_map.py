@@ -35,8 +35,6 @@ class Minimap:
         try:
 
             map_data = np.copy(self.heightmap)
-
-            
             self.add_minerals(map_data)
             self.add_geysers(map_data)
             self.add_allies(map_data)
