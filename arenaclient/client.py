@@ -77,7 +77,7 @@ class Client:
 
 		# Remove entire sub folders
 		for directory in os.listdir(self._config.BOTS_DIRECTORY):
-			shutil.rmtree(os.path.join(self._config.BOTS_DIRECTORY, directory))
+			shutil.rmtree(os.path.join(self._config.BOTS_DIRECTORY, directory),ignore_errors=True)
 
 		# self._logger.debug(f"Killing current server")
 		self.kill_current_server()
