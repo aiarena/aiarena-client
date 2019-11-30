@@ -62,7 +62,7 @@ class Bot:
             "Race": Bot.RACE_MAP[self.plays_race],
             "FileName": bot_mapped_type[0],
             "Type": bot_mapped_type[1],
-            "botID": self.id,
+            "botID": self.game_display_id,
         }
 
     def get_bot_file(self):
