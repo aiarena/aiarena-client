@@ -199,7 +199,7 @@ def run_server():
     parser = argparse.ArgumentParser()
 
     # TODO: Change default to false
-    parser.add_argument("-f", "--frontend", type=str, nargs="?", help="Start server with frontend", default="true")
+    parser.add_argument("-f", "--frontend", type=str, nargs="?", help="Start server with frontend", default="false")
 
     args, _ = parser.parse_known_args()
     print(args.frontend)

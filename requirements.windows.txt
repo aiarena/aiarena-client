@@ -15,4 +15,3 @@ aiohttp-jinja2
 jinja2
 numpy
 imutils
-psutil
