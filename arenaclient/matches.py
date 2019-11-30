@@ -129,7 +129,7 @@ class HttpApiMatchSource(MatchSource):
         return HttpApiMatchSource.HttpApiMatch(next_match_id, bot_1, bot_2, map_name)
 
     def submit_result(self, match: HttpApiMatch, result):
-        self._utl.kill_current_server()
+        # self._utl.kill_current_server()
         # quick hack to avoid these going uninitialized
         # todo: remove these and actually fix the issue
         game_time: int = 0
