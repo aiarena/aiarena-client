@@ -7,7 +7,7 @@ from arenaclient.sc2 import game_state, game_info, cache, game_data, unit
 class Minimap:
     def __init__(
             self,
-            map_scale=1,
+            map_scale=3,
             player_name=None
     ):
         self.map_scale = map_scale
@@ -45,12 +45,12 @@ class Minimap:
             org = (50, 50)
             # font_scale
             font_scale = 1
-            # Blue color in BGR
+
             color = (50, 194, 134)
             # Line thickness of 2 px
             thickness = 1
             
-            flipped = cv2.resize(flipped, (500, 500), cv2.INTER_NEAREST)
+            # flipped = cv2.resize(flipped, (500, 500), cv2.INTER_NEAREST)
             cv2.putText(flipped, self.player_name, org, font, font_scale, color, thickness, cv2.LINE_AA)
             return flipped
 
