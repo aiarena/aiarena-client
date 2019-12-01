@@ -185,7 +185,6 @@ def on_start():
                     pass
     except:
         print(traceback.format_exc())
-        pass
 
 
 def run_server():

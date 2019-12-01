@@ -392,9 +392,7 @@ class Client:
 			self._utl.printout(f"Starting game - Round {match_count}")
 			self._utl.printout(f"{match.bot1.name} vs {match.bot2.name}")
 			self.kill_current_server()
-			# proxy = subprocess.Popen(
-			#     self._config.PYTHON + " ./proxy/server.py", cwd=self._config.WORKING_DIRECTORY, shell=True
-			# )
+
 			counter = 0
 			while counter <= 100:
 				time.sleep(1)

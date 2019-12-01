@@ -149,7 +149,6 @@ class HttpApiMatchSource(MatchSource):
 
                     elif temp_results[bot_2_name] == "Result.Crashed":
                         result_type = "Player2Crash"
-                        # result_json['Winner']=bot_0
 
                     elif temp_results[bot_1_name] == "Result.Timeout":
                         result_type = "Player1TimeOut"
@@ -159,19 +158,12 @@ class HttpApiMatchSource(MatchSource):
 
                     elif temp_results[bot_1_name] == "Result.Victory":
                         result_type = "Player1Win"
-                        # result_json['Winner']=bot_1_name
 
                     elif temp_results[bot_1_name] == "Result.Defeat":
                         result_type = "Player2Win"
-                        # result_json['Winner']=bot_1
-
-                    elif temp_results[bot_2_name] == "Result.Crashed":
-                        result_type = "Player2Crash"
-                        # result_json['Winner']=bot_0
 
                     elif temp_results[bot_1_name] == "Result.Tie":
                         result_type = "Tie"
-                        # result_json['Winner']='Tie'
 
                     else:
                         result_type = "InitializationError"
@@ -196,8 +188,6 @@ class HttpApiMatchSource(MatchSource):
                     except StopIteration:
                         bot2_avg_step_time = 0
 
-                if x.get("TimeStamp", None):
-                    time_stamp = x["TimeStamp"]
 
         else:
             result_type = result
@@ -250,18 +240,12 @@ class HttpApiMatchSource(MatchSource):
 
         # client logs
         proxy_tmp = os.path.join(self._config.TEMP_PATH, "proxy.log")
-        # supervisor_tmp = os.path.join(self._config.TEMP_PATH, "supervisor.log")
         client_tmp = os.path.join(self._config.TEMP_PATH, "client.log")
 
         if os.path.isfile("proxy.log"):
             shutil.move("proxy.log", proxy_tmp)
         else:
             Path(proxy_tmp).touch()
-
-        # if os.path.isfile("supervisor.log"):
-        #     shutil.move("supervisor.log", supervisor_tmp)
-        # else:
-        #     Path(supervisor_tmp).touch()
 
         if os.path.isfile("client.log"):
             shutil.move("client.log", client_tmp)

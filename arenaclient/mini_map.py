@@ -50,7 +50,6 @@ class Minimap:
             # Line thickness of 2 px
             thickness = 1
             
-            # flipped = cv2.resize(flipped, (500, 500), cv2.INTER_NEAREST)
             cv2.putText(flipped, self.player_name, org, font, font_scale, color, thickness, cv2.LINE_AA)
             return flipped
 

@@ -40,6 +40,10 @@ class AiArenaWebApi:
         return json.loads(next_match_response.text)
 
     def submit_result(self):
+        """
+        Overridden in matches.py
+
+        """
         pass
 
 

@@ -90,30 +90,29 @@ class Proxy:
         
     async def clean_up(self):
         try:
-            if self.process is not None:
-                if self.process.poll() is None:
-                    for _ in range(3):
-                        self.process.terminate()
-                        time.sleep(0.5)
-                        if self.process.poll() is not None:
-                            break
-                    else:
-                        self.process.kill()
-                        self.process.wait()
-                        logger.error("KILLED")
+            if self.process is not None and self.process.poll() is None:
+                for _ in range(3):
+                    self.process.terminate()
+                    time.sleep(0.5)
+                    if self.process.poll() is not None:
+                        break
+                else:
+                    self.process.kill()
+                    self.process.wait()
+                    logger.error("KILLED")
         except:
             print(traceback.format_exc())
-            pass
+            
         try:
             self.ws_c2p.close()
         except:
             print(traceback.format_exc())
-            pass
+            
         try:
             self.ws_p2s.close()
         except:
             print(traceback.format_exc())
-            pass
+            
 
     async def __request(self, request):
         """
@@ -348,14 +347,6 @@ class Proxy:
             self._game_loops = response.observation.observation.game_loop
             if self.render:
                 raise NotImplemented
-                # render_data = response.observation.observation.render_data
-                #
-                # map_size = render_data.map.size
-                # map_data = render_data.map.data
-                #
-                # map_width, map_height = map_size.x, map_size.y
-                # data_buffer = np.frombuffer(map_data, np.uint8)
-                # data_numpy = data_buffer.reshape(map_height, map_width, 3)
 
             if self.visualize and (self._game_loops % self.visualize_step_count == 0 or self._game_loops < 10):
                 self.observation_loaded = True
@@ -544,15 +535,14 @@ class Proxy:
 
                     logger.debug("Disconnected")
                     logger.debug("Killing SC2")
-                    if self.process is not None:
-                        if self.process.poll() is None:
-                            for _ in range(3):
-                                self.process.terminate()
-                                time.sleep(0.5)
-                                if self.process.poll() is not None:
-                                    break
-                            else:
-                                self.process.kill()
-                                self.process.wait()
+                    if self.process is not None and self.process.poll() is None:
+                        for _ in range(3):
+                            self.process.terminate()
+                            time.sleep(0.5)
+                            if self.process.poll() is not None:
+                                break
+                        else:
+                            self.process.kill()
+                            self.process.wait()
                     
                     return self.ws_p2s
