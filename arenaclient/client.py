@@ -53,14 +53,14 @@ class Client:
 		if match is None:
 			# todo: this needs to return true because otherwise a file based match source will cause an infinite loop
 			# todo: work out a way to fix this
-			return True
+			return
 		self._utl.printout(f"Next match: {match.id}")
 		result = await self.run_match(
 			match_count,
 			match
 		)
 		self._match_source.submit_result(match, result)
-		return True
+		return
 
 	def cleanup(self):
 		"""
@@ -359,7 +359,6 @@ class Client:
 
         :return:
         """
-		# return None
 		try:
 			if self._config.SYSTEM == "Linux":
 				self._utl.printout("Killing SC2")
@@ -395,7 +394,6 @@ class Client:
 
 			counter = 0
 			while counter <= 100:
-				time.sleep(1)
 				counter += 1
 				sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 				result = sock.connect_ex(
@@ -406,6 +404,7 @@ class Client:
 				if counter == 100:
 					self._logger.error("Server is not running.")
 					raise
+                time.sleep(1)
 
 			result = await self.main(match)
 
@@ -436,8 +435,8 @@ class Client:
 					if self._config.CLEANUP_BETWEEN_ROUNDS:
 						self.cleanup()
 
-					if await self.run_next_match(count):
-						count += 1
+                    await self.run_next_match(count):
+					count += 1
 					else:
 						break
 				except Exception as e:

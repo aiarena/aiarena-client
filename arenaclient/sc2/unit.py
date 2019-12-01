@@ -1,4 +1,3 @@
-# from . import unit_command
 from .cache import property_immutable_cache
 from .position import Point2, Point3
 from .data import Attribute

@@ -250,8 +250,7 @@ class Proxy:
             "-tempDir",
             tmp_dir,
         ]
-        # if logger.getEffectiveLevel() <= logging.DEBUG:
-        #    args.append("-verbose")
+
 
         return subprocess.Popen(args, cwd=(str(Paths.CWD) if Paths.CWD else None))
 

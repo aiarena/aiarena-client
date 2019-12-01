@@ -238,7 +238,6 @@ class Supervisor:
                         self._visualize = config["Visualize"]
                         self.images[self.player1] = {}
                         self.images[self.player2] = {}
-                    # self.config = config
 
                 except JSONDecodeError as e:
                     json_error = {"Error_Description": "Expected JSON", "Error": str(e)}

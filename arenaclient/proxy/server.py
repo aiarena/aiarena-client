@@ -18,7 +18,6 @@ try:
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 except ModuleNotFoundError:
     print("Uvloop not found, using default asyncio")
-    pass
 
 from arenaclient.proxy.lib import Timer
 from arenaclient.proxy.proxy import Proxy
@@ -210,10 +209,8 @@ def run_server():
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
     app = web.Application()
-    # app.shutdown()
     app.router.add_static('/static', os.path.join(os.path.dirname(__file__), 'static'))
     app._loop = loop
-    # app._client_max_size = 3
     app["websockets"] = weakref.WeakSet()
     connection = ConnectionHandler()
     app.router.add_route("GET", "/sc2api", connection.websocket_handler)
@@ -236,7 +233,6 @@ def run_server():
             web.get("/get_maps", frontend.get_maps, name='get_maps')
         ]
         app.router.add_routes(routes)
-        # app.router.add_route("GET","/", frontend.hello, name='hello')
     on_start()
     try:
         web.run_app(app, host=HOST, port=PORT)  # HOST and PORT can be set using environment variables

@@ -55,13 +55,10 @@
       <label>Bots Location</label><br>
       <form action="{{ url('handle_data') }}" method="post" enctype="application/x-www-form-urlencoded">
          <input type="text" id="bot_directory_id_field" style="width:40%;" name="bot_directory_location"><br>
-         <!-- button type="button" id="bot_directory_id" class='browse btn btn-default'>Browse</button><br><br-->
          <label>Starcraft II Install Location</label><br>
          <input type="text" id="sc2_directory_id_field" style="width:40%;" name="sc2_directory_location"><br>
-         <!-- button type="button" id="sc2_directory_id" class='browse btn btn-default'>Browse</button><br><br-->
          <label>Replay Save Location</label><br>
          <input type="text" id="replay_directory_id_field" style="width:40%;" name="replay_directory_location"><br>
-         <!-- button type="button" id="replay_directory_id" class='browse btn btn-default'>Browse</button><br><br-->
          <label>AI-Arena API Token</label><br>
          <input id="API_token_id" type="text" style="width:40%;" name="API_token">  <a href="https://ai-arena.net/profile/token/?" rel="noopener noreferrer" target="_blank">API Token Link</a><br><br>
 
@@ -72,7 +69,7 @@
                ]
                .join(':')
                .replace(/\b(\d)\b/g, '0$1')">
-            <output name="ageOutputName" id="ageOutputId">00:45:00</output><br><br> <!--Not working from file update TODO: fix-->
+            <output name="ageOutputName" id="ageOutputId">00:45:00</output><br><br>
             <label>Allow Debug:</label><br><label class="switch">
             <input id="checkboxInputId" type="checkbox" name="allow_debug">
             <span class="slider round"></span>
@@ -86,7 +83,7 @@
         <a href="{{url('index')}}">Home</a><br><br><br>
         <a href="{{ url('settings') }}">Settings</a><br>
         <a href="{{ url('watch') }}">Watch</a><br><br><br>
-    </aside><!-- .left-sidebar -->
+    </aside>
        
 </div>
    </body>

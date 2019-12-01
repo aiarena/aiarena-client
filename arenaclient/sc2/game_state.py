@@ -24,7 +24,6 @@ class Common:
 
 class GameState:
     def __init__(self, response_observation):
-        # self.response_observation = response_observation
         self.observation = response_observation.observation
         self.common: Common = Common(self.observation.player_common)
         self.game_loop: int = self.observation.game_loop  # 22.4 per second on faster game speed
@@ -45,26 +44,19 @@ class GameState:
                 unit_obj = Unit(unit)
                 self.units.append(unit_obj)
                 alliance = unit.alliance
-                # Alliance.Neutral.value = 3
                 if alliance == 3:
                     unit_type = unit.unit_type
-                    # XELNAGATOWER = 149
                     if unit_type == 149:
                         self.watchtowers.append(unit_obj)
-                    # mineral field enums
                     elif unit_type in mineral_ids:
                         self.mineral_field.append(unit_obj)
                         self.resources.append(unit_obj)
-                    # geyser enums
                     elif unit_type in geyser_ids:
                         self.vespene_geyser.append(unit_obj)
                         self.resources.append(unit_obj)
-                    # all destructable rocks
                     else:
                         self.destructables.append(unit_obj)
-                # Alliance.Self.value = 1
                 elif alliance == 1:
                     self.own_units.append(unit_obj)
-                # Alliance.Enemy.value = 4
                 elif alliance == 4:
                     self.enemy_units.append(unit_obj)

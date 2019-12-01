@@ -138,7 +138,7 @@ class Utl:
         if pid != 0:
             return
         else:
-            for i in range(0, 5):
+            for _ in range(0, 5):
                 try:
                     os.setpgid(pid, 0)
                     return

@@ -61,8 +61,6 @@ class Protocol:
         try:
             response_bytes = await self._ws.receive_bytes()
         except TypeError:
-            # logger.exception("Cannot receive: Connection already closed.")
-            # raise ConnectionAlreadyClosed("Connection already closed.")
             logger.info("Cannot receive: Connection already closed.")
             sys.exit(2)
         except asyncio.CancelledError:

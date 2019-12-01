@@ -19,7 +19,7 @@ output_frame = None
 
 class Bot:
     def __init__(self, bot):
-        self.bot = bot
+        self.name = bot
         self.type = None
         self.settings = None
 
@@ -40,9 +40,9 @@ class Bot:
         return results
 
     def download_bot(self):
-        self.bot = self.bot.replace(' (AI-Arena)', '')
+        self.name = self.name.replace(' (AI-Arena)', '')
         r = requests.get(
-            AI_ARENA_URL + f'api/bots/?format=json&name={self.bot}',
+            AI_ARENA_URL + f'api/bots/?format=json&name={self.name}',
             headers={"Authorization": "Token " + self.settings['API_token']}
         )
         data = json.loads(r.text)
@@ -53,11 +53,11 @@ class Bot:
         if not path.is_dir():
             path.mkdir()
 
-        if os.path.isdir(os.path.join(self.settings['bot_directory_location'], self.bot)):
+        if os.path.isdir(os.path.join(self.settings['bot_directory_location'], self.name)):
             if not path.is_dir():
                 path.mkdir()
-            if Path(os.path.join(path, self.bot + '.zip')).exists():
-                with open(os.path.join(path, self.bot + '.zip'), "rb") as bot_zip:
+            if Path(os.path.join(path, self.name + '.zip')).exists():
+                with open(os.path.join(path, self.name + '.zip'), "rb") as bot_zip:
                     calculated_md5 = hashlib.md5(bot_zip.read()).hexdigest()
                 if md5_hash == calculated_md5:
                     print('Do not download')
@@ -65,7 +65,7 @@ class Bot:
         bot_zip = data['results'][0]['bot_zip']
         r = requests.get(bot_zip, headers={"Authorization": "Token " + self.settings['API_token']}, stream=True)
 
-        bot_download_path = os.path.join(path, self.bot + ".zip")
+        bot_download_path = os.path.join(path, self.name + ".zip")
         with open(bot_download_path, "wb") as bot_zip:
             for chunk in r.iter_content(chunk_size=10 * 1024):
                 bot_zip.write(chunk)
@@ -73,17 +73,17 @@ class Bot:
 
         # Extract to bot folder
         with zipfile.ZipFile(bot_download_path, "r") as zip_ref:
-            zip_ref.extractall(os.path.join(self.settings['bot_directory_location'], self.bot))
+            zip_ref.extractall(os.path.join(self.settings['bot_directory_location'], self.name))
             # os.remove(bot_download_path)
 
     def extract_bot_data(self):
         settings_file = load_settings_from_file()
         self.settings = convert_wsl_paths(settings_file)
-        if ' (AI-Arena)' in self.bot:
+        if ' (AI-Arena)' in self.name:
             self.download_bot()
             return
 
-        with open(os.path.join(self.settings['bot_directory_location'], self.bot, 'ladderbots.json')) as f:
+        with open(os.path.join(self.settings['bot_directory_location'], self.name, 'ladderbots.json')) as f:
             self.type = self.find_values('Type', f.read())[0]
 
 
@@ -219,13 +219,12 @@ async def run_games(request):
     data = await request.post()
     game_data = {}
 
-    # data = form.to_dict(flat=False)
     bot1_list = data.getall('Bot1[]')
     bot2_list = data.getall('Bot2[]')
     chosen_maps = data.getall("Map[]")
     iterations = int(data['Iterations'][0])
 
-    for x in range(iterations):
+    for _ in range(iterations):
         for maps in chosen_maps:
             if maps == "Random":
                 maps = random.choice(get_local_maps())
@@ -233,7 +232,7 @@ async def run_games(request):
                 bot1 = Bot(bot1)
                 for bot2 in bot2_list:
                     bot2 = Bot(bot2)
-                    game = f'{bot1.bot},T,{bot1.type},{bot2.bot},T,{bot2.type},{maps}'
+                    game = f'{bot1.name},T,{bot1.type},{bot2.name},T,{bot2.type},{maps}'
                     games.append(game)
     game_data['Visualize'] = data.get("Visualize", "false") == "true"
     game_data['Realtime'] = data.get('Realtime', 'false') == 'true'
