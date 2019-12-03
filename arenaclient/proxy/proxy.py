@@ -184,30 +184,28 @@ class Proxy:
         self._result, self._game_loops from the observation.
         :return:
         """
-        request = sc_pb.RequestPing()
-        r = await self._execute(ping=request)
-        if r.status > 3:
-            try:
-                result = await self._execute(observation=sc_pb.RequestObservation())
-                if not self.player_id:
-                    self.player_id = (
-                        result.observation.observation.player_common.player_id
-                    )
+    
+        try:
+            result = await self._execute(observation=sc_pb.RequestObservation())
+            if not self.player_id:
+                self.player_id = (
+                    result.observation.observation.player_common.player_id
+                )
 
-                if result.observation.player_result:
-                    player_id_to_result = {
-                        pr.player_id: Result(pr.result)
-                        for pr in result.observation.player_result
-                    }
-                    self._result = player_id_to_result[self.player_id]
-                    self._game_loops = result.observation.observation.game_loop
-                    self._game_time_seconds = (
-                            result.observation.observation.game_loop / 22.4
-                    )
+            if result.observation.player_result:
+                player_id_to_result = {
+                    pr.player_id: Result(pr.result)
+                    for pr in result.observation.player_result
+                }
+                self._result = player_id_to_result[self.player_id]
+                self._game_loops = result.observation.observation.game_loop
+                self._game_time_seconds = (
+                        result.observation.observation.game_loop / 22.4
+                )
 
-            except Exception as e:
-                print(traceback.format_exc())
-                logger.error(e)
+        except Exception as e:
+            print(traceback.format_exc())
+            logger.error(e)
 
     async def create_game(self, server, players, map_name):
         """
@@ -292,20 +290,23 @@ class Proxy:
                 self.joined = True
                 return request.SerializeToString()
 
-            if self.disable_debug and request.HasField("debug"):
+            elif self.disable_debug and request.HasField("debug"):
                 return False
-            if request.HasField('data'):
+            
+            elif request.HasField('data'):
                 request.data.unit_type_id = True
                 request.data.upgrade_id = True
                 request.data.buff_id = True
                 request.data.effect_id = True
                 request.data.ability_id = True
+                return request.SerializeToString()
             
-            if request.HasField("leave_game"):
+            elif request.HasField("leave_game"):
                 logger.debug(f'{self.player_name} has issued a LeaveGameRequest')
 
                 self._surrender = True
                 self._result = "Result.Defeat"
+                return msg.data
 
         except Exception as e:
             logger.debug(f"Exception{e}")
@@ -330,7 +331,7 @@ class Proxy:
                     await self._execute(leave_game=sc_pb.RequestLeaveGame())
                 self.killed = True
                 return request.SerializeToString()
-        return request.SerializeToString()
+        return msg.data
     
     async def process_response(self, msg):
         """
@@ -341,15 +342,15 @@ class Proxy:
         """
         response = sc_pb.Response()
         response.ParseFromString(msg)
-       
+        visualize_step = self._game_loops % self.visualize_step_count == 0 or self._game_loops < 10
         if response.HasField('observation'):
             self._game_loops = response.observation.observation.game_loop
             if self.render:
                 raise NotImplemented
 
-            if self.visualize and (self._game_loops % self.visualize_step_count == 0 or self._game_loops < 10):
+            if self.visualize and visualize_step:
                 self.observation_loaded = True
-                self.mini_map.load_state(response)
+                await self.mini_map.load_state(response)
 
         elif self.visualize and not self.game_info_loaded and response.HasField('game_info'):
             self.game_info_loaded = True
@@ -359,13 +360,12 @@ class Proxy:
             self.game_data_loaded = True
             self.mini_map.load_game_data(response)
 
-        if self.visualize and self.game_info_loaded and self.observation_loaded and self.game_data_loaded:
-            if self._game_loops % self.visualize_step_count == 0 or self._game_loops < 10:
-                self.mini_map.player_name = self.player_name
-                image = self.mini_map.draw_map()
-                score = self.mini_map.get_score()
-                self.supervisor.images[self.player_name]['image'] = image
-                self.supervisor.images[self.player_name]['score'] = score
+        if self.visualize and self.game_info_loaded and self.observation_loaded and self.game_data_loaded and visualize_step:
+            self.mini_map.player_name = self.player_name
+            image = await self.mini_map.draw_map()
+            score = await self.mini_map.get_score()
+            self.supervisor.images[self.player_name]['image'] = image
+            self.supervisor.images[self.player_name]['score'] = score
 
         if response.status > 3:
             await self.check_for_result()

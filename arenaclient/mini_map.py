@@ -31,14 +31,14 @@ class Minimap:
             "xelnaga": (170, 200, 100),
         }
 
-    def draw_map(self):
+    async def draw_map(self):
         try:
 
             map_data = np.copy(self.heightmap)
-            self.add_minerals(map_data)
-            self.add_geysers(map_data)
-            self.add_allies(map_data)
-            self.add_enemies(map_data)
+            await self.add_minerals(map_data)
+            await self.add_geysers(map_data)
+            await self.add_allies(map_data)
+            await self.add_enemies(map_data)
             
             flipped = cv2.flip(map_data, 0)
             font = cv2.FONT_HERSHEY_SIMPLEX
@@ -92,7 +92,7 @@ class Minimap:
             )
         return map_data
     
-    def get_score(self):
+    async def get_score(self):
         score_image = np.ones((500, 500, 3))
         i = 0
         font = cv2.FONT_HERSHEY_SIMPLEX
@@ -123,7 +123,7 @@ class Minimap:
             i += 1
         return score_image
     
-    def add_minerals(self, map_data):
+    async def add_minerals(self, map_data):
         for mineral in self._state.mineral_field:
             mine_pos = mineral.position
             cv2.rectangle(
@@ -140,7 +140,7 @@ class Minimap:
                 -1,
             )
 
-    def add_geysers(self, map_data):
+    async def add_geysers(self, map_data):
         for g in self._state.vespene_geyser:
             g_pos = g.position
             cv2.rectangle(
@@ -157,7 +157,7 @@ class Minimap:
                 -1,
             )
 
-    def add_allies(self, map_data):
+    async def add_allies(self, map_data):
         for ally in self._state.own_units:
             if ally.is_structure:
                 cv2.rectangle(
@@ -185,7 +185,7 @@ class Minimap:
                     -1,
                 )
 
-    def add_enemies(self, map_data):
+    async def add_enemies(self, map_data):
         for enemy in self._state.enemy_units:
             if enemy.is_structure:
                 cv2.rectangle(
@@ -216,8 +216,9 @@ class Minimap:
     def load_game_info(self, data):
         self._game_info = game_info.GameInfo(data.game_info)
 
-    def load_state(self, data):
+    async def load_state(self, data):
         self._state = game_state.GameState(data.observation)
+        await self._state._init()
 
     def load_game_data(self, data):
         self._game_data = game_data.GameData(data.data)

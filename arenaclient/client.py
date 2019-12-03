@@ -404,7 +404,7 @@ class Client:
 				if counter == 100:
 					self._logger.error("Server is not running.")
 					raise
-                time.sleep(1)
+				time.sleep(1)
 
 			result = await self.main(match)
 
@@ -435,10 +435,9 @@ class Client:
 					if self._config.CLEANUP_BETWEEN_ROUNDS:
 						self.cleanup()
 
-                    await self.run_next_match(count):
+					await self.run_next_match(count)
 					count += 1
-					else:
-						break
+
 				except Exception as e:
 					self._utl.printout(traceback.format_exc())
 					self._utl.printout(f"arena-client encountered an uncaught exception: {e} Sleeping...")

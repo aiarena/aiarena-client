@@ -186,7 +186,7 @@ def on_start():
         print(traceback.format_exc())
 
 
-def run_server():
+def run_server(use_frontend=None):
     """
     Starts the proxy application on HOST and PORT, which defaults to '127.0.0.1' and 8765.
 
@@ -200,9 +200,8 @@ def run_server():
     parser.add_argument("-f", "--frontend", type=str, nargs="?", help="Start server with frontend", default="false")
 
     args, _ = parser.parse_known_args()
-    print(args.frontend)
 
-    run_frontend = args.frontend.lower() == "true"
+    run_frontend = use_frontend if use_frontend else args.frontend.lower() == "true"
     try:
         loop = asyncio.get_event_loop()
     except:
@@ -216,6 +215,7 @@ def run_server():
     app.router.add_route("GET", "/sc2api", connection.websocket_handler)
     if run_frontend:
         print('launching with frontend')
+        game_runner = frontend.GameRunner()
         aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')))
         app['static_root_url'] = '/static'
         routes = [
@@ -227,7 +227,7 @@ def run_server():
             web.post("/handle_data", frontend.handle_data, name='handle_data'),
             web.get("/get_settings", frontend.get_settings, name='get_settings'),
             web.get("/get_results", frontend.get_results, name='get_results'),
-            web.post("/run_games", frontend.run_games, name='run_games'),
+            web.post("/run_games", game_runner.run_games, name='run_games'),
             web.get("/get_bots", frontend.get_bots, name='get_bots'),
             web.get("/get_arena_bots", frontend.get_arena_bots, name='get_arena_bots'),
             web.get("/get_maps", frontend.get_maps, name='get_maps')

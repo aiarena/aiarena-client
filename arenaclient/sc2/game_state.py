@@ -36,7 +36,8 @@ class GameState:
         self.destructables: Units = Units([])
         self.watchtowers: Units = Units([])
         self.units: Units = Units([])
-
+        
+    async def _init(self):
         for unit in self.observation.raw_data.units:
             if unit.is_blip:
                 continue

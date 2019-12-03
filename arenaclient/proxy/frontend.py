@@ -194,55 +194,61 @@ async def get_results(request):
     except Exception as e:
         return str(e)
 
+class GameRunner:
+    def __init__(self):
+        self.game_running = False
+    
+    async def run_local_game(self, games, data):
+        if system() == 'Windows':
+            config.PYTHON = 'python'
+        config.BOTS_DIRECTORY = convert_wsl_paths(load_settings_from_file())['bot_directory_location']
+        config.ROUNDS_PER_RUN = 1
+        config.REALTIME = data.get("Realtime", False)
+        config.VISUALIZE = data.get("Visualize", False)
+        config.MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(
+            matches_file=os.path.join(os.path.dirname(os.path.realpath(__file__)), "matches"),
+            results_file=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results.json'))
+        self.game_running = True
+        for key in games:
+            with open(config.MATCH_SOURCE_CONFIG.MATCHES_FILE, "w+") as f:
+                f.write(key + os.linesep)
+            ac = Client(config)
+            await ac.run()
+        self.game_running = False
 
-async def run_local_game(games, data):
-    if system() == 'Windows':
-        config.PYTHON = 'python'
-    config.BOTS_DIRECTORY = convert_wsl_paths(load_settings_from_file())['bot_directory_location']
-    config.ROUNDS_PER_RUN = 1
-    config.REALTIME = data.get("Realtime", False)
-    config.VISUALIZE = data.get("Visualize", False)
-    config.MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(
-        matches_file=os.path.join(os.path.dirname(os.path.realpath(__file__)), "matches"),
-        results_file=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results.json'))
 
-    for key in games:
-        with open(config.MATCH_SOURCE_CONFIG.MATCHES_FILE, "w+") as f:
-            f.write(key + os.linesep)
-        ac = Client(config)
-        await ac.run()
+    async def run_games(self, request):
+        games = []
+        if self.game_running:
+            return web.Response(text="Game already running!")
 
+        data = await request.post()
+        game_data = {}
 
-async def run_games(request):
-    games = []
+        bot1_list = data.getall('Bot1[]')
+        bot2_list = data.getall('Bot2[]')
+        chosen_maps = data.getall("Map[]")
+        iterations = int(data['Iterations'][0])
 
-    data = await request.post()
-    game_data = {}
+        for _ in range(iterations):
+            for maps in chosen_maps:
+                if maps == "Random":
+                    maps = random.choice(get_local_maps())
+                for bot1 in bot1_list:
+                    bot1 = Bot(bot1)
+                    for bot2 in bot2_list:
+                        bot2 = Bot(bot2)
+                        game = f'{bot1.name},T,{bot1.type},{bot2.name},T,{bot2.type},{maps}'
+                        games.append(game)
+        game_data['Visualize'] = data.get("Visualize", "false") == "true"
+        game_data['Realtime'] = data.get('Realtime', 'false') == 'true'
 
-    bot1_list = data.getall('Bot1[]')
-    bot2_list = data.getall('Bot2[]')
-    chosen_maps = data.getall("Map[]")
-    iterations = int(data['Iterations'][0])
+        asyncio.create_task(self.run_local_game(games, game_data))
 
-    for _ in range(iterations):
-        for maps in chosen_maps:
-            if maps == "Random":
-                maps = random.choice(get_local_maps())
-            for bot1 in bot1_list:
-                bot1 = Bot(bot1)
-                for bot2 in bot2_list:
-                    bot2 = Bot(bot2)
-                    game = f'{bot1.name},T,{bot1.type},{bot2.name},T,{bot2.type},{maps}'
-                    games.append(game)
-    game_data['Visualize'] = data.get("Visualize", "false") == "true"
-    game_data['Realtime'] = data.get('Realtime', 'false') == 'true'
-
-    asyncio.create_task(run_local_game(games, game_data))
-
-    if len(games) == 1:
-        return web.Response(text="Game started")
-    else:
-        return web.Response(text="Games started")
+        if len(games) == 1:
+            return web.Response(text="Game started")
+        else:
+            return web.Response(text="Games started")
 
 
 async def get_bots(request):
