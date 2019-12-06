@@ -328,6 +328,6 @@ async def get_maps(request):
 async def replays(request):
     replay = os.path.join(config.REPLAYS_DIRECTORY, request.match_info.get('replay'))
     if os.path.isfile(replay):
-        return web.FileResponse('../replays/' + request.match_info.get('replay'))
+        return web.FileResponse(replay)
     else:
         return web.Response(status=404)
