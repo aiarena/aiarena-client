@@ -234,6 +234,7 @@
                                 
                                 // ADD COLUMN HEADER TO ROW OF TABLE HEAD.
                                 for (var i = noOfResults-1; i >= 0; i--) {
+                                        
                                 
                                         var bRow = document.createElement("tr"); // CREATE ROW FOR EACH RECORD .
                                         
@@ -241,14 +242,14 @@
                                         for (var j = 0; j < col.length; j++) {
                                             var td = document.createElement("td");
                                             var value = myResults[i][col[j]];
-         
-                                            if (typeof value == 'number' && value.toFixed(5).substring(0,1)=='0.'){
-                                                value = (value*1000).toFixed(2);
+                                            if (col[j] =='ReplayPath'){
+                                                value = "<a href=\""+value+"\" download>Replay</a>";
                                             }
                                             //else if (typeof value == 'string' && value.substring(19,23) =='UTC' ){
                                             //    value = value.substring(0,10);
                                             //}
                                             td.innerHTML = value;
+                                            
                                             bRow.appendChild(td);
                                         }
                                         tBody.appendChild(bRow)

@@ -361,13 +361,23 @@ class FileMatchSource(MatchSource):
                 if line != '' and line[0] != '#':  # if the line isn't empty or escaped, we've got a match to play
                     return True
         return False
-
+    
+    def get_next_match_id(self):
+        with open(self._results_file, "r+") as results_log:
+            try:
+                results = json.loads(results_log.read())
+                result_list = results['Results']
+                return max([x.get('MatchID', 0) for x in result_list])
+            except:
+                return 0
+    
     def next_match(self) -> FileMatch:
 
         next_match = None
 
         with open(self._matches_file, "r") as match_list:
-            for match_id, line in enumerate(match_list):
+            match_id = self.get_next_match_id() + 1
+            for _, line in enumerate(match_list):
                 if line != '' and line[0] != '#':  # if the line isn't empty or escaped, we've got a match to play
                     next_match = self.FileMatch(self._config, match_id, line)
                     break
@@ -380,6 +390,7 @@ class FileMatchSource(MatchSource):
 
         result_type = "Error"  # avoid error from this not being initialized
         result_json = {
+            "MatchID": match.id,
             "Bot1": match.bot1.name,
             "Bot2": match.bot2.name,
             "Winner": None,
@@ -390,6 +401,7 @@ class FileMatchSource(MatchSource):
             "TimeStamp": None,
             "Bot1AvgFrame": 0,
             "Bot2AvgFrame": 0,
+            'ReplayPath':None,
         }
         if isinstance(result, list):
             for x in result:
@@ -437,12 +449,12 @@ class FileMatchSource(MatchSource):
                 if x.get("AverageFrameTime", None):
                     try:
                         result_json["Bot1AvgFrame"] = next(
-                            item[match.bot1.name] for item in x['AverageFrameTime'] if item.get(match.bot1.name, None))
+                            round(item[match.bot1.name] * 1000, 2) for item in x['AverageFrameTime'] if item.get(match.bot1.name, None))
                     except StopIteration:
                         result_json["Bot1AvgFrame"] = 0
                     try:
                         result_json["Bot2AvgFrame"] = next(
-                            item[match.bot2.name] for item in x['AverageFrameTime'] if item.get(match.bot2.name, None))
+                            round(item[match.bot2.name] * 1000, 2) for item in x['AverageFrameTime'] if item.get(match.bot2.name, None))
                     except StopIteration:
                         result_json["Bot2AvgFrame"] = 0
 
@@ -450,6 +462,8 @@ class FileMatchSource(MatchSource):
                     result_json["TimeStamp"] = x["TimeStamp"]
         else:
             result_json["Result"] = result_type
+
+        result_json['ReplayPath'] = os.path.join(self._config.REPLAYS_DIRECTORY, f'{match.id}_{match.bot1.name}_vs_{match.bot2.name}.SC2Replay')
 
         filename = Path(self._results_file)
         filename.touch(exist_ok=True)  # will create file, if it exists will do nothing
@@ -468,13 +482,13 @@ class FileMatchSource(MatchSource):
                 results_log.write(json.dumps(json_object, indent=4))
 
         # remove the played match from the match list
-        with open(self._matches_file, "r") as match_list:
-            lines = match_list.readlines()
+        # with open(self._matches_file, "r") as match_list:
+        #     lines = match_list.readlines()
 
-        lines[match.id] = '# ' + lines[match.id]
+        # lines[match.id] = '# ' + lines[match.id]
 
-        with open(self._matches_file, "w") as match_list:
-            match_list.writelines(lines)
+        # with open(self._matches_file, "w") as match_list:
+        #     match_list.writelines(lines)
 
 
 class MatchSourceFactory:

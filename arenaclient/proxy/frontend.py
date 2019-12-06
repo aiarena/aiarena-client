@@ -201,7 +201,9 @@ class GameRunner:
     async def run_local_game(self, games, data):
         if system() == 'Windows':
             config.PYTHON = 'python'
-        config.BOTS_DIRECTORY = convert_wsl_paths(load_settings_from_file())['bot_directory_location']
+        settings = convert_wsl_paths(load_settings_from_file())
+        config.REPLAYS_DIRECTORY = settings['replay_directory_location']
+        config.BOTS_DIRECTORY = settings['bot_directory_location']
         config.ROUNDS_PER_RUN = 1
         config.REALTIME = data.get("Realtime", False)
         config.VISUALIZE = data.get("Visualize", False)
