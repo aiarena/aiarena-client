@@ -1,17 +1,19 @@
-import random
-from aiohttp import web, ClientSession
-from aiohttp_jinja2 import render_template
-import os
+import asyncio
+import hashlib
 import json
-from arenaclient.matches import FileMatchSource
-import arenaclient.default_local_config as config
-from arenaclient.client import Client
+import os
+import random
+import zipfile
 from pathlib import Path
 from platform import system
+
 import requests
-import zipfile
-import hashlib
-import asyncio
+from aiohttp import web, ClientSession
+from aiohttp_jinja2 import render_template
+
+import arenaclient.default_local_config as config
+from arenaclient.client import Client
+from arenaclient.matches import FileMatchSource
 
 AI_ARENA_URL = r'https://ai-arena.net/'
 output_frame = None
@@ -167,15 +169,15 @@ async def handle_data(request):
 
 def convert_wsl_paths(json_data):
     json_data_modified = {}
-    
+
     if system() == "Windows":
-        
+
         for x, y in json_data.items():
             replaced_string = y.replace('/mnt/c', 'C:').replace('/mnt/d', 'D:')
             json_data_modified[x] = replaced_string
-    
+
     if system() == "Linux":
-        
+
         for x, y in json_data.items():
             replaced_string = y.replace('C:', '/mnt/c').replace('D:', '/mnt/d')
             json_data_modified[x] = replaced_string
@@ -194,10 +196,19 @@ async def get_results(request):
     except Exception as e:
         return str(e)
 
+
+async def get_results(request):
+    try:
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results.json'), 'r') as f:
+            data = json.loads(f.read())
+            return web.json_response(data.get('Results', []))
+    except Exception as e:
+        return str(e)
+
 class GameRunner:
     def __init__(self):
         self.game_running = False
-    
+
     async def run_local_game(self, games, data):
         if system() == 'Windows':
             config.PYTHON = 'python'
@@ -312,3 +323,11 @@ def get_local_maps():
 
 async def get_maps(request):
     return web.json_response({'Maps': get_local_maps()})
+
+
+async def replays(request):
+    replay = os.path.join(config.REPLAYS_DIRECTORY, request.match_info.get('replay'))
+    if os.path.isfile(replay):
+        return web.FileResponse('../replays/' + request.match_info.get('replay'))
+    else:
+        return web.Response(status=404)

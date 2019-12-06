@@ -243,7 +243,8 @@
                                             var td = document.createElement("td");
                                             var value = myResults[i][col[j]];
                                             if (col[j] =='ReplayPath'){
-                                                value = "<a href=\""+value+"\" download>Replay</a>";
+                                               var filename = value.replace(/^.*[\\\/]/, '')
+                                                value = "<a href=\"/replays/"+filename+"\" download>Replay</a>";
                                             }
                                             //else if (typeof value == 'string' && value.substring(19,23) =='UTC' ){
                                             //    value = value.substring(0,10);

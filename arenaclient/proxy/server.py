@@ -230,7 +230,8 @@ def run_server(use_frontend=None):
             web.post("/run_games", game_runner.run_games, name='run_games'),
             web.get("/get_bots", frontend.get_bots, name='get_bots'),
             web.get("/get_arena_bots", frontend.get_arena_bots, name='get_arena_bots'),
-            web.get("/get_maps", frontend.get_maps, name='get_maps')
+            web.get("/get_maps", frontend.get_maps, name='get_maps'),
+            web.get("/replays/{replay}", frontend.replays, name='replays')
         ]
         app.router.add_routes(routes)
     on_start()
