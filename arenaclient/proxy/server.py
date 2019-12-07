@@ -217,11 +217,14 @@ def run_server(use_frontend=None):
     """
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-f", "--frontend", type=str, nargs="?", help="Start server with frontend", default="false")
+    parser.add_argument("-f","--frontend", help="Start server with frontend", action="store_true")
 
-    args, _ = parser.parse_known_args()
+    args, unknown = parser.parse_known_args()
+    
 
-    run_frontend = use_frontend if use_frontend is not None else args.frontend.lower() == "true"
+    run_frontend = use_frontend if use_frontend is not None else args.frontend
+    if 'false' in [x.lower() for x in unknown]:
+        run_frontend = False
     try:
         loop = asyncio.get_event_loop()
     except:
