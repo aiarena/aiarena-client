@@ -13,32 +13,29 @@ If you already have the repo cloned but didn't do a recursive clone, run the fol
 
 ```
 pip install -r requirements.windows.txt
-# temp fix
-pip install --upgrade  git+https://github.com/Dentosal/python-sc2@develop
+```
+#### 2. Run the GUI server
+
+Run the following code in the root of the repo:
+```
+python setup.py install
 ```
 
-#### 1. Set SC2PATH
-Create an `SC2PATH` environment variable that points to the sc2 install location.  
-The default for windows is `C:\Program Files (x86)\StarCraft II\`
-
-#### 2. Create a config
-The `/arenaclient/default_config.py` file stores all the default config values that will be used when running the arena client. You can override any of these values in a `/arenaclient/config.py` file.
-
-An example local config is available at  `/arenaclient/example_local_config.py`.
-
-#### 3. Copy the test bots
-Copy the test bots from `/aiarena-test-bots/` into your configured `BOTS_DIRECTORY`. This would be `/arenaclient/bots` if you're using the example config.
-
-#### 4. Matches file
-The matches file lists the matches to be played.  
-Make a copy of the `/arenaclient/example_matches` file as `/arenaclient/matches`.
-
-#### 5. Run a match
-Navigate to the containing cloned repo and start the client with
+Then you can start the GUI server with:
 ```
-python -m arenaclient
+python -m arenaclient -f
 ```
-This should run a match between `basic_bot` and `loser_bot`.
+
+#### 3. Access the GUI server
+
+In your browser navigate to:
+
+`127.0.0.1:8765`
+
+Click on `settings` and set up all the settings to your preference. After you click submit, you will be refirected to the
+home page, where you can select your bots and maps you want to run.
+Click on `Play` and the game should start within a few seconds.
+
 
 
 ## License
