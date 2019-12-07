@@ -200,7 +200,10 @@ async def get_results(request):
 async def get_results(request):
     try:
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results.json'), 'r') as f:
-            data = json.loads(f.read())
+            try:
+                data = json.loads(f.read())
+            except:
+                data = {}
             return web.json_response(data.get('Results', []))
     except Exception as e:
         return str(e)
@@ -302,7 +305,7 @@ def get_local_maps():
         directory = convert_wsl_paths(json.load(f))['sc2_directory_location']
 
     if not os.path.isdir(directory):
-        return web.json_response({"Error": "Please enter a directory"})
+        return ["Please select a directory on the settings page."]
     base_dir = Path(directory).expanduser()
 
     if (base_dir / "maps").exists():

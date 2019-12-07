@@ -168,8 +168,29 @@ class ConnectionHandler:
 
 
 def on_start():
-    try:
+    # Create needed files
+    import json
+    from pathlib import Path
+    settings_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'settings.json')
+    results_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results.json')
+    
+    if not os.path.isfile(settings_file):
+        data = {
+            "bot_directory_location": "",
+            "sc2_directory_location": "",
+            "replay_directory_location": "", 
+            "max_game_time": "", 
+            "allow_debug": "Off", 
+            "API_token": "", 
+            "visualize": "Off"
+            }
+        with open(settings_file,'w+') as f:
+            json.dump(data, f)
+    
+    if not os.path.isfile(results_file):
+        Path(results_file).touch()
 
+    try:
         for process in psutil.process_iter():
             for conns in process.connections(kind="inet"):
                 if conns.laddr.port == PORT:
