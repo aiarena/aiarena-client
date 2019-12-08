@@ -51,7 +51,7 @@ class Proxy:
             strikes: int = 10,
             real_time: bool = False,
             visualize: bool = False,
-            visualize_step_count: int = 22
+            visualize_step_count: int = 10
     ):
         self.average_time: float = 0
         self.previous_loop: int = 0

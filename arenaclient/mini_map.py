@@ -76,7 +76,7 @@ class Minimap:
         h_max = np.amax(self._game_info.terrain_height.data_numpy)
         multiplier = 160 / (h_max - h_min)
 
-        map_data = self.empty_map
+        map_data = np.copy(self.empty_map)
 
         for (y, x), h in np.ndenumerate(self._game_info.terrain_height.data_numpy):
             color = (h - h_min) * multiplier
@@ -93,7 +93,7 @@ class Minimap:
         return map_data
     
     async def get_score(self):
-        score_image = np.ones((500, 500, 3))
+        score_image = np.copy(self.empty_map)
         i = 0
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_size = 1

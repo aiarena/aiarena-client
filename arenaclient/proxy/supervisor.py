@@ -6,7 +6,7 @@ from json import JSONDecodeError
 from arenaclient.proxy.lib import Timer
 import aiohttp
 from imutils import build_montages
-
+import numpy as np
 logger = logging.getLogger(__name__)
 logger.setLevel(10)
 logger.addHandler(logging.FileHandler("proxy.log", "a+"))
@@ -164,14 +164,21 @@ class Supervisor:
         m_w = 2
         m_h = 2
         h = w = 500
-        images = [y for x in self.images.values() for y in x.values()]
+        try:
+            images = [x['image'] for x in self.images.values()] 
+            scores = [x['score'] for x in self.images.values()] 
+        except KeyError:
+            images = []
+            scores = []
         
-        montages = build_montages(images, (w, h), (m_w, m_h))
-
-        # display the montage(s) on the screen
-        for (i, montage) in enumerate(montages):
-            # with lock:
-            return montage
+        if images:
+            col1 = np.hstack(images)
+            col2 = np.hstack(scores)
+            final = np.vstack([col1, col2])
+            
+            return final
+        else:
+            return None
     
     async def results_checker(self, args=None):
         if len(self._result) == 1:
