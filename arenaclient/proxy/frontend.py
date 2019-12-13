@@ -439,3 +439,16 @@ async def replays(request):
         return web.FileResponse(replay)
     else:
         return web.Response(status=404)
+
+
+async def logs(request):
+    """
+    Allows users to download logs if they are using a docker container.
+    :param request:
+    :return:
+    """
+    log = os.path.join(config.BOT_LOGS_DIRECTORY, request.match_info.get('match_id'), request.match_info.get('bot_name'), 'stderr.log')
+    if os.path.isfile(log):
+        return web.FileResponse(log)
+    else:
+        return web.Response(status=404)
