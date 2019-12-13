@@ -468,6 +468,37 @@ class FileMatchSource(MatchSource):
         filename = Path(self._results_file)
         filename.touch(exist_ok=True)  # will create file, if it exists will do nothing
 
+        ## LOGS
+        log_folder = os.path.join(self._config.BOT_LOGS_DIRECTORY)
+        match_log_folder = os.path.join(log_folder, str(match.id))
+
+        try:
+            os.stat(match_log_folder)
+            shutil.rmtree(match_log_folder)
+        except:
+            pass
+        
+        os.mkdir(match_log_folder)
+        os.mkdir(os.path.join(match_log_folder, str(match.bot1.name)))
+        os.mkdir(os.path.join(match_log_folder, str(match.bot2.name)))
+        
+        bot1_data_folder = os.path.join(self._config.BOTS_DIRECTORY, match.bot1.name, "data")
+        bot2_data_folder = os.path.join(self._config.BOTS_DIRECTORY, match.bot2.name, "data")
+        bot1_error_log = os.path.join(bot1_data_folder, "stderr.log")
+        bot1_error_log_tmp = os.path.join(match_log_folder, match.bot1.name, 'stderr.log')
+
+        if os.path.isfile(bot1_error_log):
+            shutil.move(bot1_error_log, bot1_error_log_tmp)
+        else:
+            Path(bot1_error_log_tmp).touch()
+
+        bot2_error_log = os.path.join(bot2_data_folder, "stderr.log")
+        bot2_error_log_tmp = os.path.join(match_log_folder, match.bot2.name, 'stderr.log')
+        if os.path.isfile(bot2_error_log):
+            shutil.move(bot2_error_log, bot2_error_log_tmp)
+        else:
+            Path(bot2_error_log_tmp).touch()
+
         with open(self._results_file, "r+") as results_log:
             try:
                 results = json.loads(results_log.read())

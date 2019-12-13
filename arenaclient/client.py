@@ -133,6 +133,13 @@ class Client:
             os.stat(self._config.REPLAYS_DIRECTORY)
         except OSError:
             os.mkdir(self._config.REPLAYS_DIRECTORY)
+        
+        if self._config.RUN_LOCAL:
+            try:
+                os.stat(self._config.BOT_LOGS_DIRECTORY)
+            except:
+                os.mkdir(self._config.BOT_LOGS_DIRECTORY)
+
         try:
             if self._config.SYSTEM == "Linux":
                 with open(os.path.join(bot_path, "data", "stderr.log"), "w+") as out:

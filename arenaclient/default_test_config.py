@@ -37,7 +37,7 @@ WORKING_DIRECTORY = LOCAL_PATH  # same for now
 LOG_FILE = os.path.join(WORKING_DIRECTORY, "client.log")
 REPLAYS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "replays")
 BOTS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "bots")
-
+BOT_LOGS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "logs")
 
 MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(
     matches_file=os.path.join(WORKING_DIRECTORY, "matches"),

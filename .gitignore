@@ -9,6 +9,7 @@ venv/
 tmp/
 bots/
 replays/
+logs/
 matchuplist
 aiarena-client.log
 results.log
