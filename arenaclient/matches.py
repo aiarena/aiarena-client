@@ -464,7 +464,7 @@ class FileMatchSource(MatchSource):
             result_json["Result"] = result_type
 
         result_json['ReplayPath'] = os.path.join(self._config.REPLAYS_DIRECTORY, f'{match.id}_{match.bot1.name}_vs_{match.bot2.name}.SC2Replay')
-
+        result_json['Map'] = match.map_name
         filename = Path(self._results_file)
         filename.touch(exist_ok=True)  # will create file, if it exists will do nothing
 
