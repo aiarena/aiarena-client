@@ -255,7 +255,7 @@ def run_server(use_frontend=None):
             web.get("/get_arena_bots", frontend.get_arena_bots, name='get_arena_bots'),
             web.get("/get_maps", frontend.get_maps, name='get_maps'),
             web.get("/replays/{replay}", frontend.replays, name='replays'),
-            web.get("/logs/{match_id}/{bot_name}", frontend.logs, name='logs')
+            web.get("/logs/{match_id}/{bot_name}/stderr.log", frontend.logs, name='logs')
         ]
         app.router.add_routes(routes)
     on_start()
