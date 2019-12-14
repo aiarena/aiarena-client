@@ -488,14 +488,15 @@ class FileMatchSource(MatchSource):
         bot1_error_log_tmp = os.path.join(match_log_folder, match.bot1.name, 'stderr.log')
 
         if os.path.isfile(bot1_error_log):
-            shutil.move(bot1_error_log, bot1_error_log_tmp)
+            shutil.copy(bot1_error_log, bot1_error_log_tmp)
         else:
             Path(bot1_error_log_tmp).touch()
 
         bot2_error_log = os.path.join(bot2_data_folder, "stderr.log")
         bot2_error_log_tmp = os.path.join(match_log_folder, match.bot2.name, 'stderr.log')
         if os.path.isfile(bot2_error_log):
-            shutil.move(bot2_error_log, bot2_error_log_tmp)
+            shutil.copy(bot2_error_log, bot2_error_log_tmp)
+            
         else:
             Path(bot2_error_log_tmp).touch()
 
