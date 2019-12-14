@@ -112,9 +112,20 @@ class GameRunner:
     Class for controlling the games that need to run.
     """
     def __init__(self):
-        self.game_running = False  # Variable that shows if a game is running or not. Keeps the gui from starting
+        self._game_running = False  # Variable that shows if a game is running or not. Keeps the gui from starting
         # another game if the current game has not finished yet.
+    
+    async def game_running(self, request):
+        resp = web.WebSocketResponse()
 
+        await resp.prepare(request)
+        while True:
+            await asyncio.sleep(1)
+            if self._game_running:
+                await resp.send_str('Game(s) running')
+            else:
+                await resp.send_str('Idle')
+    
     async def run_local_game(self, games, data):
         """
         Interacts with the arenaclient to start and run the games sequentially.
@@ -133,13 +144,13 @@ class GameRunner:
         config.MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(
             matches_file=os.path.join(os.path.dirname(os.path.realpath(__file__)), "matches"),
             results_file=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results.json'))
-        self.game_running = True
+        self._game_running = True
         for key in games:
             with open(config.MATCH_SOURCE_CONFIG.MATCHES_FILE, "w+") as f:
                 f.write(key + os.linesep)
             ac = Client(config)
             await ac.run()
-        self.game_running = False
+        self._game_running = False
 
     async def run_games(self, request):
         """
@@ -149,7 +160,7 @@ class GameRunner:
         :return:
         """
         games = []
-        if self.game_running:
+        if self._game_running:
             return web.Response(text="Game already running!")
 
         data = await request.post()

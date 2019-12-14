@@ -175,6 +175,9 @@ h1, h2, h3, h4, h5, h6,a {
 label{
     color: #86c232;
 }
+p{
+    color: #86c232;
+}
 a:hover, a:visited, a:link, a:active {
     text-decoration: none;
 }
