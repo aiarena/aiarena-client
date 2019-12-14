@@ -169,7 +169,7 @@ class GameRunner:
         bot1_list = data.getall('Bot1[]')
         bot2_list = data.getall('Bot2[]')
         chosen_maps = data.getall("Map[]")
-        iterations = int(data['Iterations'][0])
+        iterations = int(data['Iterations'])
 
         for _ in range(iterations):
             for maps in chosen_maps:
