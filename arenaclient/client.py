@@ -239,7 +239,10 @@ class Client:
                             }
                         }
                     )
+                    bot1_process.communicate(timeout=0.2)
+                    bot2_process.communicate(timeout=0.2)
                     self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
+
                     await session.close()
                     break
                 msg = await ws.receive_json()
@@ -259,6 +262,8 @@ class Client:
                             }
                         }
                     )
+                    bot1_process.communicate(timeout=0.2)
+                    bot2_process.communicate(timeout=0.2)
                     self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
                     await session.close()
                     break
@@ -274,6 +279,8 @@ class Client:
                             }
                         }
                     )
+                    bot1_process.communicate(timeout=0.2)
+                    bot2_process.communicate(timeout=0.2)
                     self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
                     await session.close()
                     break
@@ -291,6 +298,8 @@ class Client:
                             }
                         }
                     )
+                    bot1_process.communicate(timeout=0.2)
+                    bot2_process.communicate(timeout=0.2)
                     self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
                     await session.close()
                     break
@@ -299,6 +308,8 @@ class Client:
                     await ws.send_str(json.dumps({"Bot2": True}))
 
             if msg.get("PID", None):
+                bot1_process.communicate(timeout=0.2)
+                bot2_process.communicate(timeout=0.2)
                 self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])  # Terminate bots first
                 self._utl.pid_cleanup(msg["PID"])  # Terminate SC2 processes
 
@@ -329,6 +340,8 @@ class Client:
                             }
                         }
                     )
+                    bot1_process.communicate(timeout=0.2)
+                    bot2_process.communicate(timeout=0.2)
                     self._utl.pid_cleanup([bot1_process.pid, bot2_process.pid])
                 if bot2_process.poll():
                     self._utl.printout("Bot2 Init Error")
