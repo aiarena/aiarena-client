@@ -6,7 +6,7 @@ import zipfile
 import requests
 from arenaclient.utl import Utl
 import subprocess
-import sys
+
 
 class Bot:
     """
@@ -17,6 +17,9 @@ class Bot:
 
     @staticmethod
     def map_to_type(bot_name, bot_type):
+        """
+        Map bot type to relevant run commands.
+        """
         bot_type_map = {
             "python": ["run.py", "Python"],
             "cppwin32": [f"{bot_name}.exe", "Wine"],
@@ -191,7 +194,7 @@ class Bot:
         if self._config.RUN_LOCAL:
             try:
                 os.stat(self._config.BOT_LOGS_DIRECTORY)
-            except:
+            except OSError:
                 os.mkdir(self._config.BOT_LOGS_DIRECTORY)
 
         try:
@@ -222,11 +225,20 @@ class Bot:
 
 
 class BotFactory:
+    """
+    Factory to create bot object
+    """
     @staticmethod
     def from_api_data(config, data):
+        """
+        Creates bot from api data
+        """
         return Bot(config, data["id"], data["name"], data["game_display_id"], data["bot_zip"], data["bot_zip_md5hash"],
                    data["bot_data"], data["bot_data_md5hash"], data["plays_race"], data["type"])
 
     @staticmethod
     def from_values(config, bot_id, bot_name, bot_race, bot_type):
+        """
+        Creates bot from values
+        """
         return Bot(config, bot_id, bot_name, bot_id, None, None, None, None, bot_race, bot_type)

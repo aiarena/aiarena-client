@@ -24,7 +24,7 @@ class Result:
         """
         return {
             "MatchID": self.match_id,
-            "Bot1":self.bot1,
+            "Bot1": self.bot1,
             "Bot2": self.bot2,
             "Winner": self.winner,
             "Map": self.map,
@@ -99,16 +99,19 @@ class Result:
         if result.get("AverageFrameTime", None):
             try:
                 self.bot1_avg_frame = next(
-                    round(item[self.bot1] * 1000, 2) for item in result['AverageFrameTime'] if item.get(self.bot1, None))
+                    round(item[self.bot1] * 1000, 2) for item in result['AverageFrameTime'] if item.get(self.bot1, None)
+                )
             except StopIteration:
                 self.bot1_avg_frame = 0
             try:
                 self.bot2_avg_frame = next(
-                    round(item[self.bot2] * 1000, 2) for item in result['AverageFrameTime'] if item.get(self.bot2, None))
+                    round(item[self.bot2] * 1000, 2) for item in result['AverageFrameTime'] if item.get(self.bot2, None)
+                )
             except StopIteration:
                 self.bot2_avg_frame = 0
 
         if result.get("TimeStamp", None):
             self.time_stamp = result["TimeStamp"]
 
-        self.replay_path = os.path.join(self._config.REPLAYS_DIRECTORY, f'{self.match_id}_{self.bot1}_vs_{self.bot2}.SC2Replay')
+        self.replay_path = os.path.join(
+            self._config.REPLAYS_DIRECTORY, f'{self.match_id}_{self.bot1}_vs_{self.bot2}.SC2Replay')

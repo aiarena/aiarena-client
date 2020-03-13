@@ -132,7 +132,7 @@ class Utl:
         Move the pid/pids to another process group to avoid the bot killing the ai-arena client when closing.
         (CPP API specific)
 
-        :param pid:
+        :param pids:
         :return:
         """
         if not isinstance(pids, list):

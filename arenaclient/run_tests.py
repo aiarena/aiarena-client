@@ -41,8 +41,9 @@ ORIGINAL_MAX_GAME_TIME = config.MAX_GAME_TIME
 
 
 async def run_tests():
-
-
+    """
+    Run tests.
+    """
     with open('test_results.txt', 'w+') as f:  # Clear results file
         f.write('')
 
@@ -65,6 +66,7 @@ async def run_tests():
                 test_result = f"Result ({str(result['Results'][0]['Result'])}) matches expected result ({value}):" + \
                               str(result["Results"][0]["Result"] == value)
                 utl.printout(test_result)
+                assert(str(result['Results'][0]['Result']) == value)
                 with open('test_results.txt', 'a+') as f:
                     f.write(str(key) + '\t' + str(test_result) + '\n')
             except FileNotFoundError:
@@ -73,7 +75,7 @@ async def run_tests():
                 utl.printout("Test failed: Result not found in file")
 
 if __name__ == "__main__":
-    proc = Process(target=run_server, args=[False])
+    proc = Process(target=run_server, args=(False,))
     proc.daemon = True
     proc.start()
     asyncio.get_event_loop().run_until_complete(run_tests())

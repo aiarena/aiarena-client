@@ -184,7 +184,7 @@ def on_start():
             "API_token": "", 
             "visualize": "Off"
             }
-        with open(settings_file,'w+') as f:
+        with open(settings_file, 'w+') as f:
             json.dump(data, f)
     
     if not os.path.isfile(results_file):
@@ -217,10 +217,9 @@ def run_server(use_frontend=None):
     """
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-f","--frontend", help="Start server with frontend", action="store_true")
+    parser.add_argument("-f", "--frontend", help="Start server with frontend", action="store_true")
 
     args, unknown = parser.parse_known_args()
-    
 
     run_frontend = use_frontend if use_frontend is not None else args.frontend
     if 'false' in [x.lower() for x in unknown]:
@@ -256,7 +255,7 @@ def run_server(use_frontend=None):
             web.get("/get_maps", frontend.get_maps, name='get_maps'),
             web.get("/replays/{replay}", frontend.replays, name='replays'),
             web.get("/logs/{match_id}/{bot_name}/stderr.log", frontend.logs, name='logs'),
-            web.get("/game_running", game_runner.game_running,name='game_running')
+            web.get("/game_running", game_runner.game_running, name='game_running')
         ]
         app.router.add_routes(routes)
     on_start()

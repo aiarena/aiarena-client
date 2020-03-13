@@ -6,16 +6,11 @@ import shutil
 import signal
 import socket
 import subprocess
-import sys
 import time
 import traceback
-import zipfile
-from pathlib import Path
 import hashlib
 import aiohttp
 import psutil
-import requests
-from requests.exceptions import ConnectionError
 
 from arenaclient.matches import MatchSourceFactory, MatchSource
 from arenaclient.utl import Utl
@@ -23,14 +18,23 @@ from arenaclient.result import Result
 
 
 class WrongStatusException(Exception):
+    """
+    Wrong status custom exception
+    """
     pass
 
 
 class WSClosed(Exception):
+    """
+    Websocket closed custom exception
+    """
     pass
 
 
 def init_error(match: MatchSource.Match):
+    """
+    Init error JSON
+    """
     return {
             "Result": {
                 match.bot1.name: "InitializationError",
@@ -39,16 +43,27 @@ def init_error(match: MatchSource.Match):
             }
 
 
-async def connect(address, headers=None):
+async def connect(address: str, headers=None):
+    """
+    Connects to address with headers
+    """
     ws = await aiohttp.ClientSession().ws_connect(address, headers=headers)
     return ws
 
 
 def complete(msg):
+    """
+    Checks if msg status is complete.
+    """
     return msg.get("Status", None) == "Complete"
 
 
 def valid_msg(msg):
+    """
+    Looks for keywords in the message so that the result can be parsed.
+    @param msg:
+    @return:
+    """
     if 'Result' in msg:
         return True
     elif 'GameTime' in msg:
@@ -76,8 +91,14 @@ class Client:
 
     @staticmethod
     def get_opponent_id(bot_name):
-        hexdigest = hashlib.md5(bot_name.encode("utf-8")).hexdigest()
-        return hexdigest[0::2]
+        """
+        Creates an opponent id from a bot's name.
+
+        @param bot_name:
+        @return:
+        """
+        opp_id = hashlib.md5(bot_name.encode("utf-8")).hexdigest()
+        return opp_id[0::2]
 
     @property
     def error(self):
@@ -163,16 +184,30 @@ class Client:
         self.kill_current_server()
     
     async def receive(self):
+        """
+        Receive a message from the websocket connection.
+        @return:
+        """
         assert(self._ws is not None)
         msg = await self._ws.receive()
         if msg.type == aiohttp.WSMsgType.CLOSED:
             raise WSClosed("Websocket connection closed")
         return msg.json()
     
-    async def send(self, msg):
+    async def send(self, msg: str):
+        """
+        Send a meesage to the websocket connection
+        @param msg:
+        @return:
+        """
         await self._ws.send_str(msg)
 
     async def connected(self):
+        """
+        Check to see if client is connected to websocket server.
+
+        @return:
+        """
         msg = await self.receive()
 
         if msg.get("Status") == "Connected":
@@ -214,10 +249,14 @@ class Client:
 
             if await self.connected():
                 self._logger.debug(f"Starting bots...")
-                bot1_process, bot1_pid = await self.start_bot(match.bot1, match.bot2.bot_json.get("botID", self.get_opponent_id(match.bot2.name)))
+                bot1_process, bot1_pid = await self.start_bot(match.bot1,
+                                                              match.bot2.bot_json.get("botID", self.get_opponent_id(
+                                                                  match.bot2.name)))
                 pids.append(bot1_pid)
                 if bot1_process is not None:
-                    bot2_process, bot2_pid = await self.start_bot(match.bot2, match.bot1.bot_json.get("botID", self.get_opponent_id(match.bot2.name)))
+                    bot2_process, bot2_pid = await self.start_bot(match.bot2,
+                                                                  match.bot1.bot_json.get("botID", self.get_opponent_id(
+                                                                      match.bot2.name)))
                     pids.append(bot2_pid)
                     if bot2_process is None:
                         self._logger.debug(f"Failed to launch {match.bot2.name}")
@@ -426,13 +465,17 @@ class Client:
 
             result = await self.main(match)
 
-        except Exception as e:
+        except Exception:
             self._logger.error(str(traceback.format_exc()))
             result = Result(match, self._config).parse_result(self.error)
 
         return result
 
     async def run(self):
+        """
+        Run game.
+        @return:
+        """
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
         try:
             self._utl.printout(f'Arena Client started at {time.strftime("%H:%M:%S", time.gmtime(time.time()))}')

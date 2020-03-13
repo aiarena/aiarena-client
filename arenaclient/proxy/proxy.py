@@ -30,6 +30,10 @@ warnings.simplefilter("ignore", AssertionError)
 warnings.simplefilter("ignore", asyncio.CancelledError)
 
 
+class ResponseBytesNotSet(Exception):
+    pass
+
+
 class Proxy:
     """
     Class for handling all requests/responses between bots and SC2. Receives and sends all relevant
@@ -112,7 +116,6 @@ class Proxy:
             self.ws_p2s.close()
         except:
             print(traceback.format_exc())
-            
 
     async def __request(self, request):
         """
@@ -127,6 +130,7 @@ class Proxy:
             print(traceback.format_exc())
 
         response = sc_pb.Response()
+        response_bytes = None
         try:
             response_bytes = await self.ws_p2s.receive_bytes()
         except TypeError:
@@ -144,7 +148,10 @@ class Proxy:
         except Exception as e:
             print(traceback.format_exc())
             logger.error(str(e))
-        response.ParseFromString(response_bytes)
+        if response_bytes:
+            response.ParseFromString(response_bytes)
+        else:
+            raise ResponseBytesNotSet("response_bytes not set")
         return response
 
     async def _execute(self, **kwargs):
@@ -248,7 +255,6 @@ class Proxy:
             "-tempDir",
             tmp_dir,
         ]
-
 
         return subprocess.Popen(args, cwd=(str(Paths.CWD) if Paths.CWD else None))
 
@@ -360,7 +366,9 @@ class Proxy:
             self.game_data_loaded = True
             self.mini_map.load_game_data(response)
 
-        if self.visualize and self.game_info_loaded and self.observation_loaded and self.game_data_loaded and visualize_step:
+        if self.visualize and self.game_info_loaded and self.observation_loaded and self.game_data_loaded \
+                and visualize_step:
+
             self.mini_map.player_name = self.player_name
             image = await self.mini_map.draw_map()
             score = await self.mini_map.get_score()
@@ -486,7 +494,7 @@ class Proxy:
                             raise ConnectionError
 
                 except Exception as e:
-                    if not isinstance(e,ConnectionError):
+                    if not isinstance(e, ConnectionError):
                         logger.error(str(e))
                         print(traceback.format_exc())
                 finally:
