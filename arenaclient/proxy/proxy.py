@@ -483,11 +483,12 @@ class Proxy:
                                 await self.ws_c2p.close()
                         else:
                             logger.debug("Websocket connection closed")
-                            raise
+                            raise ConnectionError
 
                 except Exception as e:
-                    logger.error(str(e))
-                    print(traceback.format_exc())
+                    if not isinstance(e,ConnectionError):
+                        logger.error(str(e))
+                        print(traceback.format_exc())
                 finally:
                     if not self._result:  # bot crashed, leave instead.
                         logger.debug("Bot crashed")

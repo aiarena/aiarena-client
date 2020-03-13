@@ -131,69 +131,9 @@ class HttpApiMatchSource(MatchSource):
     def submit_result(self, match: HttpApiMatch, result):
         # quick hack to avoid these going uninitialized
         # todo: remove these and actually fix the issue
-        game_time: int = 0
-        bot1_avg_step_time: float = 0
-        bot2_avg_step_time: float = 0
+        
 
-        if isinstance(result, list):
-            for x in result:
-                if x.get("Result", None):
-                    temp_results = x["Result"]
-                    self._utl.printout(str(temp_results))
-                    bot_1_name = list(x["Result"].keys())[0]
-                    bot_2_name = list(x["Result"].keys())[1]
-
-                    if temp_results[bot_1_name] == "Result.Crashed":
-                        result_type = "Player1Crash"
-
-                    elif temp_results[bot_2_name] == "Result.Crashed":
-                        result_type = "Player2Crash"
-
-                    elif temp_results[bot_1_name] == "Result.Timeout":
-                        result_type = "Player1TimeOut"
-
-                    elif temp_results[bot_2_name] == "Result.Timeout":
-                        result_type = "Player2TimeOut"
-
-                    elif temp_results[bot_1_name] == "Result.Victory":
-                        result_type = "Player1Win"
-
-                    elif temp_results[bot_1_name] == "Result.Defeat":
-                        result_type = "Player2Win"
-
-                    elif temp_results[bot_1_name] == "Result.Tie":
-                        result_type = "Tie"
-
-                    else:
-                        result_type = "InitializationError"
-                        game_time = 0
-                        bot1_avg_step_time = 0
-                        bot2_avg_step_time = 0
-
-
-                if x.get("GameTime", None):
-                    game_time = x["GameTime"]
-
-                if x.get("AverageFrameTime", None):
-                    try:
-                        bot1_avg_step_time = next(
-                            item[match.bot1.name] for item in x['AverageFrameTime'] if item.get(match.bot1.name, None))
-                    except StopIteration:
-                        bot1_avg_step_time = 0
-                    try:
-                        bot2_avg_step_time = next(
-                            item[match.bot2.name] for item in x['AverageFrameTime'] if item.get(match.bot2.name, None))
-                    except StopIteration:
-                        bot2_avg_step_time = 0
-
-
-        else:
-            result_type = result
-            game_time = 0
-            bot1_avg_step_time = 0
-            bot2_avg_step_time = 0
-
-        self._utl.printout(str(result_type))
+        self._utl.printout(str(result.result))
         replay_file: str = ""
         for file in os.listdir(self._config.REPLAYS_DIRECTORY):
             if file.endswith('.SC2Replay'):
@@ -289,12 +229,12 @@ class HttpApiMatchSource(MatchSource):
             if os.path.isfile(replay_file_path):
                 file_list["replay_file"] = open(replay_file_path, "rb")
 
-            payload = {"type": result_type, "match": int(match.id), "game_steps": game_time}
+            payload = {"type": result.result, "match": int(match.id), "game_steps": result.game_time}
 
-            if bot1_avg_step_time is not None:
-                payload["bot1_avg_step_time"] = bot1_avg_step_time
-            if bot2_avg_step_time is not None:
-                payload["bot2_avg_step_time"] = bot2_avg_step_time
+            if  result.bot1_avg_step_time is not None:
+                payload["bot1_avg_step_time"] = result.bot1_avg_step_time
+            if result.bot2_avg_step_time is not None:
+                payload["bot2_avg_step_time"] = result.bot2_avg_step_time
 
             if self._config.DEBUG_MODE:
                 self._utl.printout(json.dumps(payload))
@@ -312,7 +252,7 @@ class HttpApiMatchSource(MatchSource):
                     f"ERROR: Result submission failed. Status code: {post.status_code}."
                 )
             else:
-                self._utl.printout(result_type + " - Result transferred")
+                self._utl.printout(result.result + " - Result transferred")
         except ConnectionError:
             self._utl.printout(f"ERROR: Result submission failed. Connection to website failed.")
 
@@ -363,13 +303,13 @@ class FileMatchSource(MatchSource):
         return False
     
     def get_next_match_id(self):
-        with open(self._results_file, "r+") as results_log:
-            try:
+        try:
+            with open(self._results_file, "r+") as results_log:
                 results = json.loads(results_log.read())
                 result_list = results['Results']
                 return max([x.get('MatchID', 0) for x in result_list])
-            except:
-                return 0
+        except:
+            return 0
     
     def next_match(self) -> FileMatch:
 
@@ -385,86 +325,87 @@ class FileMatchSource(MatchSource):
         return next_match
 
     def submit_result(self, match: FileMatch, result):
-        with open("results", "w+") as map_file:
-            map_file.write(str(result) + "\n\n")
+        result_json = result.to_json()
+        # with open("results", "w+") as map_file:
+        #     map_file.write(str(result) + "\n\n")
 
-        result_type = "Error"  # avoid error from this not being initialized
-        result_json = {
-            "MatchID": match.id,
-            "Bot1": match.bot1.name,
-            "Bot2": match.bot2.name,
-            "Winner": None,
-            "Map": None,
-            "Result": None,
-            "GameTime": None,
-            "GameTimeFormatted": None,
-            "TimeStamp": None,
-            "Bot1AvgFrame": 0,
-            "Bot2AvgFrame": 0,
-            'ReplayPath':None,
-        }
-        if isinstance(result, list):
-            for x in result:
-                if x.get("Result", None):
-                    temp_results = x["Result"]
-                    # self._utl.printout(str(temp_results))
+        # result_type = "Error"  # avoid error from this not being initialized
+        # result_json = {
+        #     "MatchID": match.id,
+        #     "Bot1": match.bot1.name,
+        #     "Bot2": match.bot2.name,
+        #     "Winner": None,
+        #     "Map": None,
+        #     "Result": None,
+        #     "GameTime": None,
+        #     "GameTimeFormatted": None,
+        #     "TimeStamp": None,
+        #     "Bot1AvgFrame": 0,
+        #     "Bot2AvgFrame": 0,
+        #     'ReplayPath':None,
+        # }
+        # if isinstance(result, list):
+        #     for x in result:
+        #         if x.get("Result", None):
+        #             temp_results = x["Result"]
+        #             # self._utl.printout(str(temp_results))
 
-                    if temp_results[match.bot1.name] == "Result.Crashed":
-                        result_type = "Player1Crash"
-                        result_json["Winner"] = match.bot2.name
+        #             if temp_results[match.bot1.name] == "Result.Crashed":
+        #                 result_type = "Player1Crash"
+        #                 result_json["Winner"] = match.bot2.name
 
-                    elif temp_results[match.bot2.name] == "Result.Crashed":
-                        result_type = "Player2Crash"
-                        result_json["Winner"] = match.bot1.name
+        #             elif temp_results[match.bot2.name] == "Result.Crashed":
+        #                 result_type = "Player2Crash"
+        #                 result_json["Winner"] = match.bot1.name
 
-                    elif temp_results[match.bot1.name] == "Result.Timeout":
-                        result_type = "Player1TimeOut"
-                        result_json["Winner"] = match.bot2.name
+        #             elif temp_results[match.bot1.name] == "Result.Timeout":
+        #                 result_type = "Player1TimeOut"
+        #                 result_json["Winner"] = match.bot2.name
 
-                    elif temp_results[match.bot2.name] == "Result.Timeout":
-                        result_type = "Player2TimeOut"
-                        result_json["Winner"] = match.bot1.name
+        #             elif temp_results[match.bot2.name] == "Result.Timeout":
+        #                 result_type = "Player2TimeOut"
+        #                 result_json["Winner"] = match.bot1.name
 
-                    elif temp_results[match.bot1.name] == "Result.Victory":
-                        result_type = "Player1Win"
-                        result_json["Winner"] = match.bot1.name
+        #             elif temp_results[match.bot1.name] == "Result.Victory":
+        #                 result_type = "Player1Win"
+        #                 result_json["Winner"] = match.bot1.name
 
-                    elif temp_results[match.bot1.name] == "Result.Defeat":
-                        result_type = "Player2Win"
-                        result_json["Winner"] = match.bot2.name
+        #             elif temp_results[match.bot1.name] == "Result.Defeat":
+        #                 result_type = "Player2Win"
+        #                 result_json["Winner"] = match.bot2.name
 
-                    elif temp_results[match.bot1.name] == "Result.Tie":
-                        result_type = "Tie"
-                        result_json["Winner"] = "Tie"
+        #             elif temp_results[match.bot1.name] == "Result.Tie":
+        #                 result_type = "Tie"
+        #                 result_json["Winner"] = "Tie"
 
-                    else:
-                        result_type = "InitializationError"
+        #             else:
+        #                 result_type = "InitializationError"
 
-                    result_json["Result"] = result_type
+        #             result_json["Result"] = result_type
 
-                if x.get("GameTime", None):
-                    result_json["GameTime"] = x["GameTime"]
-                    result_json["GameTimeFormatted"] = x["GameTimeFormatted"]
+        #         if x.get("GameTime", None):
+        #             result_json["GameTime"] = x["GameTime"]
+        #             result_json["GameTimeFormatted"] = x["GameTimeFormatted"]
 
-                if x.get("AverageFrameTime", None):
-                    try:
-                        result_json["Bot1AvgFrame"] = next(
-                            round(item[match.bot1.name] * 1000, 2) for item in x['AverageFrameTime'] if item.get(match.bot1.name, None))
-                    except StopIteration:
-                        result_json["Bot1AvgFrame"] = 0
-                    try:
-                        result_json["Bot2AvgFrame"] = next(
-                            round(item[match.bot2.name] * 1000, 2) for item in x['AverageFrameTime'] if item.get(match.bot2.name, None))
-                    except StopIteration:
-                        result_json["Bot2AvgFrame"] = 0
+        #         if x.get("AverageFrameTime", None):
+        #             try:
+        #                 result_json["Bot1AvgFrame"] = next(
+        #                     round(item[match.bot1.name] * 1000, 2) for item in x['AverageFrameTime'] if item.get(match.bot1.name, None))
+        #             except StopIteration:
+        #                 result_json["Bot1AvgFrame"] = 0
+        #             try:
+        #                 result_json["Bot2AvgFrame"] = next(
+        #                     round(item[match.bot2.name] * 1000, 2) for item in x['AverageFrameTime'] if item.get(match.bot2.name, None))
+        #             except StopIteration:
+        #                 result_json["Bot2AvgFrame"] = 0
 
-                if x.get("TimeStamp", None):
-                    result_json["TimeStamp"] = x["TimeStamp"]
-        else:
-            result_json["Result"] = result_type
+        #         if x.get("TimeStamp", None):
+        #             result_json["TimeStamp"] = x["TimeStamp"]
+        # else:
+        #     result_json["Result"] = result_type
 
-        result_json['ReplayPath'] = os.path.join(self._config.REPLAYS_DIRECTORY, f'{match.id}_{match.bot1.name}_vs_{match.bot2.name}.SC2Replay')
-        result_json['Map'] = match.map_name
+        # result_json['ReplayPath'] = os.path.join(self._config.REPLAYS_DIRECTORY, f'{match.id}_{match.bot1.name}_vs_{match.bot2.name}.SC2Replay')
+        # result_json['Map'] = match.map_name
         filename = Path(self._results_file)
         filename.touch(exist_ok=True)  # will create file, if it exists will do nothing
 
@@ -479,8 +420,11 @@ class FileMatchSource(MatchSource):
             pass
         
         os.mkdir(match_log_folder)
-        os.mkdir(os.path.join(match_log_folder, str(match.bot1.name)))
-        os.mkdir(os.path.join(match_log_folder, str(match.bot2.name)))
+        try:
+            os.mkdir(os.path.join(match_log_folder, str(match.bot1.name)))
+            os.mkdir(os.path.join(match_log_folder, str(match.bot2.name)))
+        except FileExistsError:
+            pass
         
         bot1_data_folder = os.path.join(self._config.BOTS_DIRECTORY, match.bot1.name, "data")
         bot2_data_folder = os.path.join(self._config.BOTS_DIRECTORY, match.bot2.name, "data")
@@ -500,7 +444,7 @@ class FileMatchSource(MatchSource):
         else:
             Path(bot2_error_log_tmp).touch()
 
-        with open(self._results_file, "r+") as results_log:
+        with open(self._results_file, "w+") as results_log:
             try:
                 results = json.loads(results_log.read())
                 result_list = results['Results']

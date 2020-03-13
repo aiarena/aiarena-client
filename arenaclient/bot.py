@@ -3,11 +3,10 @@ import logging
 import os
 import stat
 import zipfile
-
 import requests
-
 from arenaclient.utl import Utl
-
+import subprocess
+import sys
 
 class Bot:
     """
@@ -138,6 +137,88 @@ class Bot:
                 f"MD5 hash ({self.bot_data_md5hash}) does not match transferred file ({calculated_md5})"
             )
             return False
+
+    def start_bot(self, opponent_id):
+        """
+        Start the bot with the correct arguments.
+        
+        :param opponent_id:
+        :return:
+        """
+        # todo: move to Bot class
+
+        bot_path = os.path.join(self._config.BOTS_DIRECTORY, self.name)
+        bot_file = self.bot_json["FileName"]
+        bot_type = self.bot_json["Type"]
+        cmd_line = [
+            bot_file,
+            "--GamePort",
+            str(self._config.SC2_PROXY["PORT"]),
+            "--StartPort",
+            str(self._config.SC2_PROXY["PORT"]),
+            "--LadderServer",
+            self._config.SC2_PROXY["HOST"],
+            "--OpponentId",
+            str(opponent_id),
+        ]
+        if bot_type.lower() == "python":
+            cmd_line.insert(0, self._config.PYTHON)
+        elif bot_type.lower() == "wine":
+            cmd_line.insert(0, "wine")
+        elif bot_type.lower() == "mono":
+            cmd_line.insert(0, "mono")
+        elif bot_type.lower() == "dotnetcore":
+            cmd_line.insert(0, "dotnet")
+        elif bot_type.lower() == "commandcenter":
+            raise
+        elif bot_type.lower() == "binarycpp":
+            cmd_line.insert(0, os.path.join(bot_path, bot_file))
+        elif bot_type.lower() == "java":
+            cmd_line.insert(0, "java")
+            cmd_line.insert(1, "-jar")
+        elif bot_type.lower() == "nodejs":
+            raise
+
+        try:
+            os.stat(os.path.join(bot_path, "data"))
+        except OSError:
+            os.mkdir(os.path.join(bot_path, "data"))
+        try:
+            os.stat(self._config.REPLAYS_DIRECTORY)
+        except OSError:
+            os.mkdir(self._config.REPLAYS_DIRECTORY)
+        
+        if self._config.RUN_LOCAL:
+            try:
+                os.stat(self._config.BOT_LOGS_DIRECTORY)
+            except:
+                os.mkdir(self._config.BOT_LOGS_DIRECTORY)
+
+        try:
+            if self._config.SYSTEM == "Linux":
+                with open(os.path.join(bot_path, "data", "stderr.log"), "w+") as out:
+                    process = subprocess.Popen(
+                        " ".join(cmd_line),
+                        stdout=out,
+                        stderr=subprocess.STDOUT,
+                        cwd=(str(bot_path)),
+                        shell=True,
+                        preexec_fn=os.setpgrp,
+                    )
+                return process
+            else:
+                with open(os.path.join(bot_path, "data", "stderr.log"), "w+") as out:
+                    process = subprocess.Popen(
+                        " ".join(cmd_line),
+                        stdout=out,
+                        stderr=subprocess.STDOUT,
+                        cwd=(str(bot_path)),
+                        shell=True,
+                        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+                    )
+                return process
+        except Exception as exception:
+            self._utl.printout(exception)
 
 
 class BotFactory:
