@@ -121,16 +121,7 @@ class ConnectionHandler:
                     game_created=False,
                     player_name=self.supervisor.player1,
                     opponent_name=self.supervisor.player2,
-                    max_game_time=self.supervisor.max_game_time,
-                    map_name=self.supervisor.map,
-                    replay_name=self.supervisor.replay_name,
-                    disable_debug=bool(self.supervisor.disable_debug),
                     supervisor=self.supervisor,
-                    strikes=self.supervisor.strikes,
-                    max_frame_time=self.supervisor.max_frame_time,
-                    real_time=self.supervisor.real_time,
-                    visualize=self.supervisor.visualize,
-
                 )
                 await proxy1.websocket_handler(request)
 
@@ -142,15 +133,7 @@ class ConnectionHandler:
                     game_created=True,  # Game has already been created by Bot 1.
                     player_name=self.supervisor.player2,
                     opponent_name=self.supervisor.player1,
-                    max_game_time=self.supervisor.max_game_time,
-                    map_name=self.supervisor.map,
-                    replay_name=self.supervisor.replay_name,
-                    disable_debug=bool(self.supervisor.disable_debug),
                     supervisor=self.supervisor,
-                    strikes=self.supervisor.strikes,
-                    max_frame_time=self.supervisor.max_frame_time,
-                    real_time=self.supervisor.real_time,
-                    visualize=self.supervisor.visualize,
                 )
                 await proxy2.websocket_handler(request)
 
