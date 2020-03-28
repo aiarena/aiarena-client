@@ -87,7 +87,6 @@ class ConnectionHandler:
                     mpwriter.append(data, {
                         'Content-Type': 'image/jpeg'
                     })
-                    # asyncio.create_task( mpwriter.write(response, close_boundary=False))
                     await mpwriter.write(resp, close_boundary=False)
             
             except asyncio.CancelledError:
