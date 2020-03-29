@@ -47,8 +47,9 @@ async def connect(address: str, headers=None):
     """
     Connects to address with headers
     """
-    ws = await aiohttp.ClientSession().ws_connect(address, headers=headers)
-    return ws
+    session = aiohttp.ClientSession()
+    ws = await session.ws_connect(address, headers=headers)
+    return ws, session
 
 
 def complete(msg):
@@ -87,7 +88,8 @@ class Client:
         self._logger.addHandler(self._config.LOGGING_HANDLER)
         self._logger.setLevel(self._config.LOGGING_LEVEL)
         self._match_source = MatchSourceFactory.build_match_source(self._config)
-        self._ws: aiohttp.client._WSRequestContextManager = None
+        self._ws: aiohttp.client._WSRequestContextManager = ...
+        self._session: aiohttp.ClientSession = ...
 
     @staticmethod
     def get_opponent_id(bot_name):
@@ -244,7 +246,7 @@ class Client:
         bot2_process = None
         pids = []
         try:
-            self._ws = await connect(address=self.address, headers=self.headers)
+            self._ws, self._session = await connect(address=self.address, headers=self.headers)
             await self.send(json.dumps(self.json_config(match)))
 
             if await self.connected():
@@ -267,12 +269,14 @@ class Client:
                             pass
                         self._utl.pid_cleanup(pids)
                         await self._ws.close()
+                        await self._session.close()
                         return result
                 else:
                     self._logger.debug(f"Failed to launch {match.bot1.name}")
                     result.parse_result(init_error(match))
                     self._utl.pid_cleanup(pids)
                     await self._ws.close()
+                    await self._session.close()
                     return result
 
                 # Change PID Group
@@ -296,6 +300,7 @@ class Client:
                         pass
                     self._utl.pid_cleanup(pids)
                     await self._ws.close()
+                    await self._session.close()
                     return result
 
                 else:
@@ -314,6 +319,7 @@ class Client:
                         pass
                     self._utl.pid_cleanup(pids)
                     await self._ws.close()
+                    await self._session.close()
                     return result
 
                 else:
@@ -347,11 +353,13 @@ class Client:
                     if not result.has_result():
                         result.parse_result(self.error)
                     await self._ws.close()
+                    await self._session.close()
 
                 if 'StillAlive' in msg:
                     if bot1_process.poll():
                         self._utl.printout("Bot1 Crash")
                         await self._ws.close()
+                        await self._session.close()
                         if not result.has_result():
                             result.parse_result(
                                 {
@@ -374,6 +382,7 @@ class Client:
                     if bot2_process.poll():
                         self._utl.printout("Bot2 Crash")
                         await self._ws.close()
+                        await self._session.close()
                         if not result.has_result():
                             result.parse_result(
                                 {
@@ -398,6 +407,7 @@ class Client:
                         {"TimeStamp": datetime.datetime.utcnow().strftime("%d-%m-%Y %H-%M-%SUTC")}
                     )
                     await self._ws.close()
+                    await self._session.close()
 
             if not result.has_result():
                 result.parse_result(init_error(match))

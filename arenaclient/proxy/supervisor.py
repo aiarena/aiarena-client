@@ -305,4 +305,5 @@ class Supervisor:
             await ws.send_json(dict({"Status": "Complete"}))
             # break
         await self.cleanup(request)
-        return self._ws
+        await self._ws.close()
+        # return self._ws

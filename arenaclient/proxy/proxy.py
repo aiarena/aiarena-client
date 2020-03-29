@@ -83,6 +83,7 @@ class Proxy:
         self.game_data_loaded = False
         self.visualize_step_count = 10
         self.process = None
+        self.to_close = set()
         
     async def clean_up(self):
         try:
@@ -370,12 +371,20 @@ class Proxy:
         if response.status > 3:
             await self.check_for_result()
 
+    async def on_end(self, object=None):
+        if object is not None:
+            self.to_close.add(object)
+        else:
+            for o in self.to_close:
+                await o.close()
+
     async def await_startup(self, url):
         for i in range(60):
             try:
                 session = aiohttp.ClientSession()
                 ws = await session.ws_connect(url, timeout=120)
                 logger.debug("Websocket connection ready")
+                await self.on_end(session)
                 return ws
             except aiohttp.client_exceptions.ClientConnectorError:
                 await session.close()
@@ -394,11 +403,13 @@ class Proxy:
         logger.debug("Starting client session")
         start_time = time.monotonic()
         async with aiohttp.ClientSession() as session:
+            await self.on_end(session)
             logger.debug("Websocket client connection starting")
 
             # Set to 30 to detect internal bot crashes
             self.ws_c2p = aiohttp.web.WebSocketResponse(receive_timeout=30, max_msg_size=0)  # 0 == Unlimited
             await self.ws_c2p.prepare(request)
+            await self.on_end(self.ws_c2p)
             request.app["websockets"].add(self.ws_c2p)  # Add bot client to WeakSet for use in detecting amount of
             # clients connected
 
@@ -413,9 +424,9 @@ class Proxy:
             logger.debug("Websocket connection: " + str(url))
 
             logger.debug("Connecting to SC2")
-            ws_p2s = await self.await_startup(url)
+            self.ws_p2s = await self.await_startup(url)
+            await self.on_end(self.ws_p2s)
             # async with await self.await_startup(url) as ws_p2s:  # Connects to SC2 instance
-            self.ws_p2s = ws_p2s
             c = Controller(self.ws_p2s, self.process)
             if not self.created_game:
                 await self.create_game(c, players, self.map_name)
@@ -468,7 +479,7 @@ class Proxy:
                             else:  # Nothing wrong with the request. Forward to SC2
                                 await self.ws_p2s.send_bytes(req)
                                 try:
-                                    data_p2s = await ws_p2s.receive_bytes()  # Receive response from SC2
+                                    data_p2s = await self.ws_p2s.receive_bytes()  # Receive response from SC2
                                     await self.process_response(data_p2s)
                                 except (
                                         asyncio.CancelledError,
@@ -489,7 +500,8 @@ class Proxy:
                         raise ConnectionError
 
             except Exception as e:
-                if not isinstance(e, ConnectionError):
+                IGNORED_ERRORS = {ConnectionError, asyncio.CancelledError}
+                if not any([isinstance(e, E) for E in IGNORED_ERRORS]):
                     logger.error(str(e))
                     print(traceback.format_exc())
             finally:
@@ -527,14 +539,11 @@ class Proxy:
 
                 self.supervisor.result = dict({self.player_name: self._result})
 
-                await self.ws_c2p.close()
-                await self.ws_p2s.close()
 
-                await ws_p2s.close()
 
                 logger.debug("Discarding proxy")
                 request.app["websockets"].discard(self.ws_c2p)
-                await session.close()
+
 
                 logger.debug("Disconnected")
                 logger.debug("Killing SC2")
@@ -548,4 +557,5 @@ class Proxy:
                         self.process.kill()
                         self.process.wait()
 
-                return self.ws_p2s
+                # return self.ws_p2s
+        await self.on_end()
