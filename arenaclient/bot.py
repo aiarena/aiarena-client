@@ -175,6 +175,7 @@ class Bot:
         elif bot_type.lower() == "commandcenter":
             raise
         elif bot_type.lower() == "binarycpp":
+            cmd_line.pop(0)
             cmd_line.insert(0, os.path.join(bot_path, bot_file))
         elif bot_type.lower() == "java":
             cmd_line.insert(0, "java")
