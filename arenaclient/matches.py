@@ -233,10 +233,10 @@ class HttpApiMatchSource(MatchSource):
 
             payload = {"type": result.result, "match": int(match.id), "game_steps": result.game_time}
 
-            if result.bot1_avg_step_time is not None:
-                payload["bot1_avg_step_time"] = result.bot1_avg_step_time
-            if result.bot2_avg_step_time is not None:
-                payload["bot2_avg_step_time"] = result.bot2_avg_step_time
+            if result.bot1_avg_frame is not None:
+                payload["bot1_avg_step_time"] = result.bot1_avg_frame
+            if result.bot2_avg_frame is not None:
+                payload["bot2_avg_step_time"] = result.bot1_avg_frame
 
             if self._config.DEBUG_MODE:
                 self._utl.printout(json.dumps(payload))
