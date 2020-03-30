@@ -129,7 +129,8 @@ class GameRunner:
     async def run_local_game(self, games, data):
         """
         Interacts with the arenaclient to start and run the games sequentially.
-        :param games: List of games that need to run in the format: "bot_name, race, bot_type, bot_name, race, bot_type, map".
+        :param games: List of games that need to run in the format:
+            "bot_name, race, bot_type, bot_name, race, bot_type, map".
         :param data: Settings for the game.
         :return:
         """
@@ -458,7 +459,8 @@ async def logs(request):
     :param request:
     :return:
     """
-    log = os.path.join(config.BOT_LOGS_DIRECTORY, request.match_info.get('match_id'), request.match_info.get('bot_name'), 'stderr.log')
+    log = os.path.join(config.BOT_LOGS_DIRECTORY, request.match_info.get('match_id'),
+                       request.match_info.get('bot_name'), 'stderr.log')
     if os.path.isfile(log):
         return web.FileResponse(log)
     else:

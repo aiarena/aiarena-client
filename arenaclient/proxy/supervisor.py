@@ -5,7 +5,6 @@ import os
 from json import JSONDecodeError
 from arenaclient.proxy.lib import Timer
 import aiohttp
-from imutils import build_montages
 import numpy as np
 logger = logging.getLogger(__name__)
 logger.setLevel(10)
@@ -161,9 +160,6 @@ class Supervisor:
         await self._ws.send_json(message)
     
     async def build_montage(self):
-        m_w = 2
-        m_h = 2
-        h = w = 500
         try:
             images = [x['image'] for x in self.images.values()] 
             scores = [x['score'] for x in self.images.values()] 
@@ -309,4 +305,5 @@ class Supervisor:
             await ws.send_json(dict({"Status": "Complete"}))
             # break
         await self.cleanup(request)
-        return self._ws
+        await self._ws.close()
+        # return self._ws

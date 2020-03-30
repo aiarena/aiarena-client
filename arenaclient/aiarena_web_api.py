@@ -7,6 +7,9 @@ from arenaclient.utl import Utl
 
 
 class AiArenaWebApi:
+    """
+    Match class to handle the Ai-Arena API
+    """
     API_MATCHES_ENDPOINT = "/api/arenaclient/matches/"
     API_RESULTS_ENDPOINT = "/api/arenaclient/results/"
 
@@ -20,6 +23,9 @@ class AiArenaWebApi:
         self._utl = Utl(global_config)
 
     def get_match(self):
+        """
+        Gets the next match in queue
+        """
         try:
             next_match_response = requests.post(
                 self.API_MATCHES_URL,

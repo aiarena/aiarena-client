@@ -1,5 +1,5 @@
 from .cache import property_immutable_cache
-from .position import Point2, Point3
+from .position import Point2
 from .data import Attribute
 
 

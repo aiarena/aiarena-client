@@ -22,7 +22,7 @@ if __name__ == "__main__":  # execute only if run as a script
         run_frontend = False
         
     if run_frontend:
-        proc = Process(target=run_server,args=[True])
+        proc = Process(target=run_server, args=(True,))
         proc.daemon = True
         proc.start()
         proc.join()

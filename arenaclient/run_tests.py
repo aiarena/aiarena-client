@@ -7,6 +7,8 @@ import arenaclient.default_test_config as config
 from arenaclient.client import Client
 from arenaclient.matches import MatchSourceType
 from arenaclient.utl import Utl
+from arenaclient.proxy.server import run_server
+from multiprocessing import Process
 
 # Sanity check the config and remind people to check their config
 assert config.TEST_MODE, "LOCAL_TEST_MODE config value must must be set to True to run tests." + os.linesep \
@@ -30,7 +32,7 @@ games = {
     'connect_timeout,T,python,basic_bot,T,python,AutomatonLE': "InitializationError",
     'crash_on_first_frame,T,python,basic_bot,T,python,AutomatonLE': "Player1Crash",
     'hang,T,python,basic_bot,T,python,AutomatonLE': "Player1Crash",
-    'instant_crash,T,python,basic_bot,T,python,AutomatonLE': "Player1Crash",
+    'instant_crash,T,python,basic_bot,T,python,AutomatonLE': "InitializationError",
     'loser_bot,T,python,basic_bot,T,python,AutomatonLE': "Player2Win",
     'basic_bot,T,python,loser_bot,T,python,AutomatonLE': "Player1Win",
 }
@@ -39,6 +41,9 @@ ORIGINAL_MAX_GAME_TIME = config.MAX_GAME_TIME
 
 
 async def run_tests():
+    """
+    Run tests.
+    """
     with open('test_results.txt', 'w+') as f:  # Clear results file
         f.write('')
 
@@ -61,6 +66,7 @@ async def run_tests():
                 test_result = f"Result ({str(result['Results'][0]['Result'])}) matches expected result ({value}):" + \
                               str(result["Results"][0]["Result"] == value)
                 utl.printout(test_result)
+                assert(str(result['Results'][0]['Result']) == value)
                 with open('test_results.txt', 'a+') as f:
                     f.write(str(key) + '\t' + str(test_result) + '\n')
             except FileNotFoundError:
@@ -68,4 +74,8 @@ async def run_tests():
             except KeyError:
                 utl.printout("Test failed: Result not found in file")
 
-asyncio.get_event_loop().run_until_complete(run_tests())
+if __name__ == "__main__":
+    proc = Process(target=run_server, args=(False,))
+    proc.daemon = True
+    proc.start()
+    asyncio.get_event_loop().run_until_complete(run_tests())

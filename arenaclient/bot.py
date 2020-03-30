@@ -3,10 +3,9 @@ import logging
 import os
 import stat
 import zipfile
-
 import requests
-
 from arenaclient.utl import Utl
+import subprocess
 
 
 class Bot:
@@ -18,6 +17,9 @@ class Bot:
 
     @staticmethod
     def map_to_type(bot_name, bot_type):
+        """
+        Map bot type to relevant run commands.
+        """
         bot_type_map = {
             "python": ["run.py", "Python"],
             "cppwin32": [f"{bot_name}.exe", "Wine"],
@@ -139,13 +141,105 @@ class Bot:
             )
             return False
 
+    def start_bot(self, opponent_id):
+        """
+        Start the bot with the correct arguments.
+        
+        :param opponent_id:
+        :return:
+        """
+        # todo: move to Bot class
+
+        bot_path = os.path.join(self._config.BOTS_DIRECTORY, self.name)
+        bot_file = self.bot_json["FileName"]
+        bot_type = self.bot_json["Type"]
+        cmd_line = [
+            bot_file,
+            "--GamePort",
+            str(self._config.SC2_PROXY["PORT"]),
+            "--StartPort",
+            str(self._config.SC2_PROXY["PORT"]),
+            "--LadderServer",
+            self._config.SC2_PROXY["HOST"],
+            "--OpponentId",
+            str(opponent_id),
+        ]
+        if bot_type.lower() == "python":
+            cmd_line.insert(0, self._config.PYTHON)
+        elif bot_type.lower() == "wine":
+            cmd_line.insert(0, "wine")
+        elif bot_type.lower() == "mono":
+            cmd_line.insert(0, "mono")
+        elif bot_type.lower() == "dotnetcore":
+            cmd_line.insert(0, "dotnet")
+        elif bot_type.lower() == "commandcenter":
+            raise
+        elif bot_type.lower() == "binarycpp":
+            cmd_line.pop(0)
+            cmd_line.insert(0, os.path.join(bot_path, bot_file))
+        elif bot_type.lower() == "java":
+            cmd_line.insert(0, "java")
+            cmd_line.insert(1, "-jar")
+        elif bot_type.lower() == "nodejs":
+            raise
+
+        try:
+            os.stat(os.path.join(bot_path, "data"))
+        except OSError:
+            os.mkdir(os.path.join(bot_path, "data"))
+        try:
+            os.stat(self._config.REPLAYS_DIRECTORY)
+        except OSError:
+            os.mkdir(self._config.REPLAYS_DIRECTORY)
+        
+        if self._config.RUN_LOCAL:
+            try:
+                os.stat(self._config.BOT_LOGS_DIRECTORY)
+            except OSError:
+                os.mkdir(self._config.BOT_LOGS_DIRECTORY)
+
+        try:
+            if self._config.SYSTEM == "Linux":
+                with open(os.path.join(bot_path, "data", "stderr.log"), "w+") as out:
+                    process = subprocess.Popen(
+                        " ".join(cmd_line),
+                        stdout=out,
+                        stderr=subprocess.STDOUT,
+                        cwd=(str(bot_path)),
+                        shell=True,
+                        preexec_fn=os.setpgrp,
+                    )
+                return process
+            else:
+                with open(os.path.join(bot_path, "data", "stderr.log"), "w+") as out:
+                    process = subprocess.Popen(
+                        " ".join(cmd_line),
+                        stdout=out,
+                        stderr=subprocess.STDOUT,
+                        cwd=(str(bot_path)),
+                        shell=True,
+                        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+                    )
+                return process
+        except Exception as exception:
+            self._utl.printout(exception)
+
 
 class BotFactory:
+    """
+    Factory to create bot object
+    """
     @staticmethod
     def from_api_data(config, data):
+        """
+        Creates bot from api data
+        """
         return Bot(config, data["id"], data["name"], data["game_display_id"], data["bot_zip"], data["bot_zip_md5hash"],
                    data["bot_data"], data["bot_data_md5hash"], data["plays_race"], data["type"])
 
     @staticmethod
     def from_values(config, bot_id, bot_name, bot_race, bot_type):
+        """
+        Creates bot from values
+        """
         return Bot(config, bot_id, bot_name, bot_id, None, None, None, None, bot_race, bot_type)

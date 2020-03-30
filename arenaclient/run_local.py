@@ -18,11 +18,17 @@ class RunLocal:
         self.runner = GameRunner()
 
     def start_server(self):
-        self.server_process = Process(target=run_server, args=[False])
+        """
+        Start server
+        """
+        self.server_process = Process(target=run_server, args=(False,))
         self.server_process.daemon = True
         self.server_process.start()
 
     def stop_server(self):
+        """
+        Stop server
+        """
         self.server_process.terminate()
 
     def __enter__(self):
@@ -33,15 +39,21 @@ class RunLocal:
         self.stop_server()
 
     def add_games_to_queue(self, games: List[str]):
+        """
+
+        @param games:
+        """
         for game in games:
             self.games_queue.append(game)
 
     def generate_games_list(self, bot1_list: List[str], bot2_list: List[str], map_list: List[str]) -> List[str]:
         """
-        Generates games list, every bot from 'bot1_list' will be matched against every bot from 'bot2_list' on every map in 'map_list'.
+        Generates games list, every bot from 'bot1_list' will be matched against every bot from 'bot2_list' on every map
+        in 'map_list'.
 
         Example input:
-            generate_games_list(["CreepyBot,Z,python"], ["basic_bot,T,python", "loser_bot,T,python], ["AcropolisLE", "TritonLE"])
+            generate_games_list(["CreepyBot,Z,python"], ["basic_bot,T,python", "loser_bot,T,python],
+            ["AcropolisLE", "TritonLE"])
         """
         games = []
         for bot1_string in bot1_list:
