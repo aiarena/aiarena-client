@@ -387,6 +387,7 @@ class Proxy:
                 await self.on_end(session)
                 return ws
             except aiohttp.client_exceptions.ClientConnectorError:
+                await asyncio.sleep(1)
                 await session.close()
                 if i > 15:
                     logger.debug("Connection refused (startup not complete (yet))")

@@ -477,7 +477,8 @@ class Client:
 
         except Exception:
             self._logger.error(str(traceback.format_exc()))
-            result = Result(match, self._config).parse_result(self.error)
+            result = Result(match, self._config)
+            result.parse_result(self.error)
 
         return result
 
