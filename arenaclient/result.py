@@ -99,13 +99,13 @@ class Result:
         if result.get("AverageFrameTime", None):
             try:
                 self.bot1_avg_frame = next(
-                    round(item[self.bot1] * 1000, 2) for item in result['AverageFrameTime'] if item.get(self.bot1, None)
+                    item[self.bot1] for item in result['AverageFrameTime'] if item.get(self.bot1, None)
                 )
             except StopIteration:
                 self.bot1_avg_frame = 0
             try:
                 self.bot2_avg_frame = next(
-                    round(item[self.bot2] * 1000, 2) for item in result['AverageFrameTime'] if item.get(self.bot2, None)
+                    item[self.bot2] for item in result['AverageFrameTime'] if item.get(self.bot2, None)
                 )
             except StopIteration:
                 self.bot2_avg_frame = 0
