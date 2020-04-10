@@ -60,6 +60,16 @@ class Utl:
         with open(self._config.LOG_FILE, "a+") as f:
             line = " ".join(infos) + "\n"
             f.write(line)
+    
+    @staticmethod
+    def convert_wsl_paths(path):
+        """
+        :param path:
+        :return:
+        """
+        new_path = path.replace( 'C:','/mnt/c',).replace('D:','/mnt/d').replace("\\","/").replace(" ", "\ ")
+     
+        return new_path
 
     # Needed for hashlib md5 function
     @staticmethod
