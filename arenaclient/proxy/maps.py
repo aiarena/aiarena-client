@@ -2,7 +2,7 @@ import logging
 
 from arenaclient.proxy.lib import Paths
 
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 
 def get(name=None):

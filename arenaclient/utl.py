@@ -1,5 +1,6 @@
 import datetime
-import logging
+# import logging
+from loguru import logger
 import math
 import os
 import signal
@@ -18,9 +19,7 @@ class Utl:
     def __init__(self, config):
         self._config = config
 
-        self._logger = logging.getLogger(__name__)
-        self._logger.addHandler(config.LOGGING_HANDLER)
-        self._logger.setLevel(config.LOGGING_LEVEL)
+        self._logger = logger
 
     @staticmethod
     def is_valid_avg_step_time(num):

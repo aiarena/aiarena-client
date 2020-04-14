@@ -13,4 +13,5 @@ Brotli
 cchardet
 opencv-contrib-python==4.1.1.26
 opencv-python
-aiohttp-jinja2 
+aiohttp-jinja2
+loguru

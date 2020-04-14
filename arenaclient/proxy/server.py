@@ -1,7 +1,7 @@
 import argparse
 import asyncio
-import logging
-import os
+from loguru import logger
+import os, sys
 import signal
 import traceback
 import weakref
@@ -25,8 +25,12 @@ from arenaclient.proxy.supervisor import Supervisor
 
 HOST = os.getenv("HOST", "127.0.0.1")  # Environment variables for ease of access.
 PORT = int(os.getenv("PORT", 8765))
-logger = logging.getLogger(__name__)
-logger.setLevel(10)
+if not os.environ.get("ARENADEBUG",None):
+    logger.remove(0)
+    logger.add(sys.stderr, level="INFO")
+else:
+    logger.debug("Showing debug logs")
+logger.add("proxy.log", level="DEBUG")
 
 
 class ConnectionHandler:
@@ -237,7 +241,8 @@ def run_server(use_frontend=None):
             web.get("/get_maps", frontend.get_maps, name='get_maps'),
             web.get("/replays/{replay}", frontend.replays, name='replays'),
             web.get("/logs/{match_id}/{bot_name}/stderr.log", frontend.logs, name='logs'),
-            web.get("/game_running", game_runner.game_running, name='game_running')
+            web.get("/game_running", game_runner.game_running, name='game_running'),
+            web.get("/ac_log/aiarena-client.log", frontend.ac_log, name='ac_log'),
         ]
         app.router.add_routes(routes)
     on_start()

@@ -1,15 +1,11 @@
 import asyncio
 import json
-import logging
+from loguru import logger
 import os
 from json import JSONDecodeError
 from arenaclient.proxy.lib import Timer
 import aiohttp
 import numpy as np
-logger = logging.getLogger(__name__)
-logger.setLevel(10)
-logger.addHandler(logging.FileHandler("proxy.log", "a+"))
-logging.info("Logging started")  # Hack to show logging in PyCharm.
 
 
 class Supervisor:

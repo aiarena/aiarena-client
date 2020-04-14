@@ -1,5 +1,5 @@
 import hashlib
-import logging
+from loguru import logger
 import os
 import stat
 import zipfile
@@ -41,9 +41,7 @@ class Bot:
                  plays_race, bot_type):
         self._config = config
 
-        self._logger = logging.getLogger(__name__)
-        self._logger.addHandler(self._config.LOGGING_HANDLER)
-        self._logger.setLevel(self._config.LOGGING_LEVEL)
+        self._logger = logger
 
         self._utl = Utl(self._config)
 
