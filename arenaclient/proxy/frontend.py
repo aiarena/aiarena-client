@@ -493,9 +493,9 @@ async def ac_log(request):
     :param request:
     :return:
     """
-    log = "proxy.log"
+    log = os.path.join(config.LOCAL_PATH, "proxy.log")
     if os.path.isfile(log):
         path = os.path.abspath(log)
-        return web.FileResponse(log)
+        return web.FileResponse(path)
     else:
         return web.Response(status=404)

@@ -12,7 +12,7 @@ import psutil
 from aiohttp import web, MultipartWriter
 
 from arenaclient.proxy import frontend
-
+import arenaclient.default_config as cfg
 try:
     import uvloop
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -25,12 +25,10 @@ from arenaclient.proxy.supervisor import Supervisor
 
 HOST = os.getenv("HOST", "127.0.0.1")  # Environment variables for ease of access.
 PORT = int(os.getenv("PORT", 8765))
-if not os.environ.get("ARENADEBUG",None):
-    logger.remove(0)
-    logger.add(sys.stderr, level="INFO")
-else:
-    logger.debug("Showing debug logs")
-logger.add("proxy.log", level="DEBUG")
+
+logger.debug("Showing debug logs")
+LOG_PATH = os.path.join(cfg.LOCAL_PATH, "proxy.log")
+logger.add(LOG_PATH, level="DEBUG")
 
 
 class ConnectionHandler:
