@@ -41,6 +41,8 @@ class ConnectionHandler:
         self.supervisor: Supervisor = None
         self.t1: Timer = None
         self.t2: Timer = None
+        self.proxy1: Proxy = ...
+        self.proxy2: Proxy = ...
 
     async def bots_connected(self, args):
         """
@@ -118,25 +120,25 @@ class ConnectionHandler:
                 self.t2 = Timer(40, self.bots_connected, args=[request, 2])  # Calls bots_connected after 40 seconds.
 
                 # game_created =False forces first player to create game when both players are connected.
-                proxy1 = Proxy(
+                self.proxy1 = Proxy(
                     game_created=False,
                     player_name=self.supervisor.player1,
                     opponent_name=self.supervisor.player2,
                     supervisor=self.supervisor,
                 )
-                await proxy1.websocket_handler(request)
+                await self.proxy1.websocket_handler(request)
 
             elif len(request.app["websockets"]) == 2:  # Supervisor and bot 1 connected.
                 logger.debug("Second bot connecting")
                 await self.supervisor.send_message({"Bot": "Connected"})
 
-                proxy2 = Proxy(
+                self.proxy2 = Proxy(
                     game_created=True,  # Game has already been created by Bot 1.
                     player_name=self.supervisor.player2,
                     opponent_name=self.supervisor.player1,
                     supervisor=self.supervisor,
                 )
-                await proxy2.websocket_handler(request)
+                await self.proxy2.websocket_handler(request)
 
         else:  # TODO: Implement this for devs running without a supervisor
             raise NotImplementedError
