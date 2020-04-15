@@ -124,14 +124,14 @@ class Proxy:
             print(tb)
             
         try:
-            self.ws_c2p.close()
+            await self.ws_c2p.close()
         except:
             tb = traceback.format_exc()
             logger.error(f"Exception {e}: {tb}")
             print(tb)
             
         try:
-            self.ws_p2s.close()
+            await self.ws_p2s.close()
         except:
             tb = traceback.format_exc()
             logger.error(f"Exception {e}: {tb}")
@@ -145,7 +145,7 @@ class Proxy:
         """
         try:
             await self.ws_p2s.send_bytes(request.SerializeToString())
-        except TypeError:
+        except TypeError as e:
             logger.debug("Cannot send: SC2 Connection already closed.")
             tb = traceback.format_exc()
             logger.error(f"Exception {e}: {tb}")
@@ -245,7 +245,6 @@ class Proxy:
     async def create_game(self):
         """
         Static method to send a create_game request to SC2 with the relevant options.
-        :param map_name:
         :return:
         """
         logger.debug("Creating game...")
@@ -355,7 +354,7 @@ class Proxy:
                     self.supervisor.average_frame_time = {
                         self.player_name: self.average_time / self._game_loops
                     }
-            except ZeroDivisionError:
+            except ZeroDivisionError as e:
                 tb = traceback.format_exc()
                 logger.error(f"Exception {e}: {tb}")
                 print(tb)
@@ -448,12 +447,11 @@ class Proxy:
         self.ws_c2p = aiohttp.web.WebSocketResponse(receive_timeout=30, max_msg_size=0)  # 0 == Unlimited
         await self.ws_c2p.prepare(request)
         
-        #Clean-up
+        # Clean-up
         await self.on_end(self.ws_c2p)
         request.app["websockets"].add(self.ws_c2p)  # Add bot client to WeakSet for use in detecting amount of
         # clients connected 
         self.supervisor.pids = self.process.pid  # Add SC2 to supervisor pid list for use in cleanup
-        
 
         logger.debug("Websocket connection: " + self.url)
         logger.debug("Connecting to SC2")
@@ -492,8 +490,8 @@ class Proxy:
                     self.current_loop_frame_time += (time.monotonic() - start_time)
 
                 if self.no_of_strikes > self.strikes:  # Bot exceeded max_frame_time, surrender on behalf of bot
-                    logger.debug(f'{self.player_name} exceeded {self.max_frame_time} ms, {self.no_of_strikes} '
-                                    f'times in a row')
+                    logger.debug(f'{self.player_name} exceeded {self.max_frame_time} ms, {self.no_of_strikes} times '
+                                 f'in a row')
 
                     self._surrender = True
                     self._result = "Result.Timeout"
@@ -587,5 +585,5 @@ class Proxy:
                     self.process.wait()
             await self.ws_p2s.close()
             await self.ws_c2p.close()
-                # return self.ws_p2s
+
         await self.on_end()

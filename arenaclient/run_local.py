@@ -8,6 +8,23 @@ from arenaclient.proxy.frontend import GameRunner
 from arenaclient.proxy.server import run_server
 
 
+def generate_games_list(bot1_list: List[str], bot2_list: List[str], map_list: List[str]) -> List[str]:
+    """
+    Generates games list, every bot from 'bot1_list' will be matched against every bot from 'bot2_list' on every map
+    in 'map_list'.
+
+    Example input:
+        generate_games_list(["CreepyBot,Z,python"], ["basic_bot,T,python", "loser_bot,T,python],
+        ["AcropolisLE", "TritonLE"])
+    """
+    games = []
+    for bot1_string in bot1_list:
+        for bot2_string in bot2_list:
+            for map_name in map_list:
+                games.append(",".join([bot1_string, bot2_string, map_name]))
+    return games
+
+
 class RunLocal:
     def __init__(self):
         self.server_process = None
@@ -46,22 +63,6 @@ class RunLocal:
         for game in games:
             self.games_queue.append(game)
 
-    def generate_games_list(self, bot1_list: List[str], bot2_list: List[str], map_list: List[str]) -> List[str]:
-        """
-        Generates games list, every bot from 'bot1_list' will be matched against every bot from 'bot2_list' on every map
-        in 'map_list'.
-
-        Example input:
-            generate_games_list(["CreepyBot,Z,python"], ["basic_bot,T,python", "loser_bot,T,python],
-            ["AcropolisLE", "TritonLE"])
-        """
-        games = []
-        for bot1_string in bot1_list:
-            for bot2_string in bot2_list:
-                for map_name in map_list:
-                    games.append(",".join([bot1_string, bot2_string, map_name]))
-        return games
-
     async def run_local_games(self):
         while self.games_queue:
             games = [self.games_queue.popleft()]
@@ -78,7 +79,7 @@ async def main():
         bot1_list = ["basic_bot,T,python"]
         bot2_list = ["loser_bot,T,python"]
         map_list = ["AcropolisLE"]
-        games = run_local.generate_games_list(bot1_list, bot2_list, map_list)
+        games = generate_games_list(bot1_list, bot2_list, map_list)
         # games = ["basic_bot,T,python,loser_bot,T,python,AcropolisLE"]
 
         # Add games to queue

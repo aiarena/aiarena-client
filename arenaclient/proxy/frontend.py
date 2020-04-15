@@ -199,8 +199,10 @@ class GameRunner:
             logger.info("Games started")
             return web.Response(text="Games started")
 
+
 def verify_path(path):
     return os.path.isdir(path) or os.path.isfile(path)
+
 
 def save_settings_to_file(data):
     """
@@ -486,6 +488,7 @@ async def logs(request):
         return web.FileResponse(log)
     else:
         return web.Response(status=404)
+
 
 async def ac_log(request):
     """

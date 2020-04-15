@@ -12,7 +12,6 @@ from typing import Any
 from s2clientprotocol import sc2api_pb2 as sc_pb
 
 
-
 class Timer:
     """
     Helper class to call a coroutine after a specified amount of time.

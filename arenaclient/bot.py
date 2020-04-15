@@ -184,7 +184,7 @@ class Bot:
         elif bot_type.lower() == "wsl":
             cmd_line.pop(0)
             cmd_line.insert(0, self._utl.convert_wsl_paths(os.path.join(bot_path, bot_file)))
-            cmd_line.insert(0,'wsl ')
+            cmd_line.insert(0, 'wsl ')
         try:
             os.stat(os.path.join(bot_path, "data"))
         except OSError:

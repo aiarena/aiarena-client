@@ -6,6 +6,7 @@ from multiprocessing import Process
 from argparse import ArgumentParser
 from arenaclient.proxy.server import run_server
 
+
 async def run_client():
     ac = Client(cfg)
     await ac.run()

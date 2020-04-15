@@ -1,7 +1,7 @@
 import argparse
 import asyncio
 from loguru import logger
-import os, sys
+import os
 import signal
 import traceback
 import weakref
@@ -38,9 +38,9 @@ class ConnectionHandler:
 
     def __init__(self):
         self.connected_clients: int = 0
-        self.supervisor: Supervisor = None
-        self.t1: Timer = None
-        self.t2: Timer = None
+        self.supervisor: Supervisor = ...
+        self.t1: Timer = ...
+        self.t2: Timer = ...
         self.proxy1: Proxy = ...
         self.proxy2: Proxy = ...
 

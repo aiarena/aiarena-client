@@ -66,7 +66,7 @@ class Utl:
         :param path:
         :return:
         """
-        new_path = path.replace( 'C:','/mnt/c',).replace('D:','/mnt/d').replace("\\","/").replace(" ", "\ ")
+        new_path = path.replace('C:', '/mnt/c').replace('D:', '/mnt/d').replace("\\", "/").replace(" ", "\ ")
      
         return new_path
 
