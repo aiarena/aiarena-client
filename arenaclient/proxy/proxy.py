@@ -118,21 +118,21 @@ class Proxy:
                     self.process.kill()
                     self.process.wait()
                     logger.error("KILLED")
-        except:
+        except Exception as e:
             tb = traceback.format_exc()
             logger.error(f"Exception {e}: {tb}")
             print(tb)
             
         try:
             await self.ws_c2p.close()
-        except:
+        except Exception as e:
             tb = traceback.format_exc()
             logger.error(f"Exception {e}: {tb}")
             print(tb)
             
         try:
             await self.ws_p2s.close()
-        except:
+        except Exception as e:
             tb = traceback.format_exc()
             logger.error(f"Exception {e}: {tb}")
             print(tb)
@@ -165,7 +165,7 @@ class Proxy:
             print(traceback.format_exc())
             try:
                 await self.ws_p2s.receive_bytes()
-            except asyncio.CancelledError:
+            except asyncio.CancelledError as e:
                 tb = traceback.format_exc()
                 logger.error(f"Exception {e}: {tb}")
                 print(tb)
@@ -540,7 +540,7 @@ class Proxy:
             try:
                 if await self.save_replay():
                     await self._execute(leave_game=sc_pb.RequestLeaveGame())
-            except Exception:
+            except Exception as e:
                 tb = traceback.format_exc()
                 logger.error(f"Exception {e}: {tb}")
                 print(tb)
