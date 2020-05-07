@@ -17,7 +17,16 @@ class Result:
         self.bot2_avg_frame = 0
         self.replay_path = None
         self._config = cfg
-        
+    
+    def __repr__(self):
+        return f"""
+        Result={self.result}
+        Winner={self.winner}
+        GameTIme={self.game_time}
+        Bot1AvgStepTime={self.bot1_avg_frame}
+        Bot2AvgStepTime={self.bot2_avg_frame}
+        """
+
     def to_json(self):
         """
         Convert Result object to JSON
@@ -53,8 +62,12 @@ class Result:
             if temp_results == "Error":
                 self.result = "Error"
                 return
-
-            if temp_results[self.bot1] == "Result.Crashed":
+            
+            if temp_results[self.bot1] == "Result.SC2Crash" or temp_results[self.bot2] == "Result.SC2Crash":
+                self.result = "Error"
+                return
+            
+            elif temp_results[self.bot1] == "Result.Crashed":
                 self.result = "Player1Crash"
                 self.winner = self.bot2
 

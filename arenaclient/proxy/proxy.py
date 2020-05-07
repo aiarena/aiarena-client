@@ -121,21 +121,19 @@ class Proxy:
         except Exception as e:
             tb = traceback.format_exc()
             logger.error(f"Exception {e}: {tb}")
-            print(tb)
+
             
         try:
             await self.ws_c2p.close()
         except Exception as e:
             tb = traceback.format_exc()
             logger.error(f"Exception {e}: {tb}")
-            print(tb)
             
         try:
             await self.ws_p2s.close()
         except Exception as e:
             tb = traceback.format_exc()
             logger.error(f"Exception {e}: {tb}")
-            print(tb)
 
     async def __request(self, request):
         """
@@ -149,7 +147,7 @@ class Proxy:
             logger.debug("Cannot send: SC2 Connection already closed.")
             tb = traceback.format_exc()
             logger.error(f"Exception {e}: {tb}")
-            print(tb)
+
 
         response = sc_pb.Response()
         response_bytes = None
@@ -159,8 +157,7 @@ class Proxy:
             logger.exception("Cannot receive: SC2 Connection already closed.")
             tb = traceback.format_exc()
             logger.error(f"Exception {e}: {tb}")
-            print(tb)
-        
+
         except asyncio.CancelledError:
             print(traceback.format_exc())
             try:
@@ -168,12 +165,11 @@ class Proxy:
             except asyncio.CancelledError as e:
                 tb = traceback.format_exc()
                 logger.error(f"Exception {e}: {tb}")
-                print(tb)
 
         except Exception as e:
             tb = traceback.format_exc()
             logger.error(f"Exception {e}: {tb}")
-            print(tb)
+
         if response_bytes:
             response.ParseFromString(response_bytes)
         else:
@@ -240,7 +236,6 @@ class Proxy:
         except Exception as e:
             tb = traceback.format_exc()
             logger.error(f"Exception {e}: {tb}")
-            print(tb)
 
     async def create_game(self):
         """
@@ -344,7 +339,6 @@ class Proxy:
         except Exception as e:
             tb = traceback.format_exc()
             logger.error(f"Exception {e}: {tb}")
-            print(tb)
 
         if self._result:
             try:
@@ -357,7 +351,6 @@ class Proxy:
             except ZeroDivisionError as e:
                 tb = traceback.format_exc()
                 logger.error(f"Exception {e}: {tb}")
-                print(tb)
                 self.supervisor.average_frame_time = {self.player_name: 0}
             self.supervisor.game_time = self._game_loops
             self.supervisor.game_time_seconds = self._game_time_seconds
@@ -424,7 +417,7 @@ class Proxy:
                 await self.on_end(session)
                 return ws
             except aiohttp.client_exceptions.ClientConnectorError:
-                await asyncio.sleep(1)
+                await asyncio.sleep(2)
                 await session.close()
                 if i > 15:
                     logger.debug("Connection refused (startup not complete (yet))")
@@ -515,7 +508,6 @@ class Proxy:
                             ) as e:
                                 tb = traceback.format_exc()
                                 logger.error(f"Exception {e}: {tb}")
-                                print(tb)
                             await self.ws_c2p.send_bytes(data_p2s)  # Forward response to bot
                         start_time = time.monotonic()  # Start the frame timer.
                     elif msg.type == aiohttp.WSMsgType.CLOSED:
@@ -532,18 +524,20 @@ class Proxy:
             if not any([isinstance(e, E) for E in IGNORED_ERRORS]):
                 tb = traceback.format_exc()
                 logger.error(f"Exception {e}: {tb}")
-                print(tb)
         finally:
             if not self._result:  # bot crashed, leave instead.
-                logger.debug("Bot crashed")
-                self._result = "Result.Crashed"
+                if self.process.poll():
+                    logger.debug("SC2 crashed")
+                    self._result = "Result.SC2Crash"
+                else:
+                    logger.debug("Bot crashed")
+                    self._result = "Result.Crashed"
             try:
                 if await self.save_replay():
                     await self._execute(leave_game=sc_pb.RequestLeaveGame())
             except Exception as e:
                 tb = traceback.format_exc()
                 logger.error(f"Exception {e}: {tb}")
-                print(tb)
             try:
                 if {
                     self.player_name: self.average_time / self._game_loops

@@ -143,10 +143,10 @@ class ConnectionHandler:
         else:  # TODO: Implement this for devs running without a supervisor
             raise NotImplementedError
 
-        if self.t1:
+        if self.t1 is not ...:
             self.t1.cancel()
 
-        if self.t2:
+        if self.t2 is not ...:
             self.t2.cancel()
 
         self.__init__()

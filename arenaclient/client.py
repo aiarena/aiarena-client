@@ -477,7 +477,9 @@ class Client:
             self._logger.error(str(traceback.format_exc()))
             result = Result(match, self._config)
             result.parse_result(self.error)
-
+        
+        logger.info(result)
+        
         return result
 
     async def run(self):
