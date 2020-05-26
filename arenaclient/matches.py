@@ -210,53 +210,57 @@ class HttpApiMatchSource(MatchSource):
         shutil.make_archive(
             os.path.join(self._config.TEMP_PATH, match.bot2.name + "-data"), "zip", bot2_data_folder
         )
+        attempts = 0
+        while attempts < 3:
+            try:  # Upload replay file and bot data archives
+                file_list = {
+                    "bot1_data": open(
+                        os.path.join(self._config.TEMP_PATH, f"{match.bot1.name}-data.zip"), "rb"
+                    ),
+                    "bot2_data": open(
+                        os.path.join(self._config.TEMP_PATH, f"{match.bot2.name}-data.zip"), "rb"
+                    ),
+                    "bot1_log": open(
+                        os.path.join(self._config.TEMP_PATH, f"{match.bot1.name}-error.zip"), "rb"
+                    ),
+                    "bot2_log": open(
+                        os.path.join(self._config.TEMP_PATH, f"{match.bot2.name}-error.zip"), "rb"
+                    ),
+                    "arenaclient_log": open(arenaclient_log_zip, "rb"),
+                }
 
-        try:  # Upload replay file and bot data archives
-            file_list = {
-                "bot1_data": open(
-                    os.path.join(self._config.TEMP_PATH, f"{match.bot1.name}-data.zip"), "rb"
-                ),
-                "bot2_data": open(
-                    os.path.join(self._config.TEMP_PATH, f"{match.bot2.name}-data.zip"), "rb"
-                ),
-                "bot1_log": open(
-                    os.path.join(self._config.TEMP_PATH, f"{match.bot1.name}-error.zip"), "rb"
-                ),
-                "bot2_log": open(
-                    os.path.join(self._config.TEMP_PATH, f"{match.bot2.name}-error.zip"), "rb"
-                ),
-                "arenaclient_log": open(arenaclient_log_zip, "rb"),
-            }
+                if os.path.isfile(replay_file_path):
+                    file_list["replay_file"] = open(replay_file_path, "rb")
 
-            if os.path.isfile(replay_file_path):
-                file_list["replay_file"] = open(replay_file_path, "rb")
+                payload = {"type": result.result, "match": int(match.id), "game_steps": result.game_time}
 
-            payload = {"type": result.result, "match": int(match.id), "game_steps": result.game_time}
+                if result.bot1_avg_frame is not None:
+                    payload["bot1_avg_step_time"] = result.bot1_avg_frame
+                if result.bot2_avg_frame is not None:
+                    payload["bot2_avg_step_time"] = result.bot1_avg_frame
 
-            if result.bot1_avg_frame is not None:
-                payload["bot1_avg_step_time"] = result.bot1_avg_frame
-            if result.bot2_avg_frame is not None:
-                payload["bot2_avg_step_time"] = result.bot1_avg_frame
+                if self._config.DEBUG_MODE:
+                    self._utl.printout(json.dumps(payload))
 
-            if self._config.DEBUG_MODE:
-                self._utl.printout(json.dumps(payload))
-
-            post = requests.post(
-                self._config.API_RESULTS_URL,
-                files=file_list,
-                data=payload,
-                headers={"Authorization": "Token " + self._config.MATCH_SOURCE_CONFIG.API_TOKEN},
-            )
-            if post is None:
-                self._utl.printout("ERROR: Result submission failed. 'post' was None.")
-            elif post.status_code >= 400:  # todo: retry?
-                self._utl.printout(
-                    f"ERROR: Result submission failed. Status code: {post.status_code}."
+                post = requests.post(
+                    self._config.API_RESULTS_URL,
+                    files=file_list,
+                    data=payload,
+                    headers={"Authorization": "Token " + self._config.MATCH_SOURCE_CONFIG.API_TOKEN},
                 )
-            else:
-                self._utl.printout(result.result + " - Result transferred")
-        except ConnectionError:
-            self._utl.printout(f"ERROR: Result submission failed. Connection to website failed.")
+                if post is None:
+                    self._utl.printout("ERROR: Result submission failed. 'post' was None.")
+                    attempts +=1
+                elif post.status_code >= 400:  # todo: retry?
+                    self._utl.printout(
+                        f"ERROR: Result submission failed. Status code: {post.status_code}."
+                    )
+                    attempts +=1
+                else:
+                    self._utl.printout(result.result + " - Result transferred")
+                    break
+            except ConnectionError:
+                self._utl.printout(f"ERROR: Result submission failed. Connection to website failed.")
 
 
 class FileMatchSource(MatchSource):
