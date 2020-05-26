@@ -148,12 +148,11 @@ class Proxy:
             tb = traceback.format_exc()
             logger.error(f"Exception {e}: {tb}")
 
-
         response = sc_pb.Response()
         response_bytes = None
         try:
             response_bytes = await self.ws_p2s.receive_bytes()
-        except TypeError:
+        except TypeError as e:
             logger.exception("Cannot receive: SC2 Connection already closed.")
             tb = traceback.format_exc()
             logger.error(f"Exception {e}: {tb}")
