@@ -1978,5 +1978,5 @@ class UnitTypeId(enum.Enum):
 
 
 for item in UnitTypeId:
-    assert not item.name in globals()
+    assert item.name not in globals()
     globals()[item.name] = item

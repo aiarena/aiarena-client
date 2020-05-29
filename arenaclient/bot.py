@@ -1,5 +1,5 @@
 import hashlib
-import logging
+from loguru import logger
 import os
 import stat
 import zipfile
@@ -33,6 +33,7 @@ class Bot:
             "DotNetCore": [f"{bot_name}.dll", "DotNetCore"],
             "Java": [f"{bot_name}.jar", "Java"],
             "NodeJS": ["main.jar", "NodeJS"],
+            "WSL": [f"{bot_name}", "WSL"]
         }
         return bot_type_map[bot_type][0], bot_type_map[bot_type][1]
 
@@ -40,9 +41,7 @@ class Bot:
                  plays_race, bot_type):
         self._config = config
 
-        self._logger = logging.getLogger(__name__)
-        self._logger.addHandler(self._config.LOGGING_HANDLER)
-        self._logger.setLevel(self._config.LOGGING_LEVEL)
+        self._logger = logger
 
         self._utl = Utl(self._config)
 
@@ -182,7 +181,10 @@ class Bot:
             cmd_line.insert(1, "-jar")
         elif bot_type.lower() == "nodejs":
             raise
-
+        elif bot_type.lower() == "wsl":
+            cmd_line.pop(0)
+            cmd_line.insert(0, self._utl.convert_wsl_paths(os.path.join(bot_path, bot_file)))
+            cmd_line.insert(0, 'wsl ')
         try:
             os.stat(os.path.join(bot_path, "data"))
         except OSError:

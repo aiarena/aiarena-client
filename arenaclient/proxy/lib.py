@@ -1,6 +1,6 @@
 import asyncio
 import enum
-import logging
+from loguru import logger
 import os
 import platform
 import re
@@ -10,8 +10,6 @@ import sys
 from typing import Any
 
 from s2clientprotocol import sc2api_pb2 as sc_pb
-
-logger = logging.getLogger(__name__)
 
 
 class Timer:
@@ -49,7 +47,6 @@ class Protocol:
         self._status = None
 
     async def __request(self, request):
-        logger.debug(f"Sending request: {request !r}")
         try:
             await self._ws.send_bytes(request.SerializeToString())
         except TypeError:

@@ -4,14 +4,13 @@ import json
 import os
 import random
 import zipfile
+import requests
+import arenaclient.default_local_config as config
 from pathlib import Path
 from platform import system
-
-import requests
+from loguru import logger
 from aiohttp import web, ClientSession
 from aiohttp_jinja2 import render_template
-
-import arenaclient.default_local_config as config
 from arenaclient.client import Client
 from arenaclient.matches import FileMatchSource
 
@@ -76,12 +75,13 @@ class Bot:
                 with open(os.path.join(path, self.name + '.zip'), "rb") as bot_zip:
                     calculated_md5 = hashlib.md5(bot_zip.read()).hexdigest()
                 if md5_hash == calculated_md5:
-                    print('Do not download')
+                    logger.debug('Local MD5 matches ai-arena MD5. Do not download')
                     return
         bot_zip = data['results'][0]['bot_zip']
         r = requests.get(bot_zip, headers={"Authorization": "Token " + self.settings['API_token']}, stream=True)
 
         bot_download_path = os.path.join(path, self.name + ".zip")
+        logger.debug(f'Downloading bot to {bot_download_path}')
         with open(bot_download_path, "wb") as bot_zip:
             for chunk in r.iter_content(chunk_size=10 * 1024):
                 bot_zip.write(chunk)
@@ -90,7 +90,6 @@ class Bot:
         # Extract to bot folder
         with zipfile.ZipFile(bot_download_path, "r") as zip_ref:
             zip_ref.extractall(os.path.join(self.settings['bot_directory_location'], self.name))
-            # os.remove(bot_download_path)
 
     def extract_bot_data(self):
         """
@@ -100,11 +99,13 @@ class Bot:
         settings_file = load_settings_from_file()
         self.settings = convert_wsl_paths(settings_file)
         if ' (AI-Arena)' in self.name:
+            logger.debug("Download bot")
             self.download_bot()
             return
 
         with open(os.path.join(self.settings['bot_directory_location'], self.name, 'ladderbots.json')) as f:
             self.type = self.find_values('Type', f.read())[0]
+            logger.debug(f"{self.name}'s type ={self.type}")
 
 
 class GameRunner:
@@ -137,11 +138,15 @@ class GameRunner:
         if system() == 'Windows':
             config.PYTHON = 'python'
         settings = convert_wsl_paths(load_settings_from_file())
+        logger.debug(f"Settings ={settings}")
         config.REPLAYS_DIRECTORY = settings['replay_directory_location']
         config.BOTS_DIRECTORY = settings['bot_directory_location']
+        if not os.path.isdir(config.BOTS_DIRECTORY):
+            logger.error(f"{config.BOTS_DIRECTORY} does not exist")
         config.ROUNDS_PER_RUN = 1
         config.REALTIME = data.get("Realtime", False)
         config.VISUALIZE = data.get("Visualize", False)
+        logger.debug(f"Realtime={config.REALTIME}, Visualize={config.VISUALIZE}")
         config.MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(
             matches_file=os.path.join(os.path.dirname(os.path.realpath(__file__)), "matches"),
             results_file=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results.json'))
@@ -188,9 +193,15 @@ class GameRunner:
         asyncio.create_task(self.run_local_game(games, game_data))
 
         if len(games) == 1:
+            logger.info("Game started")
             return web.Response(text="Game started")
         else:
+            logger.info("Games started")
             return web.Response(text="Games started")
+
+
+def verify_path(path):
+    return os.path.isdir(path) or os.path.isfile(path)
 
 
 def save_settings_to_file(data):
@@ -200,8 +211,20 @@ def save_settings_to_file(data):
     :return:
     """
     data['bot_directory_location'] = data.get('bot_directory_location', None)
+    
+    if not verify_path(data['bot_directory_location']):
+        logger.error(f"{data['bot_directory_location']} is not a valid path")
+    
     data['sc2_directory_location'] = data.get('sc2_directory_location', None)
+    
+    if not verify_path(data['sc2_directory_location']):
+        logger.error(f"{data['sc2_directory_location']} is not a valid path")
+    
     data['replay_directory_location'] = data.get('replay_directory_location', None)
+    
+    if not verify_path(data['replay_directory_location']):
+        logger.error(f"{data['replay_directory_location']} is not a valid path")
+
     data['max_game_time'] = data.get('max_game_time', 60486)
     data['allow_debug'] = data.get('allow_debug', 'Off')
     data['visualize'] = data.get('visualize', 'Off')
@@ -463,5 +486,19 @@ async def logs(request):
                        request.match_info.get('bot_name'), 'stderr.log')
     if os.path.isfile(log):
         return web.FileResponse(log)
+    else:
+        return web.Response(status=404)
+
+
+async def ac_log(request):
+    """
+    Allows users to download AC logs if they are using a docker container.
+    :param request:
+    :return:
+    """
+    log = os.path.join(config.LOCAL_PATH, "proxy.log")
+    if os.path.isfile(log):
+        path = os.path.abspath(log)
+        return web.FileResponse(path)
     else:
         return web.Response(status=404)

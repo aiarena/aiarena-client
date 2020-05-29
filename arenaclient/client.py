@@ -1,6 +1,6 @@
 import datetime
 import json
-import logging
+from loguru import logger
 import os
 import shutil
 import signal
@@ -84,9 +84,7 @@ class Client:
         self._config = config
         self._utl = Utl(self._config)
 
-        self._logger = logging.getLogger(__name__)
-        self._logger.addHandler(self._config.LOGGING_HANDLER)
-        self._logger.setLevel(self._config.LOGGING_LEVEL)
+        self._logger = logger
         self._match_source = MatchSourceFactory.build_match_source(self._config)
         self._ws: aiohttp.client._WSRequestContextManager = ...
         self._session: aiohttp.ClientSession = ...
@@ -479,7 +477,9 @@ class Client:
             self._logger.error(str(traceback.format_exc()))
             result = Result(match, self._config)
             result.parse_result(self.error)
-
+        
+        logger.info(result)
+        
         return result
 
     async def run(self):

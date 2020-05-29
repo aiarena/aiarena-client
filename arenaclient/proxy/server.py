@@ -1,6 +1,6 @@
 import argparse
 import asyncio
-import logging
+from loguru import logger
 import os
 import signal
 import traceback
@@ -12,7 +12,7 @@ import psutil
 from aiohttp import web, MultipartWriter
 
 from arenaclient.proxy import frontend
-
+import arenaclient.default_config as cfg
 try:
     import uvloop
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -25,8 +25,10 @@ from arenaclient.proxy.supervisor import Supervisor
 
 HOST = os.getenv("HOST", "127.0.0.1")  # Environment variables for ease of access.
 PORT = int(os.getenv("PORT", 8765))
-logger = logging.getLogger(__name__)
-logger.setLevel(10)
+
+logger.debug("Showing debug logs")
+LOG_PATH = os.path.join(cfg.LOCAL_PATH, "proxy.log")
+logger.add(LOG_PATH, level="DEBUG")
 
 
 class ConnectionHandler:
@@ -36,9 +38,11 @@ class ConnectionHandler:
 
     def __init__(self):
         self.connected_clients: int = 0
-        self.supervisor: Supervisor = None
-        self.t1: Timer = None
-        self.t2: Timer = None
+        self.supervisor: Supervisor = ...
+        self.t1: Timer = ...
+        self.t2: Timer = ...
+        self.proxy1: Proxy = ...
+        self.proxy2: Proxy = ...
 
     async def bots_connected(self, args):
         """
@@ -116,33 +120,33 @@ class ConnectionHandler:
                 self.t2 = Timer(40, self.bots_connected, args=[request, 2])  # Calls bots_connected after 40 seconds.
 
                 # game_created =False forces first player to create game when both players are connected.
-                proxy1 = Proxy(
+                self.proxy1 = Proxy(
                     game_created=False,
                     player_name=self.supervisor.player1,
                     opponent_name=self.supervisor.player2,
                     supervisor=self.supervisor,
                 )
-                await proxy1.websocket_handler(request)
+                await self.proxy1.websocket_handler(request)
 
             elif len(request.app["websockets"]) == 2:  # Supervisor and bot 1 connected.
                 logger.debug("Second bot connecting")
                 await self.supervisor.send_message({"Bot": "Connected"})
 
-                proxy2 = Proxy(
+                self.proxy2 = Proxy(
                     game_created=True,  # Game has already been created by Bot 1.
                     player_name=self.supervisor.player2,
                     opponent_name=self.supervisor.player1,
                     supervisor=self.supervisor,
                 )
-                await proxy2.websocket_handler(request)
+                await self.proxy2.websocket_handler(request)
 
         else:  # TODO: Implement this for devs running without a supervisor
             raise NotImplementedError
 
-        if self.t1:
+        if self.t1 is not ...:
             self.t1.cancel()
 
-        if self.t2:
+        if self.t2 is not ...:
             self.t2.cancel()
 
         self.__init__()
@@ -237,7 +241,8 @@ def run_server(use_frontend=None):
             web.get("/get_maps", frontend.get_maps, name='get_maps'),
             web.get("/replays/{replay}", frontend.replays, name='replays'),
             web.get("/logs/{match_id}/{bot_name}/stderr.log", frontend.logs, name='logs'),
-            web.get("/game_running", game_runner.game_running, name='game_running')
+            web.get("/game_running", game_runner.game_running, name='game_running'),
+            web.get("/ac_log/aiarena-client.log", frontend.ac_log, name='ac_log'),
         ]
         app.router.add_routes(routes)
     on_start()

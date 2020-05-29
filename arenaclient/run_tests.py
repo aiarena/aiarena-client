@@ -27,7 +27,6 @@ games = {
     'basic_bot,T,python,crash_on_first_frame,T,python,AutomatonLE': "Player2Crash",
     'basic_bot,T,python,hang,T,python,AutomatonLE': "Player2Crash",
     'basic_bot,T,python,instant_crash,T,python,AutomatonLE': "InitializationError",
-    'timeout_bot,T,python,timeout_bot,T,python,AutomatonLE': "Tie",
     'crash,T,python,basic_bot,T,python,AutomatonLE': "Player1Crash",
     'connect_timeout,T,python,basic_bot,T,python,AutomatonLE': "InitializationError",
     'crash_on_first_frame,T,python,basic_bot,T,python,AutomatonLE': "Player1Crash",
@@ -35,6 +34,7 @@ games = {
     'instant_crash,T,python,basic_bot,T,python,AutomatonLE': "InitializationError",
     'loser_bot,T,python,basic_bot,T,python,AutomatonLE': "Player2Win",
     'basic_bot,T,python,loser_bot,T,python,AutomatonLE': "Player1Win",
+    'timeout_bot,T,python,timeout_bot,T,python,AutomatonLE': "Tie",
 }
 
 ORIGINAL_MAX_GAME_TIME = config.MAX_GAME_TIME

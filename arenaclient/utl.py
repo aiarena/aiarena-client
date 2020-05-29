@@ -1,5 +1,6 @@
 import datetime
-import logging
+# import logging
+from loguru import logger
 import math
 import os
 import signal
@@ -18,9 +19,7 @@ class Utl:
     def __init__(self, config):
         self._config = config
 
-        self._logger = logging.getLogger(__name__)
-        self._logger.addHandler(config.LOGGING_HANDLER)
-        self._logger.setLevel(config.LOGGING_LEVEL)
+        self._logger = logger
 
     @staticmethod
     def is_valid_avg_step_time(num):
@@ -60,6 +59,16 @@ class Utl:
         with open(self._config.LOG_FILE, "a+") as f:
             line = " ".join(infos) + "\n"
             f.write(line)
+    
+    @staticmethod
+    def convert_wsl_paths(path):
+        """
+        :param path:
+        :return:
+        """
+        new_path = path.replace('C:', '/mnt/c').replace('D:', '/mnt/d').replace("\\", "/").replace(" ", "\ ")
+     
+        return new_path
 
     # Needed for hashlib md5 function
     @staticmethod

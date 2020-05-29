@@ -1,5 +1,6 @@
 import asyncio
-import logging
+from loguru import logger
+import os
 import socket
 from contextlib import contextmanager
 import subprocess
@@ -20,9 +21,6 @@ from arenaclient.proxy.supervisor import Supervisor
 
 from arenaclient.mini_map import Minimap
 
-logger = logging.getLogger(__name__)
-logger.setLevel(10)
-logger.addHandler(logging.FileHandler("proxy.log", "a+"))
 
 warnings.simplefilter("ignore", ResourceWarning)
 warnings.simplefilter("ignore", ConnectionResetError)
@@ -67,8 +65,8 @@ class Proxy:
         self.max_game_time: int = self.supervisor.max_game_time
         self._game_loops: int = 0
         self._game_time_seconds: float = 0
-        self.ws_c2p = None
-        self.ws_p2s = None
+        self.ws_c2p: aiohttp.WebSocketResponse = ...
+        self.ws_p2s: aiohttp.ClientWebSocketResponse = ...
         self.no_of_strikes: int = 0
         self.max_frame_time: int = self.supervisor.max_frame_time
         self.strikes: int = self.supervisor.strikes
@@ -77,14 +75,37 @@ class Proxy:
         self.real_time: bool = self.supervisor.real_time
         self.visualize: bool = self.supervisor.visualize
         self.render: bool = False 
-        self.mini_map = Minimap()
-        self.observation_loaded = False
-        self.game_info_loaded = False
-        self.game_data_loaded = False
-        self.visualize_step_count = 10
-        self.process = None
+        self.mini_map: Minimap = Minimap()
+        self.observation_loaded: bool = False
+        self.game_info_loaded: bool = False
+        self.game_data_loaded: bool = False
+        self.visualize_step_count: int = 10
+        self.process: subprocess.Popen = ...
         self.to_close = set()
-        
+        self.data_requested: bool = False
+    
+    @property
+    def url(self):
+        return "ws://localhost:" + str(self.port) + "/sc2api"
+    
+    @property
+    def players(self):
+        return [
+            Bot(None, None, name=self.player_name),
+            Bot(None, None, name=self.opponent_name),
+        ]
+
+    @property
+    def controller(self):
+        return Controller(self.ws_p2s, self.process)
+    
+    @property
+    def empty_response(self):
+        data_p2s = sc_pb.Response()
+        data_p2s.id = 0
+        data_p2s.status = 3
+        return data_p2s.SerializeToString()
+
     async def clean_up(self):
         try:
             if self.process is not None and self.process.poll() is None:
@@ -97,18 +118,22 @@ class Proxy:
                     self.process.kill()
                     self.process.wait()
                     logger.error("KILLED")
-        except:
-            print(traceback.format_exc())
+        except Exception as e:
+            tb = traceback.format_exc()
+            logger.error(f"Exception {e}: {tb}")
+
             
         try:
-            self.ws_c2p.close()
-        except:
-            print(traceback.format_exc())
+            await self.ws_c2p.close()
+        except Exception as e:
+            tb = traceback.format_exc()
+            logger.error(f"Exception {e}: {tb}")
             
         try:
-            self.ws_p2s.close()
-        except:
-            print(traceback.format_exc())
+            await self.ws_p2s.close()
+        except Exception as e:
+            tb = traceback.format_exc()
+            logger.error(f"Exception {e}: {tb}")
 
     async def __request(self, request):
         """
@@ -118,29 +143,32 @@ class Proxy:
         """
         try:
             await self.ws_p2s.send_bytes(request.SerializeToString())
-        except TypeError:
+        except TypeError as e:
             logger.debug("Cannot send: SC2 Connection already closed.")
-            print(traceback.format_exc())
+            tb = traceback.format_exc()
+            logger.error(f"Exception {e}: {tb}")
 
         response = sc_pb.Response()
         response_bytes = None
         try:
             response_bytes = await self.ws_p2s.receive_bytes()
-        except TypeError:
+        except TypeError as e:
             logger.exception("Cannot receive: SC2 Connection already closed.")
-            print(traceback.format_exc())
-        
+            tb = traceback.format_exc()
+            logger.error(f"Exception {e}: {tb}")
+
         except asyncio.CancelledError:
             print(traceback.format_exc())
             try:
                 await self.ws_p2s.receive_bytes()
-            except asyncio.CancelledError:
-                print(traceback.format_exc())
-                logger.error("Requests must not be cancelled multiple times")
+            except asyncio.CancelledError as e:
+                tb = traceback.format_exc()
+                logger.error(f"Exception {e}: {tb}")
 
         except Exception as e:
-            print(traceback.format_exc())
-            logger.error(str(e))
+            tb = traceback.format_exc()
+            logger.error(f"Exception {e}: {tb}")
+
         if response_bytes:
             response.ParseFromString(response_bytes)
         else:
@@ -173,6 +201,7 @@ class Proxy:
                 self.max_game_time
                 and self._game_loops > self.max_game_time
         ):
+            logger.debug("Tie detected")
             self._result = "Result.Tie"
             self._game_time_seconds = (
                     self._game_loops / 22.4
@@ -204,20 +233,17 @@ class Proxy:
                 )
 
         except Exception as e:
-            print(traceback.format_exc())
-            logger.error(e)
+            tb = traceback.format_exc()
+            logger.error(f"Exception {e}: {tb}")
 
-    async def create_game(self, server, players, map_name):
+    async def create_game(self):
         """
         Static method to send a create_game request to SC2 with the relevant options.
-        :param server:
-        :param players:
-        :param map_name:
         :return:
         """
         logger.debug("Creating game...")
-        map_name = map_name.replace(".SC2Replay", "").replace(" ", "")
-        response = await server.create_game(maps.get(map_name), players, realtime=self.real_time)
+        map_name = self.map_name.replace(".SC2Map", "").replace(" ", "")
+        response = await self.controller.create_game(maps.get(map_name), self.players, realtime=self.real_time)
         logger.debug("Game created")
         return response
 
@@ -290,14 +316,16 @@ class Proxy:
                 return request.SerializeToString()
 
             elif self.disable_debug and request.HasField("debug"):
+                logger.debug("Debug interface used")
                 return False
             
-            elif request.HasField('data'):
+            elif not self.data_requested and request.HasField('data'):
                 request.data.unit_type_id = True
                 request.data.upgrade_id = True
                 request.data.buff_id = True
                 request.data.effect_id = True
                 request.data.ability_id = True
+                self.data_requested = True
                 return request.SerializeToString()
             
             elif request.HasField("leave_game"):
@@ -308,8 +336,8 @@ class Proxy:
                 return msg.data
 
         except Exception as e:
-            logger.debug(f"Exception{e}")
-            print(traceback.format_exc())
+            tb = traceback.format_exc()
+            logger.error(f"Exception {e}: {tb}")
 
         if self._result:
             try:
@@ -319,8 +347,9 @@ class Proxy:
                     self.supervisor.average_frame_time = {
                         self.player_name: self.average_time / self._game_loops
                     }
-            except ZeroDivisionError:
-                print(traceback.format_exc())
+            except ZeroDivisionError as e:
+                tb = traceback.format_exc()
+                logger.error(f"Exception {e}: {tb}")
                 self.supervisor.average_frame_time = {self.player_name: 0}
             self.supervisor.game_time = self._game_loops
             self.supervisor.game_time_seconds = self._game_time_seconds
@@ -378,16 +407,16 @@ class Proxy:
             for o in self.to_close:
                 await o.close()
 
-    async def await_startup(self, url):
+    async def await_startup(self):
         for i in range(60):
             try:
                 session = aiohttp.ClientSession()
-                ws = await session.ws_connect(url, timeout=120)
+                ws = await session.ws_connect(self.url, timeout=120)
                 logger.debug("Websocket connection ready")
                 await self.on_end(session)
                 return ws
             except aiohttp.client_exceptions.ClientConnectorError:
-                await asyncio.sleep(1)
+                await asyncio.sleep(2)
                 await session.close()
                 if i > 15:
                     logger.debug("Connection refused (startup not complete (yet))")
@@ -403,160 +432,151 @@ class Proxy:
         self.process = self._launch("127.0.0.1", False)
         logger.debug("Starting client session")
         start_time = time.monotonic()
-        async with aiohttp.ClientSession() as session:
-            await self.on_end(session)
-            logger.debug("Websocket client connection starting")
 
-            # Set to 30 to detect internal bot crashes
-            self.ws_c2p = aiohttp.web.WebSocketResponse(receive_timeout=30, max_msg_size=0)  # 0 == Unlimited
-            await self.ws_c2p.prepare(request)
-            await self.on_end(self.ws_c2p)
-            request.app["websockets"].add(self.ws_c2p)  # Add bot client to WeakSet for use in detecting amount of
-            # clients connected
+        logger.debug("Websocket client connection starting")              
+        
+        # Set to 30 to detect internal bot crashes  
+        self.ws_c2p = aiohttp.web.WebSocketResponse(receive_timeout=30, max_msg_size=0)  # 0 == Unlimited
+        await self.ws_c2p.prepare(request)
+        
+        # Clean-up
+        await self.on_end(self.ws_c2p)
+        request.app["websockets"].add(self.ws_c2p)  # Add bot client to WeakSet for use in detecting amount of
+        # clients connected 
+        self.supervisor.pids = self.process.pid  # Add SC2 to supervisor pid list for use in cleanup
 
-            players = [
-                Bot(None, None, name=self.player_name),
-                Bot(None, None, name=self.opponent_name),
-            ]
+        logger.debug("Websocket connection: " + self.url)
+        logger.debug("Connecting to SC2")
+        self.ws_p2s = await self.await_startup()
+        await self.on_end(self.ws_p2s)
 
-            self.supervisor.pids = self.process.pid  # Add SC2 to supervisor pid list for use in cleanup
+        if not self.created_game:
+            await self.create_game()
+            self.created_game = True
 
-            url = "ws://localhost:" + str(self.port) + "/sc2api"
-            logger.debug("Websocket connection: " + str(url))
+        logger.debug("Player:" + str(self.player_name))
+        logger.debug("Joining game")
+        logger.debug("Connecting proxy")
+        try:
+            async for msg in self.ws_c2p:
+                await self.check_time()  # Check for ties
+                if msg.data is None:
+                    raise
 
-            logger.debug("Connecting to SC2")
-            self.ws_p2s = await self.await_startup(url)
-            await self.on_end(self.ws_p2s)
-            # async with await self.await_startup(url) as ws_p2s:  # Connects to SC2 instance
-            c = Controller(self.ws_p2s, self.process)
-            if not self.created_game:
-                await self.create_game(c, players, self.map_name)
-                self.created_game = True
+                # Detect slow bots. TODO: Move to own method
+                if self.previous_loop < self._game_loops:  # New loop. Add frame time to average time and reset
+                    # current frame time.
+                    self.average_time += self.current_loop_frame_time
+                    self.previous_loop = self._game_loops
 
-            logger.debug("Player:" + str(self.player_name))
-            logger.debug("Joining game")
-            logger.debug("Connecting proxy")
-            try:
-                async for msg in self.ws_c2p:
-                    await self.check_time()  # Check for ties
-                    if msg.data is None:
-                        raise
+                    if self.current_loop_frame_time * 1000 > self.max_frame_time:  # If bot's current frame is
+                        # slower than max allowed, increment strike counter.
+                        self.no_of_strikes += 1
 
-                    # Detect slow bots. TODO: Move to own method
-                    if self.previous_loop < self._game_loops:  # New loop. Add frame time to average time and reset
-                        # current frame time.
-                        self.average_time += self.current_loop_frame_time
-                        self.previous_loop = self._game_loops
+                    elif self.no_of_strikes > 0:  # We don't want bots to build up a "credit"
+                        self.no_of_strikes -= 1
 
-                        if self.current_loop_frame_time * 1000 > self.max_frame_time:  # If bot's current frame is
-                            # slower than max allowed, increment strike counter.
-                            self.no_of_strikes += 1
+                    self.current_loop_frame_time = 0
 
-                        elif self.no_of_strikes > 0:  # We don't want bots to build up a "credit"
-                            self.no_of_strikes -= 1
+                else:
+                    self.current_loop_frame_time += (time.monotonic() - start_time)
 
-                        self.current_loop_frame_time = 0
+                if self.no_of_strikes > self.strikes:  # Bot exceeded max_frame_time, surrender on behalf of bot
+                    logger.debug(f'{self.player_name} exceeded {self.max_frame_time} ms, {self.no_of_strikes} times '
+                                 f'in a row')
 
+                    self._surrender = True
+                    self._result = "Result.Timeout"
+
+                if not self.killed:  # Bot connection has not been closed, forward requests.
+                    if msg.type == aiohttp.WSMsgType.BINARY:
+                        req = await self.process_request(msg)
+
+                        if not req:  # If process_request returns False, the request has been
+                            # nullified. Return an empty response instead. TODO: Do this better                            
+                            await self.ws_c2p.send_bytes(self.empty_response)
+                        else:  # Nothing wrong with the request. Forward to SC2
+                            await self.ws_p2s.send_bytes(req)
+                            try:
+                                data_p2s = await self.ws_p2s.receive_bytes()  # Receive response from SC2
+                                await self.process_response(data_p2s)
+                            except (
+                                    asyncio.CancelledError,
+                                    asyncio.TimeoutError,
+                                    Exception
+                            ) as e:
+                                tb = traceback.format_exc()
+                                logger.error(f"Exception {e}: {tb}")
+                            await self.ws_c2p.send_bytes(data_p2s)  # Forward response to bot
+                        start_time = time.monotonic()  # Start the frame timer.
+                    elif msg.type == aiohttp.WSMsgType.CLOSED:
+                        logger.error("Client shutdown")
                     else:
-                        self.current_loop_frame_time += (time.monotonic() - start_time)
+                        logger.error("Incorrect message type")
+                        await self.ws_c2p.close()
+                else:
+                    logger.debug("Websocket connection closed")
+                    raise ConnectionError
 
-                    if self.no_of_strikes > self.strikes:  # Bot exceeded max_frame_time, surrender on behalf of bot
-                        logger.debug(f'{self.player_name} exceeded {self.max_frame_time} ms, {self.no_of_strikes} '
-                                     f'times in a row')
-
-                        self._surrender = True
-                        self._result = "Result.Timeout"
-
-                    if not self.killed:  # Bot connection has not been closed, forward requests.
-                        if msg.type == aiohttp.WSMsgType.BINARY:
-                            req = await self.process_request(msg)
-
-                            if isinstance(req, bool):  # If process_request returns a bool, the request has been
-                                # nullified. Return an empty response instead. TODO: Do this better
-                                data_p2s = sc_pb.Response()
-                                data_p2s.id = 0
-                                data_p2s.status = 3
-                                await self.ws_c2p.send_bytes(data_p2s.SerializeToString())
-                            else:  # Nothing wrong with the request. Forward to SC2
-                                await self.ws_p2s.send_bytes(req)
-                                try:
-                                    data_p2s = await self.ws_p2s.receive_bytes()  # Receive response from SC2
-                                    await self.process_response(data_p2s)
-                                except (
-                                        asyncio.CancelledError,
-                                        asyncio.TimeoutError,
-                                        Exception
-                                ) as e:
-                                    logger.error(str(e))
-                                    print(traceback.format_exc())
-                                await self.ws_c2p.send_bytes(data_p2s)  # Forward response to bot
-                            start_time = time.monotonic()  # Start the frame timer.
-                        elif msg.type == aiohttp.WSMsgType.CLOSED:
-                            logger.error("Client shutdown")
-                        else:
-                            logger.error("Incorrect message type")
-                            await self.ws_c2p.close()
-                    else:
-                        logger.debug("Websocket connection closed")
-                        raise ConnectionError
-
-            except Exception as e:
-                IGNORED_ERRORS = {ConnectionError, asyncio.CancelledError}
-                if not any([isinstance(e, E) for E in IGNORED_ERRORS]):
-                    logger.error(str(e))
-                    print(traceback.format_exc())
-            finally:
-                if not self._result:  # bot crashed, leave instead.
+        except Exception as e:
+            IGNORED_ERRORS = {ConnectionError, asyncio.CancelledError}
+            if not any([isinstance(e, E) for E in IGNORED_ERRORS]):
+                tb = traceback.format_exc()
+                logger.error(f"Exception {e}: {tb}")
+        finally:
+            if not self._result:  # bot crashed, leave instead.
+                if self.process.poll():
+                    logger.debug("SC2 crashed")
+                    self._result = "Result.SC2Crash"
+                else:
                     logger.debug("Bot crashed")
                     self._result = "Result.Crashed"
-                try:
-                    if await self.save_replay():
-                        await self._execute(leave_game=sc_pb.RequestLeaveGame())
-                except Exception:
-                    print(traceback.format_exc())
-                    logger.debug("Can't save replay, SC2 already closed")
-                try:
-                    if {
+            try:
+                if await self.save_replay():
+                    await self._execute(leave_game=sc_pb.RequestLeaveGame())
+            except Exception as e:
+                tb = traceback.format_exc()
+                logger.error(f"Exception {e}: {tb}")
+            try:
+                if {
+                    self.player_name: self.average_time / self._game_loops
+                } not in self.supervisor.average_frame_time:
+                    self.supervisor.average_frame_time = {
                         self.player_name: self.average_time / self._game_loops
-                    } not in self.supervisor.average_frame_time:
-                        self.supervisor.average_frame_time = {
-                            self.player_name: self.average_time / self._game_loops
-                        }
-                except ZeroDivisionError:
-                    self.supervisor.average_frame_time = {self.player_name: 0}
-                if self.visualize and False:  # TODO: fix for new visualization
-                    img = np.ones((500, 500, 3))
-                    font = cv2.FONT_HERSHEY_SIMPLEX
-                    org = (50, 50)
-                    font_scale = 1
-                    color = (50, 194, 134)
-                    thickness = 1
+                    }
+            except ZeroDivisionError:
+                self.supervisor.average_frame_time = {self.player_name: 0}
+            if self.visualize and False:  # TODO: fix for new visualization
+                img = np.ones((500, 500, 3))
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                org = (50, 50)
+                font_scale = 1
+                color = (50, 194, 134)
+                thickness = 1
 
-                    flipped = cv2.resize(img, (500, 500), cv2.INTER_NEAREST)
-                    cv2.putText(flipped, self.player_name, org, font, font_scale, color, thickness, cv2.LINE_AA)
-                    if self._result:
-                        cv2.putText(flipped, str(self._result), (50, 200), font, font_scale, color, thickness,
-                                    cv2.LINE_AA)
+                flipped = cv2.resize(img, (500, 500), cv2.INTER_NEAREST)
+                cv2.putText(flipped, self.player_name, org, font, font_scale, color, thickness, cv2.LINE_AA)
+                if self._result:
+                    cv2.putText(flipped, str(self._result), (50, 200), font, font_scale, color, thickness,
+                                cv2.LINE_AA)
 
-                self.supervisor.result = dict({self.player_name: self._result})
+            self.supervisor.result = dict({self.player_name: self._result})
 
+            logger.debug("Discarding proxy")
+            request.app["websockets"].discard(self.ws_c2p)
+            logger.debug("Disconnected")
 
+            logger.debug("Killing SC2")
+            if self.process is not None and self.process.poll() is None:
+                for _ in range(3):
+                    self.process.terminate()
+                    time.sleep(0.5)
+                    if self.process.poll() is not None:
+                        break
+                else:
+                    self.process.kill()
+                    self.process.wait()
+            await self.ws_p2s.close()
+            await self.ws_c2p.close()
 
-                logger.debug("Discarding proxy")
-                request.app["websockets"].discard(self.ws_c2p)
-
-
-                logger.debug("Disconnected")
-                logger.debug("Killing SC2")
-                if self.process is not None and self.process.poll() is None:
-                    for _ in range(3):
-                        self.process.terminate()
-                        time.sleep(0.5)
-                        if self.process.poll() is not None:
-                            break
-                    else:
-                        self.process.kill()
-                        self.process.wait()
-
-                # return self.ws_p2s
         await self.on_end()
