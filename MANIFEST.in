@@ -1,2 +1,0 @@
-recursive-include arenaclient/proxy/templates *
-recursive-include arenaclient/proxy/static *

@@ -11,7 +11,7 @@ import os
 import platform
 from urllib import parse
 
-from arenaclient.matches import FileMatchSource
+from ..match.matches import FileMatchSource
 
 # GERERAL
 ARENA_CLIENT_ID = "aiarenaclient_test"
@@ -24,10 +24,10 @@ PYTHON = "python"
 TEST_MODE = True
 CLEANUP_BETWEEN_ROUNDS = False
 SYSTEM = platform.system()
-SC2_PROXY = {"HOST": "127.0.0.1", "PORT": 8765}
+SC2_PROXY = {"HOST": "127.0.0.1", "PORT": 8642}
 RUN_LOCAL = True
 # LOGGING
-LOGGING_HANDLER = logging.FileHandler("supervisor.log", "a+")
+LOGGING_HANDLER = logging.FileHandler("../supervisor.log", "a+")
 LOGGING_LEVEL = 10
 
 # PATHS AND FILES
@@ -57,9 +57,9 @@ REALTIME = False
 VISUALIZE = False
 # Override values with environment specific config
 try:
-    from arenaclient.test_config import *
+    from test_config import *
 except ImportError as e:
-    if e.name == "arenaclient.test_config":
+    if e.name == "test_config":
         pass
     else:
         raise

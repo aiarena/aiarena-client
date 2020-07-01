@@ -1,20 +1,19 @@
+import asyncio
 import datetime
 import json
 from loguru import logger
 import os
 import shutil
 import signal
-import socket
 import subprocess
 import time
 import traceback
 import hashlib
 import aiohttp
 import psutil
-
-from arenaclient.matches import MatchSourceFactory, MatchSource
-from arenaclient.utl import Utl
-from arenaclient.result import Result
+from .match.matches import MatchSourceFactory, MatchSource
+from .utl import Utl
+from .match.result import Result
 
 
 class WrongStatusException(Exception):
@@ -47,8 +46,20 @@ async def connect(address: str, headers=None):
     """
     Connects to address with headers
     """
-    session = aiohttp.ClientSession()
-    ws = await session.ws_connect(address, headers=headers)
+    ws, session = None, None
+    for i in range(60):
+        await asyncio.sleep(1)
+        try:
+            session = aiohttp.ClientSession()
+            ws = await session.ws_connect(address, headers=headers)
+            logger.debug("Websocket connection ready")
+            return ws, session
+        except aiohttp.client_exceptions.ClientConnectorError:
+            await session.close()
+            if i > 15:
+                logger.debug("Connection refused (startup not complete (yet))")
+                return None, None
+
     return ws, session
 
 
@@ -112,19 +123,18 @@ class Client:
         Game JSON config to be sent to proxy
         """
         return {
-            "Config": {
                 "Map": match.map_name,
                 "MaxGameTime": self._config.MAX_GAME_TIME,
                 "Player1": match.bot1.name,
                 "Player2": match.bot2.name,
-                "ReplayPath": self._config.REPLAYS_DIRECTORY,
+                "ReplayPath": os.path.join(self._config.REPLAYS_DIRECTORY,
+                            f"{match.id}_{match.bot1.name}_vs_{match.bot2.name}.SC2Replay"),
                 "MatchID": match.id,
-                "DisableDebug": "False",
+                "DisableDebug": False,
                 "MaxFrameTime": self._config.MAX_FRAME_TIME,
                 "Strikes": self._config.STRIKES,
                 "RealTime": self._config.REALTIME,
                 "Visualize": self._config.VISUALIZE
-            }
         }
     
     @property
@@ -132,7 +142,7 @@ class Client:
         """
         Address for proxy.
         """
-        return f"http://{self._config.SC2_PROXY['HOST']}:{str(self._config.SC2_PROXY['PORT'])}/sc2api"
+        return f"ws://{self._config.SC2_PROXY['HOST']}:{str(self._config.SC2_PROXY['PORT'])}/sc2api"
     
     @property
     def headers(self):
@@ -183,20 +193,20 @@ class Client:
         # self._logger.debug(f"Killing current server")
         self.kill_current_server()
     
-    async def receive(self):
+    async def receive(self, timeout=None):
         """
         Receive a message from the websocket connection.
         @return:
         """
         assert(self._ws is not None)
-        msg = await self._ws.receive()
+        msg = await self._ws.receive(timeout)
         if msg.type == aiohttp.WSMsgType.CLOSED:
             raise WSClosed("Websocket connection closed")
         return msg.json()
     
     async def send(self, msg: str):
         """
-        Send a meesage to the websocket connection
+        Send a message to the websocket connection
         @param msg:
         @return:
         """
@@ -224,8 +234,10 @@ class Client:
         :return:
         """
         process = bot.start_bot(opponent_id)
-
-        msg = await self.receive()
+        try:
+            msg = await self.receive(40)
+        except:
+            return None, process.pid
 
         if msg.get("Bot", None) == "Connected":
             return process, process.pid
@@ -260,6 +272,8 @@ class Client:
                     pids.append(bot2_pid)
                     if bot2_process is None:
                         self._logger.debug(f"Failed to launch {match.bot2.name}")
+                        await self.send("Reset")
+                        _ = await self._ws.receive() # Receive confirmation
                         result.parse_result(init_error(match))
                         try:
                             bot1_process.communicate(timeout=0.2)
@@ -271,10 +285,13 @@ class Client:
                         return result
                 else:
                     self._logger.debug(f"Failed to launch {match.bot1.name}")
+                    await self.send("Reset")
+                    _ = await self._ws.receive() # Receive confirmation
                     result.parse_result(init_error(match))
                     self._utl.pid_cleanup(pids)
                     await self._ws.close()
                     await self._session.close()
+                    self._utl.pid_cleanup(pids)
                     return result
 
                 # Change PID Group
@@ -327,6 +344,7 @@ class Client:
                 if msg.type == aiohttp.WSMsgType.CLOSED:
                     if not result.has_result():
                         result.parse_result(self.error)
+                    self._utl.pid_cleanup(pids)
                     return result
 
                 msg = msg.json()
@@ -341,7 +359,6 @@ class Client:
                     except subprocess.TimeoutExpired:
                         pass
                     self._utl.pid_cleanup(pids)  # Terminate bots first
-                    self._utl.pid_cleanup(msg["PID"])  # Terminate SC2 processes
 
                 if valid_msg(msg):
                     result.parse_result(msg)
@@ -406,15 +423,17 @@ class Client:
                     )
                     await self._ws.close()
                     await self._session.close()
+                await self._ws.send_str("Received")
 
             if not result.has_result():
                 result.parse_result(init_error(match))
-
+            self._utl.pid_cleanup(pids)
             return result
         except WSClosed:
             print(traceback.format_exc())
             if not result.has_result():
                 result.parse_result(self.error)
+            self._utl.pid_cleanup(pids)
             return result
 
     def kill_current_server(self, server=False):
@@ -429,7 +448,7 @@ class Client:
                 self._utl.printout("Killing SC2")
                 os.system("pkill -f SC2_x64")
                 if server:
-                    os.system("lsof -ti tcp:8765 | xargs kill")
+                    os.system(f"lsof -ti tcp:{self._config.SC2_PROXY['PORT']} | xargs kill")
             for process in psutil.process_iter():
                 if server:
                     for conns in process.connections(kind="inet"):
@@ -457,19 +476,6 @@ class Client:
             self._utl.printout(f"{match.bot1.name} vs {match.bot2.name}")
             self.kill_current_server()
 
-            counter = 0
-            while counter <= 100:
-                counter += 1
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                result = sock.connect_ex(
-                    (self._config.SC2_PROXY["HOST"], self._config.SC2_PROXY["PORT"])
-                )
-                if result == 0:
-                    break
-                if counter == 100:
-                    self._logger.error("Server is not running.")
-                    raise
-                time.sleep(1)
 
             result = await self.main(match)
 

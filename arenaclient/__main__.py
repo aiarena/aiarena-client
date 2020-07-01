@@ -1,10 +1,9 @@
-from arenaclient.client import Client
+from .client import Client
 # the default config will also import custom config values
-import arenaclient.default_config as cfg
+from .configs import default_config as cfg
 import asyncio
-from multiprocessing import Process
-from argparse import ArgumentParser
-from arenaclient.proxy.server import run_server
+from rust_ac import Server
+import os
 
 
 async def run_client():
@@ -12,20 +11,14 @@ async def run_client():
     await ac.run()
 
 if __name__ == "__main__":  # execute only if run as a script
-    parser = ArgumentParser()
-
-    parser.add_argument("-f","--frontend", help="Start server with frontend", action="store_true")
-
-    args, unknown = parser.parse_known_args()
-    run_frontend = args.frontend
-
-    if 'false' in [x.lower() for x in unknown]:
-        run_frontend = False
-        
-    if run_frontend:
-        proc = Process(target=run_server, args=(True,))
-        proc.daemon = True
-        proc.start()
-        proc.join()
-    else:
+    os.environ['SC2_PROXY_BASE'] = cfg.SC2_HOME
+    os.environ['SC2_PROXY_BIN'] = "SC2_x64"
+    HOST = cfg.SC2_PROXY["HOST"]
+    PORT = cfg.SC2_PROXY["PORT"]
+    server = Server(f"{HOST}:{PORT}")
+    try:
+        server.run()
         asyncio.get_event_loop().run_until_complete(run_client())
+    except Exception as e:
+        print(e)
+        server.kill()

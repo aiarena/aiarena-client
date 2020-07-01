@@ -1,14 +1,14 @@
 import json
 import os
 import asyncio
+import shutil
+from .configs import default_test_config as config
 
-import arenaclient.default_test_config as config
-
-from arenaclient.client import Client
-from arenaclient.matches import MatchSourceType
-from arenaclient.utl import Utl
-from arenaclient.proxy.server import run_server
-from multiprocessing import Process
+from .client import Client
+from .match.matches import MatchSourceType
+from .utl import Utl
+from rust_ac import Server
+from pathlib import Path
 
 # Sanity check the config and remind people to check their config
 assert config.TEST_MODE, "LOCAL_TEST_MODE config value must must be set to True to run tests." + os.linesep \
@@ -38,6 +38,25 @@ games = {
 }
 
 ORIGINAL_MAX_GAME_TIME = config.MAX_GAME_TIME
+
+
+def setup_bots():
+    bots_path = Path("../aiarena-test-bots")
+    to_bots_path = Path("bots/")
+
+    if not bots_path.exists():
+        raise NotADirectoryError(f"{bots_path} does not exist")
+    elif len([x for x in bots_path.iterdir() if x.is_dir()]) == 0:
+        raise FileNotFoundError(f"{bots_path} is empty. Did you do git clone --recursive?")
+    else:
+        if not to_bots_path.exists():
+            shutil.copytree(bots_path, to_bots_path)
+
+
+def cleanup():
+    bots_path = Path("bots/")
+    if bots_path.exists():
+        bots_path.rmdir()
 
 
 async def run_tests():
@@ -74,8 +93,12 @@ async def run_tests():
             except KeyError:
                 utl.printout("Test failed: Result not found in file")
 
+
 if __name__ == "__main__":
-    proc = Process(target=run_server, args=(False,))
-    proc.daemon = True
-    proc.start()
+    s = Server('127.0.0.1:8642')
+    s.run()
+    setup_bots()
+    
     asyncio.get_event_loop().run_until_complete(run_tests())
+    s.kill()
+    cleanup()
