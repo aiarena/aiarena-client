@@ -1,5 +1,5 @@
 import os
-from arenaclient.matches import MatchSource
+from ..match.matches import MatchSource
 
 
 class Result:
@@ -22,7 +22,7 @@ class Result:
         return f"""
         Result={self.result}
         Winner={self.winner}
-        GameTIme={self.game_time}
+        GameTime={self.game_time}
         Bot1AvgStepTime={self.bot1_avg_frame}
         Bot2AvgStepTime={self.bot2_avg_frame}
         """
@@ -63,39 +63,39 @@ class Result:
                 self.result = "Error"
                 return
             
-            if temp_results[self.bot1] == "Result.SC2Crash" or temp_results[self.bot2] == "Result.SC2Crash":
+            if temp_results[self.bot1] == "SC2Crash" or temp_results[self.bot2] == "SC2Crash":
                 self.result = "Error"
                 return
             
-            elif temp_results[self.bot1] == "Result.Crashed":
+            elif temp_results[self.bot1] == "Crash":
                 self.result = "Player1Crash"
                 self.winner = self.bot2
 
-            elif temp_results[self.bot2] == "Result.Crashed":
+            elif temp_results[self.bot2] == "Crash":
                 self.result = "Player2Crash"
                 self.winner = self.bot1
 
-            elif temp_results[self.bot1] == "Result.Timeout":
+            elif temp_results[self.bot1] == "Timeout":
                 self.result = "Player1TimeOut"
                 self.winner = self.bot2
 
-            elif temp_results[self.bot2] == "Result.Timeout":
+            elif temp_results[self.bot2] == "Timeout":
                 self.result = "Player2TimeOut"
                 self.winner = self.bot1
 
-            elif temp_results[self.bot1] == "Result.Victory":
+            elif temp_results[self.bot1] == "Victory":
                 self.result = "Player1Win"
                 self.winner = self.bot1
 
-            elif temp_results[self.bot1] == "Result.Defeat":
+            elif temp_results[self.bot1] == "Defeat":
                 self.result = "Player2Win"
                 self.winner = self.bot2
 
-            elif temp_results[self.bot1] == "Result.Tie":
+            elif temp_results[self.bot1] == "Tie":
                 self.result = "Tie"
                 self.winner = "Tie"
             
-            elif temp_results[self.bot2] == "Result.Tie":
+            elif temp_results[self.bot2] == "Tie":
                 self.result = "Tie"
                 self.winner = "Tie"
 
@@ -110,18 +110,8 @@ class Result:
             self.game_time_formatted = result["GameTimeFormatted"]
 
         if result.get("AverageFrameTime", None):
-            try:
-                self.bot1_avg_frame = next(
-                    item[self.bot1] for item in result['AverageFrameTime'] if item.get(self.bot1, None)
-                )
-            except StopIteration:
-                self.bot1_avg_frame = 0
-            try:
-                self.bot2_avg_frame = next(
-                    item[self.bot2] for item in result['AverageFrameTime'] if item.get(self.bot2, None)
-                )
-            except StopIteration:
-                self.bot2_avg_frame = 0
+            self.bot1_avg_frame = result['AverageFrameTime'].get(self.bot1, 0)
+            self.bot2_avg_frame = result['AverageFrameTime'].get(self.bot2, 0)
 
         if result.get("TimeStamp", None):
             self.time_stamp = result["TimeStamp"]

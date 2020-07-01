@@ -25,3 +25,4 @@ build/
 arenaclient.egg-info
 settings.json
 arenaclient/test_results.txt
+test_arenaclient/

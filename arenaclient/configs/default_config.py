@@ -10,14 +10,16 @@ import logging
 import os
 import platform
 
-# GERERAL
-from arenaclient.matches import FileMatchSource
+# GENERAL
+from ..match.matches import FileMatchSource
 
 ARENA_CLIENT_ID = "aiarenaclient_000"
 API_TOKEN = "12345"
 ROUNDS_PER_RUN = 5  # Set to -1 to ignore this
+BASE_WEBSITE_URL = ""
 SHUT_DOWN_AFTER_RUN = True
 USE_PID_CHECK = False
+RUN_REPLAY_CHECK = False
 DEBUG_MODE = True
 PYTHON = "python3"
 RUN_LOCAL = False
@@ -26,7 +28,7 @@ SYSTEM = platform.system()
 SC2_PROXY = {"HOST": "127.0.0.1", "PORT": 8765}
 
 # LOGGING
-LOGGING_HANDLER = logging.FileHandler("supervisor.log", "a+")
+LOGGING_HANDLER = logging.FileHandler("../supervisor.log", "a+")
 LOGGING_LEVEL = 10
 
 # PATHS AND FILES
@@ -53,9 +55,9 @@ VISUALIZE = False
 
 # Override values with environment specific config
 try:
-    from arenaclient.config import *
+    from config import *
 except ImportError as e:
-    if e.name == "arenaclient.config":
+    if e.name == "config":
         pass
     else:
         raise

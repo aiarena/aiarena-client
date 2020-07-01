@@ -171,7 +171,7 @@ class Utl:
             if self._config.SYSTEM == "Linux":
                 self.printout("Killing SC2")
                 os.system("pkill -f SC2_x64")
-                os.system("lsof -ti tcp:8765 | xargs kill")
+                os.system(f"lsof -ti tcp:{self._config.PORT} | xargs kill")
             for process in psutil.process_iter():
                 for conns in process.connections(kind="inet"):
                     if conns.laddr.port == self._config.SC2_PROXY["PORT"]:

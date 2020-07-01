@@ -8,9 +8,9 @@ from pathlib import Path
 
 import requests
 
-from arenaclient.aiarena_web_api import AiArenaWebApi
-from arenaclient.bot import Bot, BotFactory
-from arenaclient.utl import Utl
+from ..match.aiarena_web_api import AiArenaWebApi
+from ..match.bot import Bot, BotFactory
+from ..utl import Utl
 
 
 class MatchSourceType(Enum):
@@ -187,8 +187,8 @@ class HttpApiMatchSource(MatchSource):
         else:
             Path(proxy_tmp).touch()
 
-        if os.path.isfile("aiarena-client.log"):
-            shutil.move("aiarena-client.log", client_tmp)
+        if os.path.isfile("../aiarena-client.log"):
+            shutil.move("../aiarena-client.log", client_tmp)
         else:
             Path(client_tmp).touch()
 

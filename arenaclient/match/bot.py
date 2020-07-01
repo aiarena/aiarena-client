@@ -4,7 +4,7 @@ import os
 import stat
 import zipfile
 import requests
-from arenaclient.utl import Utl
+from ..utl import Utl
 import subprocess
 
 
@@ -219,7 +219,7 @@ class Bot:
                         stdout=out,
                         stderr=subprocess.STDOUT,
                         cwd=(str(bot_path)),
-                        shell=True,
+                        shell=False,
                         creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
                     )
                 return process

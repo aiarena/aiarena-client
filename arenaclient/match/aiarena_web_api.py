@@ -3,7 +3,7 @@ from urllib import parse
 
 import requests
 
-from arenaclient.utl import Utl
+from ..utl import Utl
 
 
 class AiArenaWebApi:
