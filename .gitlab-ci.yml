@@ -36,8 +36,8 @@ test:
     - unzip -P iagreetotheeula SC2.4.10.zip
     - ln -s StarCraftII/Maps StarCraftII/maps
     - echo "Done"
-    - SC2_PROXY_BASE=StarCraftII/
-    - SC2_PROXY_BIN=SC2_x64
+    - export SC2_PROXY_BASE=StarCraftII/
+    - export SC2_PROXY_BIN=SC2_x64
     - python tests.py
 #run:
 #  script:
