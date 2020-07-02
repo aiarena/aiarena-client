@@ -11,7 +11,7 @@ import os
 import platform
 from urllib import parse
 
-from ..match.matches import FileMatchSource
+from arenaclient.match.matches import FileMatchSource
 
 # GERERAL
 ARENA_CLIENT_ID = "aiarenaclient_test"
@@ -27,7 +27,7 @@ SYSTEM = platform.system()
 SC2_PROXY = {"HOST": "127.0.0.1", "PORT": 8642}
 RUN_LOCAL = True
 # LOGGING
-LOGGING_HANDLER = logging.FileHandler("../supervisor.log", "a+")
+LOGGING_HANDLER = logging.FileHandler("supervisor.log", "a+")
 LOGGING_LEVEL = 10
 
 # PATHS AND FILES
@@ -36,7 +36,7 @@ LOCAL_PATH = os.path.dirname(__file__)
 WORKING_DIRECTORY = LOCAL_PATH  # same for now
 LOG_FILE = os.path.join(WORKING_DIRECTORY, "client.log")
 REPLAYS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "replays")
-BOTS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "bots")
+BOTS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "aiarena-test-bots")
 BOT_LOGS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "logs")
 
 MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(

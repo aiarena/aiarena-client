@@ -2,11 +2,11 @@ import json
 import os
 import asyncio
 import shutil
-from .configs import default_test_config as config
+from arenaclient.configs import default_test_config as config
 
-from .client import Client
-from .match.matches import MatchSourceType
-from .utl import Utl
+from arenaclient.client import Client
+from arenaclient.match.matches import MatchSourceType
+from arenaclient.utl import Utl
 from rust_ac import Server
 from pathlib import Path
 
@@ -97,8 +97,8 @@ async def run_tests():
 if __name__ == "__main__":
     s = Server('127.0.0.1:8642')
     s.run()
-    setup_bots()
+    # setup_bots()
     
     asyncio.get_event_loop().run_until_complete(run_tests())
     s.kill()
-    cleanup()
+    # cleanup()
