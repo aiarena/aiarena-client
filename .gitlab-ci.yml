@@ -31,21 +31,13 @@ test:
     - cp arenaclient/configs/default_test_config.py test_config.py
     - DIR=StarCraftII/
     - if ! [ -f "SC2.4.10.zip" ]; then echo "Download"\
-      && wget -q 'http://blzdistsc2-a.akamaihd.net/Linux/SC2.4.10.zip'
-    - ls .
+      && wget -q 'http://blzdistsc2-a.akamaihd.net/Linux/SC2.4.10.zip'; fi
     - unzip -P iagreetotheeula SC2.4.10.zip
     - ln -s StarCraftII/Maps StarCraftII/maps
-    - rm -Rf StarCraftII/maps/*
-    - ls StarCraftII/
-    - wget -q 'http://blzdistsc2-a.akamaihd.net/MapPacks/Ladder2019Season3.zip'
-    - unzip -P iagreetotheeula Ladder2019Season3.zip
-    - rm Ladder2019Season3.zip
     - echo "Done"
-    - mv Ladder2019Season3 StarCraftII/maps; fi
-    - ls .
     - SC2_PROXY_BASE=StarCraftII/
     - SC2_PROXY_BIN=SC2_x64
-    - python tests.py
+#    - python tests.py
 #run:
 #  script:
 #    - python setup.py bdist_wheel
