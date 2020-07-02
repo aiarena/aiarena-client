@@ -37,7 +37,7 @@ test:
     - echo "Done"
     - SC2_PROXY_BASE=StarCraftII/
     - SC2_PROXY_BIN=SC2_x64
-#    - python tests.py
+    - python tests.py
 #run:
 #  script:
 #    - python setup.py bdist_wheel
