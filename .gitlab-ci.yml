@@ -16,7 +16,7 @@ cache:
   paths:
     - .cache/pip
     - venv/
-    - StarCraftII/
+    - SC2.4.10.zip
 
 before_script:
   - python -V  # Print out python version for debugging
@@ -30,7 +30,18 @@ test:
     - pip install -r requirements.txt
     - cp arenaclient/configs/default_test_config.py test_config.py
     - DIR=StarCraftII/
-    - if ! [ -d "$DIR" ]; then echo "Download" && wget -q 'http://blzdistsc2-a.akamaihd.net/Linux/SC2.4.10.zip' && unzip -P iagreetotheeula SC2.4.10.zip && rm SC2.4.10.zip && ln -s StarCraftII/Maps StarCraftII/maps && rm -Rf StarCraftII/maps/* && wget -q 'http://blzdistsc2-a.akamaihd.net/MapPacks/Ladder2019Season3.zip' && unzip -P iagreetotheeula Ladder2019Season3.zip && rm Ladder2019Season3.zip && echo "Done" && mv Ladder2019Season3 StarCraftII/maps; fi
+    - if ! [ -f "SC2.4.10.zip" ]; then echo "Download"\
+      && wget -q 'http://blzdistsc2-a.akamaihd.net/Linux/SC2.4.10.zip'
+    - ls .
+    - unzip -P iagreetotheeula SC2.4.10.zip
+    - ln -s StarCraftII/Maps StarCraftII/maps
+    - rm -Rf StarCraftII/maps/*
+    - ls StarCraftII/
+    - wget -q 'http://blzdistsc2-a.akamaihd.net/MapPacks/Ladder2019Season3.zip'
+    - unzip -P iagreetotheeula Ladder2019Season3.zip
+    - rm Ladder2019Season3.zip
+    - echo "Done"
+    - mv Ladder2019Season3 StarCraftII/maps; fi
     - ls .
     - SC2_PROXY_BASE=StarCraftII/
     - SC2_PROXY_BIN=SC2_x64
