@@ -250,13 +250,13 @@ class HttpApiMatchSource(MatchSource):
                 )
                 if post is None:
                     self._utl.printout("ERROR: Result submission failed. 'post' was None.")
-                    attempts +=1
+                    attempts += 1
                     time.sleep(60)
                 elif post.status_code >= 400:  # todo: retry?
                     self._utl.printout(
                         f"ERROR: Result submission failed. Status code: {post.status_code}."
                     )
-                    attempts +=1
+                    attempts += 1
                     time.sleep(60)
                 else:
                     self._utl.printout(result.result + " - Result transferred")
