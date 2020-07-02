@@ -38,7 +38,7 @@ test:
     - echo "Done"
     - export SC2_PROXY_BASE=StarCraftII/
     - export SC2_PROXY_BIN=SC2_x64
-    - chmod -R 777
+    - chmod -R 777 StarCrafII/
     - python tests.py
 #run:
 #  script:
