@@ -17,6 +17,7 @@ cache:
     - .cache/pip
     - venv/
     - SC2.4.10.zip
+    - StarCrafII/
 
 before_script:
   - python -V  # Print out python version for debugging
