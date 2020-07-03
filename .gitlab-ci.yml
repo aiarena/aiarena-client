@@ -33,7 +33,8 @@ test:
     - DIR=StarCraftII/
     - if ! [ -f "SC2.4.10.zip" ]; then echo "Download"\
       && wget -q 'http://blzdistsc2-a.akamaihd.net/Linux/SC2.4.10.zip'; fi
-    - unzip -P iagreetotheeula SC2.4.10.zip
+    - pwd
+    - unzip -d $CI_PROJECT_DIR -P iagreetotheeula SC2.4.10.zip
     - ln -s StarCraftII/Maps StarCraftII/maps
     - echo "Done"
     - export SC2_PROXY_BASE=StarCraftII/
