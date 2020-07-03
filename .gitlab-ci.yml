@@ -31,11 +31,9 @@ test:
     - pip install burnysc2
     - cp arenaclient/configs/default_test_config.py test_config.py
     - DIR=StarCraftII/
-    - if ! [ -f "SC2.4.10.zip" ]; then echo "Download"\
-      && wget -q 'http://blzdistsc2-a.akamaihd.net/Linux/SC2.4.10.zip'; fi
-    - unzip -v -d $CI_PROJECT_DIR -P iagreetotheeula SC2.4.10.zip
-    - echo $CI_PROJECT_DIR
-    - ls $CI_PROJECT_DIR
+    - wget -q 'http://blzdistsc2-a.akamaihd.net/Linux/SC2.4.10.zip' \
+      && unzip -P iagreetotheeula SC2.4.10.zip \
+      && rm SC2.4.10.zip
     - chmod -R 777 StarCrafII/
     - ln -s StarCraftII/Maps StarCraftII/maps
     - echo "Done"
