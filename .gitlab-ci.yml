@@ -27,7 +27,7 @@ before_script:
 
 test:
   script:
-    - pip install -r requirements.txt && pip install burnysc2 && cp arenaclient/configs/default_test_config.py test_config.py && DIR=StarCraftII/ && wget -q 'http://blzdistsc2-a.akamaihd.net/Linux/SC2.4.10.zip' && unzip -P iagreetotheeula SC2.4.10.zip && rm SC2.4.10.zip && chmod -R 777 StarCrafII/ && ln -s StarCraftII/Maps StarCraftII/maps && echo "Done" && export SC2_PROXY_BASE=StarCraftII/ && export SC2_PROXY_BIN=SC2_x64 && python tests.py
+    - pip install -r requirements.txt && pip install burnysc2 && cp arenaclient/configs/default_test_config.py test_config.py && DIR=StarCraftII/ && wget -q 'http://blzdistsc2-a.akamaihd.net/Linux/SC2.4.10.zip' && unzip -P iagreetotheeula SC2.4.10.zip && rm SC2.4.10.zip && ls -la && chmod -R 777 StarCrafII/ && ln -s StarCraftII/Maps StarCraftII/maps && echo "Done" && export SC2_PROXY_BASE=StarCraftII/ && export SC2_PROXY_BIN=SC2_x64 && python tests.py
 #run:
 #  script:
 #    - python setup.py bdist_wheel
