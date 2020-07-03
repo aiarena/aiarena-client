@@ -33,13 +33,13 @@ test:
     - DIR=StarCraftII/
     - if ! [ -f "SC2.4.10.zip" ]; then echo "Download"\
       && wget -q 'http://blzdistsc2-a.akamaihd.net/Linux/SC2.4.10.zip'; fi
-    - unzip -d $CI_PROJECT_DIR -P iagreetotheeula SC2.4.10.zip\
-      && ln -s StarCraftII/Maps StarCraftII/maps\
-      && echo "Done"\
-      && export SC2_PROXY_BASE=StarCraftII/\
-      && export SC2_PROXY_BIN=SC2_x64\
-      && chmod -R 777 StarCrafII/\
-      && python tests.py
+    - unzip -v -d $CI_PROJECT_DIR -P iagreetotheeula "SC2.4.10.zip"\
+        && chmod -R 777 "StarCrafII/"\
+        && ln -s "StarCraftII/Maps" "StarCraftII/maps"\
+        && echo "Done"\
+        && export SC2_PROXY_BASE="StarCraftII/"\
+        && export SC2_PROXY_BIN="SC2_x64"\
+        && python tests.py
 #run:
 #  script:
 #    - python setup.py bdist_wheel
