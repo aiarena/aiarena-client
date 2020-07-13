@@ -39,10 +39,10 @@ sonarqube-check:
     - merge_requests
     - master
 
-test:
-  stage: test
-  script:
-    - pip install -r requirements.txt && pip install burnysc2 && cp arenaclient/configs/default_test_config.py test_config.py && DIR=StarCraftII/ && wget -q 'http://blzdistsc2-a.akamaihd.net/Linux/SC2.4.10.zip' && unzip -P iagreetotheeula SC2.4.10.zip && rm SC2.4.10.zip && pwd && ls -la && ls -la /builds/aiarena/aiarena-client/StarCrafII && chmod -R 777 /builds/aiarena/aiarena-client/StarCrafII && ln -s /builds/aiarena/aiarena-client/StarCraftII/Maps /builds/aiarena/aiarena-client/StarCraftII/maps && echo "Done" && export SC2_PROXY_BASE=/builds/aiarena/aiarena-client/StarCraftII && export SC2_PROXY_BIN=SC2_x64 && python tests.py
+#test:
+#  stage: test
+#  script:
+#    - pip install -r requirements.txt && pip install burnysc2 && cp arenaclient/configs/default_test_config.py test_config.py && DIR=StarCraftII/ && wget -q 'http://blzdistsc2-a.akamaihd.net/Linux/SC2.4.10.zip' && unzip -P iagreetotheeula SC2.4.10.zip && rm SC2.4.10.zip && pwd && ls -la && ls -la /builds/aiarena/aiarena-client/StarCrafII && chmod -R 777 /builds/aiarena/aiarena-client/StarCrafII && ln -s /builds/aiarena/aiarena-client/StarCraftII/Maps /builds/aiarena/aiarena-client/StarCraftII/maps && echo "Done" && export SC2_PROXY_BASE=/builds/aiarena/aiarena-client/StarCraftII && export SC2_PROXY_BIN=SC2_x64 && python tests.py
 #run:
 #  script:
 #    - python setup.py bdist_wheel
