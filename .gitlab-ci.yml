@@ -2,10 +2,6 @@
 # https://hub.docker.com/r/library/python/tags/
 image: python:3.7.8
 
-before_script:
-  - apt-get update -qq
-  - apt-get install -qq git unzip wget nodejs
-
 # Change pip's cache directory to be inside the project directory since we can
 # only cache local items.
 variables:
@@ -24,6 +20,8 @@ cache:
     - StarCrafII/
 
 before_script:
+  - apt-get update -qq
+  - apt-get install -qq git unzip wget nodejs
   - python -V  # Print out python version for debugging
   - git submodule update --init --recursive
   - pip install virtualenv
