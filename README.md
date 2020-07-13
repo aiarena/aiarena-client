@@ -1,3 +1,4 @@
+[![Quality Gate Status](https://sonar.m1nd.io/api/project_badges/measure?project=aiarena-client&metric=alert_status)](https://sonar.m1nd.io/dashboard?id=aiarena-client)
 # aiarena-client
 ## Bootstrapping for local play on windows
 The linux steps are probably essentially the same, I just can't guarantee they'd work because I haven't tested it.

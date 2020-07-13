@@ -5,7 +5,7 @@ import time
 import zipfile
 from enum import Enum
 from pathlib import Path
-
+from typing import Optional
 import requests
 
 from ..match.aiarena_web_api import AiArenaWebApi
@@ -83,12 +83,12 @@ class HttpApiMatchSource(MatchSource):
     def has_next(self) -> bool:
         return True  # always return true
 
-    def next_match(self) -> HttpApiMatch:
+    def next_match(self) -> Optional[HttpApiMatch]:
         next_match_data = self._api.get_match()
 
         if next_match_data is None:
             time.sleep(30)
-            return None  # there was an issue
+            return None
 
         if "id" not in next_match_data:
             self._utl.printout("No games available - sleeping")
