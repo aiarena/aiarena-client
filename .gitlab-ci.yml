@@ -2,6 +2,10 @@
 # https://hub.docker.com/r/library/python/tags/
 image: python:3.7.8
 
+before_script:
+  - apt-get update -qq
+  - apt-get install -qq git unzip wget nodejs
+
 # Change pip's cache directory to be inside the project directory since we can
 # only cache local items.
 variables:
@@ -26,7 +30,19 @@ before_script:
   - virtualenv venv
   - source venv/bin/activate
 
+sonarqube-check:
+  stage: test
+  script:
+    - wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.2.0.1873-linux.zip
+    - unzip sonar-scanner-cli-4.2.0.1873-linux.zip
+    - sonar-scanner-4.2.0.1873-linux/bin/sonar-scanner -Dsonar.qualitygate.wait=true -Dsonar.projectKey=aiarena-web -Dsonar.sources=. -Dsonar.host.url=https://sonar.m1nd.io -Dsonar.login=$SONAR_TOKEN
+  allow_failure: true
+  only:
+    - merge_requests
+    - master
+
 test:
+  stage: test
   script:
     - pip install -r requirements.txt && pip install burnysc2 && cp arenaclient/configs/default_test_config.py test_config.py && DIR=StarCraftII/ && wget -q 'http://blzdistsc2-a.akamaihd.net/Linux/SC2.4.10.zip' && unzip -P iagreetotheeula SC2.4.10.zip && rm SC2.4.10.zip && pwd && ls -la && ls -la /builds/aiarena/aiarena-client/StarCrafII && chmod -R 777 /builds/aiarena/aiarena-client/StarCrafII && ln -s /builds/aiarena/aiarena-client/StarCraftII/Maps /builds/aiarena/aiarena-client/StarCraftII/maps && echo "Done" && export SC2_PROXY_BASE=/builds/aiarena/aiarena-client/StarCraftII && export SC2_PROXY_BIN=SC2_x64 && python tests.py
 #run:
