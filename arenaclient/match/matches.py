@@ -141,6 +141,8 @@ class HttpApiMatchSource(MatchSource):
             if file.endswith('.SC2Replay'):
                 replay_file = file
                 break
+        else:
+            self._utl.printout(f"Could not find replay in {self._config.REPLAYS_DIRECTORY}")
 
         replay_file_path = os.path.join(self._config.REPLAYS_DIRECTORY, replay_file)
 
