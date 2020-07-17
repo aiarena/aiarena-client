@@ -15,7 +15,7 @@ setup(
         "aiohttp==3.6.2",
         "termcolor==1.1.0",
         "psutil==5.7.0",
-        "typing==3.7.4.1",
+        "typing==3.7.4.3",
         "aiodns>=2.0.0",
         "Brotli",
         "cchardet",
