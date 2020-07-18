@@ -26,3 +26,7 @@ arenaclient.egg-info
 settings.json
 arenaclient/test_results.txt
 test_arenaclient/
+matches
+results
+test_config.py
+test_results.txt
