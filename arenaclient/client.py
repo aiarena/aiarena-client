@@ -130,7 +130,7 @@ class Client:
             "ReplayPath": os.path.join(self._config.REPLAYS_DIRECTORY,
                                        f"{match.id}_{match.bot1.name}_vs_{match.bot2.name}.SC2Replay"),
             "MatchID": match.id,
-            "DisableDebug": False,
+            "DisableDebug": True,
             "MaxFrameTime": self._config.MAX_FRAME_TIME,
             "Strikes": self._config.STRIKES,
             "RealTime": self._config.REALTIME,
@@ -257,9 +257,11 @@ class Client:
         pids = []
         try:
             self._ws, self._session = await connect(address=self.address, headers=self.headers)
-            await self.send(json.dumps(self.json_config(match)))
 
             if await self.connected():
+                await self.send(json.dumps(self.json_config(match)))
+
+                _ = await self.receive()
                 self._logger.debug(f"Starting bots...")
                 bot1_process, bot1_pid = await self.start_bot(match.bot1,
                                                               match.bot2.bot_json.get("botID", self.get_opponent_id(
