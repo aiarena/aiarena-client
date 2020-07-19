@@ -7,4 +7,4 @@ aiodns>=2.0.0
 Brotli
 cchardet
 loguru
-rust_arenaclient==0.1.8
+rust_arenaclient==0.1.9
