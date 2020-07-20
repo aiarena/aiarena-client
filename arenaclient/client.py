@@ -263,11 +263,13 @@ class Client:
 
                 _ = await self.receive()
                 self._logger.debug(f"Starting bots...")
+                await asyncio.sleep(3)
                 bot1_process, bot1_pid = await self.start_bot(match.bot1,
                                                               match.bot2.bot_json.get("botID", self.get_opponent_id(
                                                                   match.bot2.name)))
                 pids.append(bot1_pid)
                 if bot1_process is not None:
+                    await asyncio.sleep(3)
                     bot2_process, bot2_pid = await self.start_bot(match.bot2,
                                                                   match.bot1.bot_json.get("botID", self.get_opponent_id(
                                                                       match.bot2.name)))
