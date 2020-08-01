@@ -130,11 +130,14 @@ class Client:
             "ReplayPath": os.path.join(self._config.REPLAYS_DIRECTORY,
                                        f"{match.id}_{match.bot1.name}_vs_{match.bot2.name}.SC2Replay"),
             "MatchID": match.id,
-            "DisableDebug": True,
+            "DisableDebug": self._config.DISABLE_DEBUG,
             "MaxFrameTime": self._config.MAX_FRAME_TIME,
             "Strikes": self._config.STRIKES,
             "RealTime": self._config.REALTIME,
-            "Visualize": self._config.VISUALIZE
+            "Visualize": self._config.VISUALIZE,
+            "ValidateRace": self._config.VALIDATE_RACE,
+            "Player1Race": match.bot1.plays_race,
+            "Player2Race": match.bot2.plays_race
         }
 
     @property

@@ -189,8 +189,8 @@ class HttpApiMatchSource(MatchSource):
         else:
             Path(proxy_tmp).touch()
 
-        if os.path.isfile("../aiarena-client.log"):
-            shutil.move("../aiarena-client.log", client_tmp)
+        if os.path.isfile(self._config.LOG_FILE):
+            shutil.move(self._config.LOG_FILE, client_tmp)
         else:
             Path(client_tmp).touch()
 

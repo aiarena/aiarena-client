@@ -23,3 +23,7 @@ MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(
     matches_file=os.path.join(WORKING_DIRECTORY, "matches"),
     results_file=os.path.join(WORKING_DIRECTORY, "results")
 )
+
+# MATCHES
+DISABLE_DEBUG = True
+VALIDATE_RACE = False

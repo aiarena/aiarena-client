@@ -55,6 +55,12 @@ MAX_FRAME_TIME = 1000
 STRIKES = 10
 REALTIME = False
 VISUALIZE = False
+
+# MATCHES
+DISABLE_DEBUG = True
+VALIDATE_RACE = False
+
+
 # Override values with environment specific config
 try:
     from test_config import *
