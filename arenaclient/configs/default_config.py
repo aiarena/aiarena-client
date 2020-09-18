@@ -27,6 +27,8 @@ CLEANUP_BETWEEN_ROUNDS = True  # Clean up files between rounds
 SYSTEM = platform.system()  # What OS are we on?
 SC2_PROXY = {"HOST": "127.0.0.1", "PORT": 8765}  # On which host and port to run the proxy between SC2 and bots
 SECURE_MODE = False  # Used for AiArena
+SECURE_PLAYER1_USERNAME = None
+SECURE_PLAYER2_USERNAME = None
 
 # LOGGING
 LOGGING_HANDLER = logging.FileHandler("../supervisor.log", "a+")

@@ -6,7 +6,9 @@ import zipfile
 import requests
 from ..utl import Utl
 import subprocess
+from ..configs.default_config import SECURE_MODE, SECURE_PLAYER1_USERNAME, SECURE_PLAYER2_USERNAME
 
+SECURE_MAPPING ={1: SECURE_PLAYER1_USERNAME, 2: SECURE_PLAYER2_USERNAME}
 
 class Bot:
     """
@@ -38,7 +40,7 @@ class Bot:
         return bot_type_map[bot_type][0], bot_type_map[bot_type][1]
 
     def __init__(self, config, bot_id, name, game_display_id, bot_zip, bot_zip_md5hash, bot_data, bot_data_md5hash,
-                 plays_race, bot_type):
+                 plays_race, bot_type, player=None):
         self._config = config
 
         self._logger = logger
@@ -54,6 +56,7 @@ class Bot:
         self.bot_data_md5hash = bot_data_md5hash
         self.plays_race = plays_race
         self.type = bot_type
+        self.player = player
 
     @property
     def bot_json(self):
@@ -202,14 +205,32 @@ class Bot:
 
         try:
             if self._config.SYSTEM == "Linux":
+                def demote(player):
+                    import pwd
+                    
+                    def demote_function():
+                        user_name = SECURE_MAPPING[player]
+                        user = pwd.getpwnam(user_name)
+                        uid = user.pw_uid
+                        gid = user.pw_gid
+                        os.initgroups(user_name, gid)
+                        os.setgid(gid)
+                        os.setuid(uid)
+                        os.setpgrp()
+                    return demote_function
+
                 with open(os.path.join(bot_path, "data", "stderr.log"), "w+") as out:
+                    if SECURE_MODE and self.player:
+                        function = demote(self.player)
+                    else:
+                        function = os.setpgrp
                     process = subprocess.Popen(
                         " ".join(cmd_line),
                         stdout=out,
                         stderr=subprocess.STDOUT,
                         cwd=(str(bot_path)),
                         shell=True,
-                        preexec_fn=os.setpgrp,
+                        preexec_fn=function,
                     )
                 return process
             else:
@@ -232,16 +253,16 @@ class BotFactory:
     Factory to create bot object
     """
     @staticmethod
-    def from_api_data(config, data):
+    def from_api_data(config, data, player=None):
         """
         Creates bot from api data
         """
         return Bot(config, data["id"], data["name"], data["game_display_id"], data["bot_zip"], data["bot_zip_md5hash"],
-                   data["bot_data"], data["bot_data_md5hash"], data["plays_race"], data["type"])
+                   data["bot_data"], data["bot_data_md5hash"], data["plays_race"], data["type"], player)
 
     @staticmethod
-    def from_values(config, bot_id, bot_name, bot_race, bot_type):
+    def from_values(config, bot_id, bot_name, bot_race, bot_type, player=None):
         """
         Creates bot from values
         """
-        return Bot(config, bot_id, bot_name, bot_id, None, None, None, None, bot_race, bot_type)
+        return Bot(config, bot_id, bot_name, bot_id, None, None, None, None, bot_race, bot_type, player)
