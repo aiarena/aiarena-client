@@ -4,11 +4,13 @@ import os
 
 from ..match.matches import FileMatchSource
 
-# GERERAL
+# GENERAL
 ARENA_CLIENT_ID = "aiarenaclient_local"
 ROUNDS_PER_RUN = -1
 CLEANUP_BETWEEN_ROUNDS = False
 PYTHON = "python"
+SECURE_MODE = False
+
 
 # PATHS AND FILES
 LOCAL_PATH = os.path.dirname(__file__)
