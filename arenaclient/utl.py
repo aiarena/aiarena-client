@@ -180,3 +180,13 @@ class Utl:
                     process.send_signal(signal.SIGTERM)
         except:
             pass
+
+    @staticmethod
+    def change_permissions(uid, gid, directory):
+        for root, dirs, files in os.walk(directory):
+            for d in dirs:
+                os.chown(d, uid=uid, gid=gid)
+                os.chmod(os.path.join(root, d), 0o760)
+            for f in files:
+                os.chown(f, uid=uid, gid=gid)
+                os.chmod(os.path.join(root, f), 0o760)

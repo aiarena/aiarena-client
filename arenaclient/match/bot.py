@@ -76,6 +76,7 @@ class Bot:
         :return: bool
         """
         self._utl.printout(f"Downloading bot {self.name}")
+        secure_mode = self._config.SYSTEM == "Linux" and self._config.SECURE_MODE and self.player
         # Download bot and save to .zip
         r = requests.get(
             self.bot_zip, headers={"Authorization": "Token " + self._config.MATCH_SOURCE_CONFIG.API_TOKEN}
@@ -91,15 +92,31 @@ class Bot:
             self._utl.printout(f"Extracting bot {self.name} to bots/{self.name}")
             # Extract to bot folder
             with zipfile.ZipFile(bot_download_path, "r") as zip_ref:
-                zip_ref.extractall(f"bots/{self.name}")
+                if secure_mode:
+                    import pwd
+                    user_name = SECURE_MAPPING[self.player]
+                    user = pwd.getpwnam(user_name)
+                    uid = user.pw_uid
+                    gid = user.pw_gid
+                    directory = os.path.join('/home/', user_name, self.name)
+                else:
+                    directory = os.path.join("bots", self.name)
+                zip_ref.extractall(directory)
 
-            # if it's a linux bot, we need to add execute permissions
-            if self.type == "cpplinux":
-                # Chmod 744: rwxr--r--
-                os.chmod(
-                    f"bots/{self.name}/{self.name}",
-                    stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH,
-                )
+                if secure_mode:
+                    self._utl.change_permissions(uid, gid, directory)
+
+            # # if it's a linux bot, we need to add execute permissions
+            # if self.type == "cpplinux":
+            #     if secure_mode:
+            #         file = os.path.join('/home/', user_name, self.name, self.name)
+            #     else:
+            #         file = f"bots/{self.name}/{self.name}"
+            #     # Chmod 744: rwxr--r--
+            #     os.chmod(
+            #         file,
+            #         stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH,
+            #     )
 
             if self.get_bot_data_file():
                 return True
@@ -120,7 +137,7 @@ class Bot:
         """
         if self.bot_data is None:
             return True
-
+        secure_mode = self._config.SYSTEM == "Linux" and self._config.SECURE_MODE and self.player
         self._utl.printout(f"Downloading bot data for {self.name}")
         # Download bot data and save to .zip
         r = requests.get(
@@ -135,7 +152,20 @@ class Bot:
             self._utl.printout("MD5 hash matches transferred file...")
             self._utl.printout(f"Extracting data for {self.name} to bots/{self.name}/data")
             with zipfile.ZipFile(bot_data_path, "r") as zip_ref:
-                zip_ref.extractall(f"bots/{self.name}/data")
+                if secure_mode:
+                    import pwd
+                    user_name = SECURE_MAPPING[self.player]
+                    user = pwd.getpwnam(user_name)
+                    uid = user.pw_uid
+                    gid = user.pw_gid
+                    directory = os.path.join('/home/', user_name, self.name, 'data')
+
+                else:
+                    directory = f"bots/{self.name}/data"
+                zip_ref.extractall(directory)
+
+                if secure_mode:
+                    self._utl.change_permissions(uid, gid, directory)
             return True
         else:
             self._utl.printout(
@@ -207,7 +237,7 @@ class Bot:
             if self._config.SYSTEM == "Linux":
                 def demote(player):
                     import pwd
-                    
+
                     def demote_function():
                         user_name = SECURE_MAPPING[player]
                         user = pwd.getpwnam(user_name)
