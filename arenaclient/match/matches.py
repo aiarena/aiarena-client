@@ -212,9 +212,12 @@ class HttpApiMatchSource(MatchSource):
         shutil.make_archive(
             os.path.join(self._config.TEMP_PATH, match.bot2.name + "-data"), "zip", bot2_data_folder
         )
-        attempts = 0
-        while attempts < 3:
+        attempt_number = 1
+        while attempt_number < 60:
             try:  # Upload replay file and bot data archives
+                self._utl.printout(
+                    f"Attempting to submit result. Attempt number: {attempt_number}."
+                )
                 file_list = {
                     "bot1_data": open(
                         os.path.join(self._config.TEMP_PATH, f"{match.bot1.name}-data.zip"), "rb"
@@ -252,13 +255,13 @@ class HttpApiMatchSource(MatchSource):
                 )
                 if post is None:
                     self._utl.printout("ERROR: Result submission failed. 'post' was None.")
-                    attempts += 1
+                    attempt_number += 1
                     time.sleep(60)
                 elif post.status_code >= 400:  # todo: retry?
                     self._utl.printout(
                         f"ERROR: Result submission failed. Status code: {post.status_code}."
                     )
-                    attempts += 1
+                    attempt_number += 1
                     time.sleep(60)
                 else:
                     self._utl.printout(result.result + " - Result transferred")
