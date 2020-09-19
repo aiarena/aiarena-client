@@ -6,9 +6,8 @@ import zipfile
 import requests
 from ..utl import Utl
 import subprocess
-from ..configs.default_config import SECURE_MODE, SECURE_PLAYER1_USERNAME, SECURE_PLAYER2_USERNAME
+# from ..configs.default_config import SECURE_MODE, SECURE_PLAYER1_USERNAME, SECURE_PLAYER2_USERNAME
 
-SECURE_MAPPING ={1: SECURE_PLAYER1_USERNAME, 2: SECURE_PLAYER2_USERNAME}
 
 class Bot:
     """
@@ -69,6 +68,10 @@ class Bot:
             "botID": self.game_display_id,
         }
 
+    @property
+    def SECURE_MAPPING(self):
+        return {1: self._config.SECURE_PLAYER1_USERNAME, 2: self._config.SECURE_PLAYER2_USERNAME}
+
     def get_bot_file(self):
         """
         Download the bot's folder and extracts it to a specified location.
@@ -94,7 +97,7 @@ class Bot:
             with zipfile.ZipFile(bot_download_path, "r") as zip_ref:
                 if secure_mode:
                     import pwd
-                    user_name = SECURE_MAPPING[self.player]
+                    user_name = self.SECURE_MAPPING[self.player]
                     user = pwd.getpwnam(user_name)
                     uid = user.pw_uid
                     gid = user.pw_gid
@@ -154,7 +157,7 @@ class Bot:
             with zipfile.ZipFile(bot_data_path, "r") as zip_ref:
                 if secure_mode:
                     import pwd
-                    user_name = SECURE_MAPPING[self.player]
+                    user_name = self.SECURE_MAPPING[self.player]
                     user = pwd.getpwnam(user_name)
                     uid = user.pw_uid
                     gid = user.pw_gid
@@ -239,7 +242,7 @@ class Bot:
                     import pwd
 
                     def demote_function():
-                        user_name = SECURE_MAPPING[player]
+                        user_name = self.SECURE_MAPPING[player]
                         user = pwd.getpwnam(user_name)
                         uid = user.pw_uid
                         gid = user.pw_gid
@@ -250,7 +253,7 @@ class Bot:
                     return demote_function
 
                 with open(os.path.join(bot_path, "data", "stderr.log"), "w+") as out:
-                    if SECURE_MODE and self.player:
+                    if self._config.SECURE_MODE and self.player:
                         function = demote(self.player)
                     else:
                         function = os.setpgrp
