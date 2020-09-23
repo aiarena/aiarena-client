@@ -4,7 +4,7 @@ The linux steps are probably essentially the same, I just can't guarantee they'd
 
 #### Clone this repo
 A recursive clone is required in order to download all the test bots.  
-`git clone --recursive https://gitlab.com/aiarena/aiarena-client.git`
+`git clone --recursive https://github.com/aiarena/aiarena-client.git`
 
 If you already have the repo cloned but didn't do a recursive clone, run the following:  
 `git submodule update --init --recursive`
