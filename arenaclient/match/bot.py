@@ -27,13 +27,13 @@ class Bot:
             "cpplinux": [f"{bot_name}", "BinaryCpp"],
             "dotnetcore": [f"{bot_name}.dll", "DotNetCore"],
             "java": [f"{bot_name}.jar", "Java"],
-            "nodejs": ["main.jar", "NodeJS"],
+            "nodejs": [f"{bot_name}.js", "NodeJS"],
             "Python": ["run.py", "Python"],
             "Wine": [f"{bot_name}.exe", "Wine"],
             "BinaryCpp": [f"{bot_name}", "BinaryCpp"],
             "DotNetCore": [f"{bot_name}.dll", "DotNetCore"],
             "Java": [f"{bot_name}.jar", "Java"],
-            "NodeJS": ["main.jar", "NodeJS"],
+            "NodeJS": [f"{bot_name}.js", "NodeJS"],
             "WSL": [f"{bot_name}", "WSL"]
         }
         return bot_type_map[bot_type][0], bot_type_map[bot_type][1]
@@ -179,7 +179,7 @@ class Bot:
     def start_bot(self, opponent_id):
         """
         Start the bot with the correct arguments.
-        
+
         :param opponent_id:
         :return:
         """
@@ -216,7 +216,7 @@ class Bot:
             cmd_line.insert(0, "java")
             cmd_line.insert(1, "-jar")
         elif bot_type.lower() == "nodejs":
-            raise
+            cmd_line.insert(0, "node")
         elif bot_type.lower() == "wsl":
             cmd_line.pop(0)
             cmd_line.insert(0, self._utl.convert_wsl_paths(os.path.join(bot_path, bot_file)))
@@ -229,7 +229,7 @@ class Bot:
             os.stat(self._config.REPLAYS_DIRECTORY)
         except OSError:
             os.mkdir(self._config.REPLAYS_DIRECTORY)
-        
+
         if self._config.RUN_LOCAL:
             try:
                 os.stat(self._config.BOT_LOGS_DIRECTORY)
