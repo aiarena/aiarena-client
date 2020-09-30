@@ -1,11 +1,10 @@
-[![Quality Gate Status](https://sonar.m1nd.io/api/project_badges/measure?project=aiarena-client&metric=alert_status)](https://sonar.m1nd.io/dashboard?id=aiarena-client)
 # aiarena-client
 ## Bootstrapping for local play on windows
 The linux steps are probably essentially the same, I just can't guarantee they'd work because I haven't tested it.
 
 #### Clone this repo
 A recursive clone is required in order to download all the test bots.  
-`git clone --recursive https://gitlab.com/aiarena/aiarena-client.git`
+`git clone --recursive https://github.com/aiarena/aiarena-client.git`
 
 If you already have the repo cloned but didn't do a recursive clone, run the following:  
 `git submodule update --init --recursive`

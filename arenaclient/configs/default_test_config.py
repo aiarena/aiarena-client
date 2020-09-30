@@ -26,6 +26,11 @@ CLEANUP_BETWEEN_ROUNDS = False
 SYSTEM = platform.system()
 SC2_PROXY = {"HOST": "127.0.0.1", "PORT": 8642}
 RUN_LOCAL = True
+SECURE_MODE = False
+SECURE_PLAYER1_USERNAME = None
+SECURE_PLAYER2_USERNAME = None
+
+
 # LOGGING
 LOGGING_HANDLER = logging.FileHandler("supervisor.log", "a+")
 LOGGING_LEVEL = 10

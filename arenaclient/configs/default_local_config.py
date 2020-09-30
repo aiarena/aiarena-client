@@ -12,7 +12,7 @@ import platform
 from urllib import parse
 from ..match.matches import FileMatchSource
 
-# GERERAL
+# GENERAL
 ARENA_CLIENT_ID = "aiarenaclient_000"
 API_TOKEN = "12345"
 ROUNDS_PER_RUN = 5
@@ -24,6 +24,10 @@ RUN_LOCAL = True
 CLEANUP_BETWEEN_ROUNDS = False
 SYSTEM = platform.system()
 SC2_PROXY = {"HOST": "127.0.0.1", "PORT": 8765}
+SECURE_MODE = False
+SECURE_PLAYER1_USERNAME = None
+SECURE_PLAYER2_USERNAME = None
+
 
 # LOGGING
 LOGGING_HANDLER = logging.FileHandler("../supervisor.log", "a+")

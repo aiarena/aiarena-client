@@ -114,12 +114,12 @@ class HttpApiMatchSource(MatchSource):
         with open(map_path, "wb") as map_file:
             map_file.write(r.content)
 
-        bot_1 = BotFactory.from_api_data(self._config, next_match_data["bot1"])
+        bot_1 = BotFactory.from_api_data(self._config, next_match_data["bot1"], player=1)
         if not bot_1.get_bot_file():
             time.sleep(30)
             return None
 
-        bot_2 = BotFactory.from_api_data(self._config, next_match_data["bot2"])
+        bot_2 = BotFactory.from_api_data(self._config, next_match_data["bot2"], player=2)
         if not bot_2.get_bot_file():
             time.sleep(30)
             return None

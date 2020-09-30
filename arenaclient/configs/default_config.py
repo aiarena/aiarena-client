@@ -13,19 +13,22 @@ import platform
 # GENERAL
 from ..match.matches import FileMatchSource
 
-ARENA_CLIENT_ID = "aiarenaclient_000"
-API_TOKEN = "12345"
+ARENA_CLIENT_ID = "aiarenaclient_000"  # ID of arenaclient. Used for AiArena
+API_TOKEN = "12345"  # API Token to retrieve matches and submit results. Used for AiArena
 ROUNDS_PER_RUN = 5  # Set to -1 to ignore this
 BASE_WEBSITE_URL = ""
-SHUT_DOWN_AFTER_RUN = True
+SHUT_DOWN_AFTER_RUN = True  # Write a .shutdown file after running games. Used for AiArena
 USE_PID_CHECK = False
-RUN_REPLAY_CHECK = False
-DEBUG_MODE = True
-PYTHON = "python3"
-RUN_LOCAL = False
-CLEANUP_BETWEEN_ROUNDS = True
-SYSTEM = platform.system()
-SC2_PROXY = {"HOST": "127.0.0.1", "PORT": 8765}
+RUN_REPLAY_CHECK = False  # Validate replays
+DEBUG_MODE = True  # Enables debug mode for more logging
+PYTHON = "python3"  # Which python version to use
+RUN_LOCAL = False  # Run on AiArena or locally
+CLEANUP_BETWEEN_ROUNDS = True  # Clean up files between rounds
+SYSTEM = platform.system()  # What OS are we on?
+SC2_PROXY = {"HOST": "127.0.0.1", "PORT": 8765}  # On which host and port to run the proxy between SC2 and bots
+SECURE_MODE = False  # Used for AiArena
+SECURE_PLAYER1_USERNAME = None
+SECURE_PLAYER2_USERNAME = None
 
 # LOGGING
 LOGGING_HANDLER = logging.FileHandler("../supervisor.log", "a+")
