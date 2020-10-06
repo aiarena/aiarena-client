@@ -159,7 +159,6 @@ class Bot:
         """
         # todo: move to Bot class
 
-        bot_path = os.path.join(self._config.BOTS_DIRECTORY, self.name)
         bot_file = self.bot_json["FileName"]
         bot_type = self.bot_json["Type"]
         cmd_line = [
@@ -185,7 +184,7 @@ class Bot:
             raise
         elif bot_type.lower() == "binarycpp":
             cmd_line.pop(0)
-            cmd_line.insert(0, os.path.join(bot_path, bot_file))
+            cmd_line.insert(0, os.path.join(self.bot_directory, bot_file))
         elif bot_type.lower() == "java":
             cmd_line.insert(0, "java")
             cmd_line.insert(1, "-jar")
@@ -193,12 +192,12 @@ class Bot:
             cmd_line.insert(0, "node")
         elif bot_type.lower() == "wsl":
             cmd_line.pop(0)
-            cmd_line.insert(0, self._utl.convert_wsl_paths(os.path.join(bot_path, bot_file)))
+            cmd_line.insert(0, self._utl.convert_wsl_paths(os.path.join(self.bot_directory, bot_file)))
             cmd_line.insert(0, 'wsl ')
         try:
-            os.stat(os.path.join(bot_path, "data"))
+            os.stat(os.path.join(self.bot_directory, "data"))
         except OSError:
-            os.mkdir(os.path.join(bot_path, "data"))
+            os.mkdir(os.path.join(self.bot_directory, "data"))
         try:
             os.stat(self._config.REPLAYS_DIRECTORY)
         except OSError:
@@ -225,7 +224,7 @@ class Bot:
                         os.setpgrp()
                     return demote_function
 
-                with open(os.path.join(bot_path, "data", "stderr.log"), "w+") as out:
+                with open(os.path.join(self.bot_directory, "data", "stderr.log"), "w+") as out:
                     if self.run_as_user:
                         function = demote(self.run_as_user)
                     else:
@@ -234,18 +233,18 @@ class Bot:
                         " ".join(cmd_line),
                         stdout=out,
                         stderr=subprocess.STDOUT,
-                        cwd=(str(bot_path)),
+                        cwd=(str(self.bot_directory)),
                         shell=True,
                         preexec_fn=function,
                     )
                 return process
             else:
-                with open(os.path.join(bot_path, "data", "stderr.log"), "w+") as out:
+                with open(os.path.join(self.bot_directory, "data", "stderr.log"), "w+") as out:
                     process = subprocess.Popen(
                         " ".join(cmd_line),
                         stdout=out,
                         stderr=subprocess.STDOUT,
-                        cwd=(str(bot_path)),
+                        cwd=(str(self.bot_directory)),
                         shell=False,
                         creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
                     )
