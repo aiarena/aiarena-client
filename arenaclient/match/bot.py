@@ -262,9 +262,9 @@ class BotFactory:
     def get_bot_directory_and_run_as_user(config, bot_name: str, player_number: int) -> (str, str):
         if config.SECURE_MODE:
             if player_number == 1:
-                return os.path.join('home', config.RUN_PLAYER1_AS_USER), config.RUN_PLAYER1_AS_USER
+                return os.path.join('/home', config.RUN_PLAYER1_AS_USER), config.RUN_PLAYER1_AS_USER
             elif player_number == 2:
-                return os.path.join('home', config.RUN_PLAYER2_AS_USER), config.RUN_PLAYER2_AS_USER
+                return os.path.join('/home', config.RUN_PLAYER2_AS_USER), config.RUN_PLAYER2_AS_USER
             else:
                 raise Exception("player_number is invalid!")
         else:
