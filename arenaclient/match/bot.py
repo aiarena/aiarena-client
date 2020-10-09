@@ -96,6 +96,8 @@ class Bot:
             # Extract to bot folder
             with zipfile.ZipFile(bot_download_path, "r") as zip_ref:
                 zip_ref.extractall(self.bot_directory)
+                if self._config.SECURE_MODE:
+                    self._utl.set_secure_mode_permissions(self.bot_directory)
 
             # # if it's a linux bot, we need to add execute permissions
             # if self.type == "cpplinux":
