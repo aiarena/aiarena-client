@@ -1,5 +1,7 @@
 import datetime
 # import logging
+import shutil
+
 from loguru import logger
 import math
 import os
@@ -187,3 +189,11 @@ class Utl:
                 os.chown(os.path.join(root, d), uid=uid, gid=gid)
             for f in files:
                 os.chown(os.path.join(root, f), uid=uid, gid=gid)
+
+    def clean_dir(self, directory):
+        for filename in os.listdir(directory):
+            file_path = os.path.join(directory, filename)
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
