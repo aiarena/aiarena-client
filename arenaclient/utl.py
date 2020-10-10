@@ -181,8 +181,9 @@ class Utl:
         except:
             pass
 
-    @staticmethod
-    def set_secure_mode_permissions(directory, directory_owner):
-        # The environment needs to be set up correctly to allow these commands to be run.
-        os.system(f"sudo /usr/bin/chmod 6770 {directory} -R")
-        os.system(f"sudo /usr/bin/chown {directory_owner} {directory} -R")
+    def set_secure_mode_permissions(self, uid, gid, directory):
+        for root, dirs, files in os.walk(directory):
+            for d in dirs:
+                os.chown(os.path.join(root, d), uid=uid, gid=gid)
+            for f in files:
+                os.chown(os.path.join(root, f), uid=uid, gid=gid)
