@@ -7,5 +7,5 @@ aiodns==2.0.0
 Brotli==1.0.7
 cchardet==2.1.6
 loguru==0.5.1
-rust_arenaclient==0.1.15
+rust_arenaclient==0.1.16
 
