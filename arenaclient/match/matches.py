@@ -97,6 +97,7 @@ class HttpApiMatchSource(MatchSource):
 
         self._utl.printout(f"Cleaning temp directory root {self._config.TEMP_ROOT}")
         self._utl.clean_dir(self._config.TEMP_ROOT)
+        os.makedirs(self._config.TEMP_PATH, exist_ok=True)  # recreate aiarena temp folder
 
         next_match_id = next_match_data["id"]
         self._utl.printout(f"Next match: {next_match_id}")
