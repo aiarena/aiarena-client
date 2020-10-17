@@ -1,4 +1,6 @@
 import hashlib
+import stat
+
 from loguru import logger
 import os
 import zipfile
@@ -100,17 +102,13 @@ class Bot:
             with zipfile.ZipFile(bot_download_path, "r") as zip_ref:
                 zip_ref.extractall(self.bot_directory)
 
-            # # if it's a linux bot, we need to add execute permissions
-            # if self.type == "cpplinux":
-            #     if secure_mode:
-            #         file = os.path.join('/home/', user_name, self.name, self.name)
-            #     else:
-            #         file = f"bots/{self.name}/{self.name}"
-            #     # Chmod 744: rwxr--r--
-            #     os.chmod(
-            #         file,
-            #         stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH,
-            #     )
+            # if it's a linux bot, we need to add execute permissions
+            if self.type == "cpplinux":
+                # Chmod 770: rwxrwx---
+                os.chmod(
+                    os.path.join(self.bot_directory, self.name),
+                    stat.S_IRWXU | stat.S_IRWXG,  # | stat.S_IROTH,  - no public permissions
+                )
 
             if self.get_bot_data_file():
                 if self._config.SECURE_MODE:
