@@ -38,7 +38,8 @@ LOGGING_HANDLER = logging.FileHandler("../supervisor.log", "a+")
 LOGGING_LEVEL = 10
 
 # PATHS AND FILES
-TEMP_PATH = "/tmp/aiarena/"
+TEMP_ROOT = "/tmp/"
+TEMP_PATH = os.path.join(TEMP_ROOT, "aiarena")
 LOCAL_PATH = os.path.dirname(__file__)
 WORKING_DIRECTORY = LOCAL_PATH  # same for now
 LOG_FILE = os.path.join(WORKING_DIRECTORY, "client.log")

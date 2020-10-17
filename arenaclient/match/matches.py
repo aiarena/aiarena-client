@@ -95,6 +95,9 @@ class HttpApiMatchSource(MatchSource):
             time.sleep(30)
             return None
 
+        self._utl.printout(f"Cleaning temp directory root {self._config.TEMP_ROOT}")
+        self._utl.clean_dir(self._config.TEMP_ROOT)
+
         next_match_id = next_match_data["id"]
         self._utl.printout(f"Next match: {next_match_id}")
 
