@@ -54,6 +54,9 @@ class MatchSource:
     def submit_result(self, match: Match, result):
         raise NotImplementedError()
 
+    def report_status(self, status: str):
+        pass  # this does nothing at the moment - so the HttpApiMatchSource can report status.
+
 
 class HttpApiMatchSource(MatchSource):
     """
@@ -268,6 +271,11 @@ class HttpApiMatchSource(MatchSource):
                     break
             except ConnectionError:
                 self._utl.printout(f"ERROR: Result submission failed. Connection to website failed.")
+
+    def report_status(self, status: str):
+        pass
+        # todo: post the status string to the website (see other post calls for reference)
+        # todo: then call this throughout the AC code to notify the website of the AC's status
 
 
 class FileMatchSource(MatchSource):
