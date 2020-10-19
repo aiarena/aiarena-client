@@ -26,21 +26,25 @@ RUN_LOCAL = False  # Run on AiArena or locally
 CLEANUP_BETWEEN_ROUNDS = True  # Clean up files between rounds
 SYSTEM = platform.system()  # What OS are we on?
 SC2_PROXY = {"HOST": "127.0.0.1", "PORT": 8765}  # On which host and port to run the proxy between SC2 and bots
-SECURE_MODE = False  # Used for AiArena
-SECURE_PLAYER1_USERNAME = None
-SECURE_PLAYER2_USERNAME = None
+
+# Secure mode will ignore the BOTS_DIRECTORY config setting and instead run each bot in their home directory.
+SECURE_MODE = False
+# Specify the users (if any) to run the bots as.
+RUN_PLAYER1_AS_USER = None
+RUN_PLAYER2_AS_USER = None
 
 # LOGGING
 LOGGING_HANDLER = logging.FileHandler("../supervisor.log", "a+")
 LOGGING_LEVEL = 10
 
 # PATHS AND FILES
-TEMP_PATH = "/tmp/aiarena/"
+TEMP_ROOT = "/tmp/"
+TEMP_PATH = os.path.join(TEMP_ROOT, "aiarena")
 LOCAL_PATH = os.path.dirname(__file__)
 WORKING_DIRECTORY = LOCAL_PATH  # same for now
 LOG_FILE = os.path.join(WORKING_DIRECTORY, "client.log")
 REPLAYS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "replays")
-BOTS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "bots")
+BOTS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "bots")  # Ignored when SECURE_MODE == True
 
 MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(
     matches_file=os.path.join(WORKING_DIRECTORY, "matches"),

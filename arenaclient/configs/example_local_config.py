@@ -9,11 +9,6 @@ ARENA_CLIENT_ID = "aiarenaclient_local"
 ROUNDS_PER_RUN = -1
 CLEANUP_BETWEEN_ROUNDS = False
 PYTHON = "python"
-SECURE_MODE = False
-SECURE_PLAYER1_USERNAME = None
-SECURE_PLAYER2_USERNAME = None
-
-
 
 # PATHS AND FILES
 LOCAL_PATH = os.path.dirname(__file__)
@@ -22,7 +17,6 @@ LOG_FILE = os.path.join(WORKING_DIRECTORY, "client.log")
 REPLAYS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "replays")
 BOTS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "bots")
 TEMP_PATH = os.path.join(WORKING_DIRECTORY, "tmp")
-
 
 MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(
     matches_file=os.path.join(WORKING_DIRECTORY, "matches"),

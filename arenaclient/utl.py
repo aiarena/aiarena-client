@@ -1,5 +1,7 @@
 import datetime
 # import logging
+import shutil
+
 from loguru import logger
 import math
 import os
@@ -181,12 +183,17 @@ class Utl:
         except:
             pass
 
-    @staticmethod
-    def change_permissions(uid, gid, directory):
+    def set_secure_mode_permissions(self, uid, gid, directory):
         for root, dirs, files in os.walk(directory):
             for d in dirs:
-                os.chown(d, uid=uid, gid=gid)
-                os.chmod(os.path.join(root, d), 0o760)
+                os.chown(os.path.join(root, d), uid=uid, gid=gid)
             for f in files:
-                os.chown(f, uid=uid, gid=gid)
-                os.chmod(os.path.join(root, f), 0o760)
+                os.chown(os.path.join(root, f), uid=uid, gid=gid)
+
+    def clean_dir(self, directory):
+        for filename in os.listdir(directory):
+            file_path = os.path.join(directory, filename)
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
