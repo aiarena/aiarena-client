@@ -17,7 +17,7 @@ setup(
         "psutil==5.7.2",
         "typing==3.7.4.3",
         "aiodns==2.0.0",
-        "Brotli==1.0.7",
+        "Brotli==1.0.9",
         "cchardet==2.1.6",
         "loguru==0.5.1",
     ]
