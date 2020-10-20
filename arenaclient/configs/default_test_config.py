@@ -56,6 +56,7 @@ API_RESULTS_URL = parse.urljoin(BASE_WEBSITE_URL, "/api/arenaclient/results/")
 
 # STARCRAFT
 MAX_GAME_TIME = 60486
+MAX_REAL_TIME = 7200  # 2 hours in seconds
 MAX_FRAME_TIME = 1000
 STRIKES = 10
 REALTIME = False
