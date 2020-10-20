@@ -26,9 +26,12 @@ CLEANUP_BETWEEN_ROUNDS = False
 SYSTEM = platform.system()
 SC2_PROXY = {"HOST": "127.0.0.1", "PORT": 8642}
 RUN_LOCAL = True
+
+# Secure mode will ignore the BOTS_DIRECTORY config setting and instead run each bot in their home directory.
 SECURE_MODE = False
-SECURE_PLAYER1_USERNAME = None
-SECURE_PLAYER2_USERNAME = None
+# Specify the users (if any) to run the bots as.
+RUN_PLAYER1_AS_USER = None
+RUN_PLAYER2_AS_USER = None
 
 
 # LOGGING

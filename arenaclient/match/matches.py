@@ -95,6 +95,10 @@ class HttpApiMatchSource(MatchSource):
             time.sleep(30)
             return None
 
+        self._utl.printout(f"Cleaning temp directory root {self._config.TEMP_ROOT}")
+        self._utl.clean_dir(self._config.TEMP_ROOT)
+        os.makedirs(self._config.TEMP_PATH, exist_ok=True)  # recreate aiarena temp folder
+
         next_match_id = next_match_data["id"]
         self._utl.printout(f"Next match: {next_match_id}")
 
@@ -114,12 +118,12 @@ class HttpApiMatchSource(MatchSource):
         with open(map_path, "wb") as map_file:
             map_file.write(r.content)
 
-        bot_1 = BotFactory.from_api_data(self._config, next_match_data["bot1"], player=1)
+        bot_1 = BotFactory.from_api_data(self._config, next_match_data["bot1"], 1)
         if not bot_1.get_bot_file():
             time.sleep(30)
             return None
 
-        bot_2 = BotFactory.from_api_data(self._config, next_match_data["bot2"], player=2)
+        bot_2 = BotFactory.from_api_data(self._config, next_match_data["bot2"], 2)
         if not bot_2.get_bot_file():
             time.sleep(30)
             return None
@@ -146,16 +150,14 @@ class HttpApiMatchSource(MatchSource):
 
         replay_file_path = os.path.join(self._config.REPLAYS_DIRECTORY, replay_file)
 
-        bot1_data_folder = os.path.join(self._config.BOTS_DIRECTORY, match.bot1.name, "data")
-        bot2_data_folder = os.path.join(self._config.BOTS_DIRECTORY, match.bot2.name, "data")
-        bot1_error_log = os.path.join(bot1_data_folder, "stderr.log")
+        bot1_error_log = os.path.join(match.bot1.bot_data_directory, "stderr.log")
         bot1_error_log_tmp = os.path.join(self._config.TEMP_PATH, match.bot1.name + "-error.log")
         if os.path.isfile(bot1_error_log):
             shutil.move(bot1_error_log, bot1_error_log_tmp)
         else:
             Path(bot1_error_log_tmp).touch()
 
-        bot2_error_log = os.path.join(bot2_data_folder, "stderr.log")
+        bot2_error_log = os.path.join(match.bot2.bot_data_directory, "stderr.log")
         bot2_error_log_tmp = os.path.join(self._config.TEMP_PATH, match.bot2.name + "-error.log")
         if os.path.isfile(bot2_error_log):
             shutil.move(bot2_error_log, bot2_error_log_tmp)
@@ -202,15 +204,15 @@ class HttpApiMatchSource(MatchSource):
         zip_file.close()
 
         # Create downloadable data archives
-        if not os.path.isdir(bot1_data_folder):
-            os.mkdir(bot1_data_folder)
+        if not os.path.isdir(match.bot1.bot_data_directory):
+            os.mkdir(match.bot1.bot_data_directory)
         shutil.make_archive(
-            os.path.join(self._config.TEMP_PATH, match.bot1.name + "-data"), "zip", bot1_data_folder
+            os.path.join(self._config.TEMP_PATH, match.bot1.name + "-data"), "zip", match.bot1.bot_data_directory
         )
-        if not os.path.isdir(bot2_data_folder):
-            os.mkdir(bot2_data_folder)
+        if not os.path.isdir(match.bot2.bot_data_directory):
+            os.mkdir(match.bot2.bot_data_directory)
         shutil.make_archive(
-            os.path.join(self._config.TEMP_PATH, match.bot2.name + "-data"), "zip", bot2_data_folder
+            os.path.join(self._config.TEMP_PATH, match.bot2.name + "-data"), "zip", match.bot2.bot_data_directory
         )
         attempt_number = 1
         while attempt_number < 60:
@@ -358,10 +360,8 @@ class FileMatchSource(MatchSource):
             os.mkdir(os.path.join(match_log_folder, str(match.bot2.name)))
         except FileExistsError:
             pass
-        
-        bot1_data_folder = os.path.join(self._config.BOTS_DIRECTORY, match.bot1.name, "data")
-        bot2_data_folder = os.path.join(self._config.BOTS_DIRECTORY, match.bot2.name, "data")
-        bot1_error_log = os.path.join(bot1_data_folder, "stderr.log")
+
+        bot1_error_log = os.path.join(match.bot1.bot_data_directory, "stderr.log")
         bot1_error_log_tmp = os.path.join(match_log_folder, match.bot1.name, 'stderr.log')
 
         if os.path.isfile(bot1_error_log):
@@ -369,7 +369,7 @@ class FileMatchSource(MatchSource):
         else:
             Path(bot1_error_log_tmp).touch()
 
-        bot2_error_log = os.path.join(bot2_data_folder, "stderr.log")
+        bot2_error_log = os.path.join(match.bot2.bot_data_directory, "stderr.log")
         bot2_error_log_tmp = os.path.join(match_log_folder, match.bot2.name, 'stderr.log')
         if os.path.isfile(bot2_error_log):
             shutil.copy(bot2_error_log, bot2_error_log_tmp)

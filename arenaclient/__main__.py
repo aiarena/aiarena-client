@@ -1,9 +1,14 @@
+import asyncio
+import logging
+import os
 from .client import Client
 # the default config will also import custom config values
 from .configs import default_config as cfg
-import asyncio
+
+logging.getLogger().setLevel(logging.DEBUG)  # Logging needs to be initialized before importing rust_ac
+logging.basicConfig(filename="proxy.log", level=logging.DEBUG, filemode="w+")
+logging.info("")
 from rust_ac import Server
-import os
 
 
 async def run_client():
