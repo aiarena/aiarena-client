@@ -45,6 +45,7 @@ WORKING_DIRECTORY = LOCAL_PATH  # same for now
 LOG_FILE = os.path.join(WORKING_DIRECTORY, "client.log")
 REPLAYS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "replays")
 BOTS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "bots")  # Ignored when SECURE_MODE == True
+CLEAN_BOT_DIRECTORIES_BEFORE_MATCH_START = True  # a quick fix to stop attempting to clean a non-existent bot directory
 
 MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(
     matches_file=os.path.join(WORKING_DIRECTORY, "matches"),

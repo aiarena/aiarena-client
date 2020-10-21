@@ -80,8 +80,9 @@ class Bot:
 
         :return: bool
         """
-        self._utl.printout(f"Cleaning destination directory {self.bot_directory} for bot {self.name}")
-        self._utl.clean_dir(self.bot_directory)
+        if self._config.CLEAN_BOT_DIRECTORIES_BEFORE_MATCH_START:
+            self._utl.printout(f"Cleaning destination directory {self.bot_directory} for bot {self.name}")
+            self._utl.clean_dir(self.bot_directory)
 
         self._utl.printout(f"Downloading bot {self.name}")
         # Download bot and save to .zip
