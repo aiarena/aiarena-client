@@ -14,7 +14,7 @@ setup(
         "requests==2.24.0",
         "aiohttp==3.6.3",
         "termcolor==1.1.0",
-        "psutil==5.7.2",
+        "psutil==5.7.3",
         "typing==3.7.4.3",
         "aiodns==2.0.0",
         "Brotli==1.0.9",
