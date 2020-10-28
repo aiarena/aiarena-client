@@ -12,7 +12,7 @@ setup(
     install_requires=[
         "rust_arenaclient==0.1.16",
         "requests==2.24.0",
-        "aiohttp==3.6.3",
+        "aiohttp==3.7.2",
         "termcolor==1.1.0",
         "psutil==5.7.2",
         "typing==3.7.4.3",
