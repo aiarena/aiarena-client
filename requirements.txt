@@ -1,4 +1,4 @@
-requests==2.24.0
+requests==2.25.0
 aiohttp==3.6.3
 termcolor==1.1.0
 psutil==5.7.2
