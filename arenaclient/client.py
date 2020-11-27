@@ -11,7 +11,7 @@ import traceback
 import hashlib
 import aiohttp
 import psutil
-from .match.matches import MatchSourceFactory, MatchSource
+from .match.matches import ACStatus, MatchSourceFactory, MatchSource
 from .utl import Utl
 from .match.result import Result
 
@@ -262,6 +262,9 @@ class Client:
             self._ws, self._session = await connect(address=self.address, headers=self.headers)
 
             if await self.connected():
+
+                match.report_status(ACStatus.PLAYING_GAME)
+
                 await self.send(json.dumps(self.json_config(match)))
 
                 _ = await self.receive()
@@ -481,6 +484,9 @@ class Client:
         try:
             self._utl.printout(f"Starting game - Round {match_count}")
             self._utl.printout(f"{match.bot1.name} vs {match.bot2.name}")
+
+            match.report_status(ACStatus.STARTING_GAME)
+
             self.kill_current_server()
 
             result = await self.main(match)
