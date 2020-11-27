@@ -13,6 +13,13 @@ from ..match.bot import Bot, BotFactory
 from ..utl import Utl
 
 
+class ACStatus(Enum):
+    IDLE = 1
+    STARTING_GAME = 2
+    PLAYING_GAME = 3
+    SUBMITTING_RESULT = 4
+
+
 class MatchSourceType(Enum):
     FILE = 1
     HTTP_API = 2
