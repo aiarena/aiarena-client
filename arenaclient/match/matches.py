@@ -62,8 +62,7 @@ class MatchSource:
         raise NotImplementedError()
 
     def report_status(self, status: str):
-        pass  # this does nothing at the moment - so the HttpApiMatchSource can report status.
-
+        raise NotImplementedError()  # this does nothing at the moment - so the HttpApiMatchSource can report status.
 
 class HttpApiMatchSource(MatchSource):
     """
