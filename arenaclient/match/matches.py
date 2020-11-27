@@ -139,6 +139,22 @@ class HttpApiMatchSource(MatchSource):
 
         return HttpApiMatchSource.HttpApiMatch(next_match_id, bot_1, bot_2, map_name)
 
+    def report_status(self, status: ACStatus):
+        # todo: post the status string to the website (see other post calls for reference)
+        # todo: then call this throughout the AC code to notify the website of the AC's status
+        self._utl.printout(status)
+        payload = {"status" : status}
+
+        post = requests.post(
+                self._config.API_SET_STATUS_URL,
+                data=payload,
+                headers={"Authorization": "Token " + self._config.MATCH_SOURCE_CONFIG.API_TOKEN},
+        )
+        if post is None:
+            self._utl.printout("ERROR: Status submission failed. 'post' was None.")
+        else:
+            self._utl.printout(status + " - Status Submitted")
+
     def submit_result(self, match: HttpApiMatch, result):
         """
         Submit result.
@@ -147,6 +163,8 @@ class HttpApiMatchSource(MatchSource):
         """
         # quick hack to avoid these going uninitialized
         # todo: remove these and actually fix the issue
+
+        self.report_status(ACStatus.SUBMITTING_RESULT)
 
         self._utl.printout(str(result.result))
         replay_file: str = ""
@@ -280,10 +298,7 @@ class HttpApiMatchSource(MatchSource):
             except ConnectionError:
                 self._utl.printout(f"ERROR: Result submission failed. Connection to website failed.")
 
-    def report_status(self, status: str):
-        pass
-        # todo: post the status string to the website (see other post calls for reference)
-        # todo: then call this throughout the AC code to notify the website of the AC's status
+        self.report_status(ACStatus.IDLE)
 
 
 class FileMatchSource(MatchSource):
@@ -317,6 +332,9 @@ class FileMatchSource(MatchSource):
             bot1 = BotFactory.from_values(config, 1, match_values[0], match_values[1], match_values[2])
             bot2 = BotFactory.from_values(config, 2, match_values[3], match_values[4], match_values[5])
             super().__init__(match_id, bot1, bot2, map_name)
+
+        def report_status(self, status):
+            pass
 
     def __init__(self, global_config, config: FileMatchSourceConfig):
         super().__init__(config)
