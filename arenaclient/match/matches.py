@@ -120,7 +120,7 @@ class HttpApiMatchSource(MatchSource):
 
     def next_match(self) -> Optional[HttpApiMatch]:
         next_match_data = self._api.get_match()
-        self.report_status(status_enum=ACStatus.STARTING_GAME)
+        self.HttpApiMatch.report_status(status_enum=ACStatus.STARTING_GAME)
         if next_match_data is None:
             time.sleep(30)
             return None
