@@ -90,23 +90,6 @@ class HttpApiMatchSource(MatchSource):
         def __init__(self, match_id, bot1: Bot, bot2: Bot, map_name):
             super().__init__(match_id, bot1, bot2, map_name)
 
-        def report_status(self, status_enum: ACStatus):
-            # todo: post the status string to the website (see other post calls for reference)
-            # todo: then call this throughout the AC code to notify the website of the AC's status
-            status = STATUS_TYPES[status_enum.value]
-            logger.info(status)
-            payload = {"status": status}
-
-            post = requests.post(
-                    AiArenaWebApi.API_SET_STATUS_URL,
-                    data=payload,
-                    headers={"Authorization": "Token " + AiArenaWebApi.API_TOKEN},
-            )
-            if post is None:
-                logger.error("ERROR: Status submission failed. 'post' was None.")
-            else:
-                logger.info(status + " - Status Submitted")
-
     def __init__(self, config: HttpApiMatchSourceConfig, global_config):
         super().__init__(config)
         self._api = AiArenaWebApi(config.API_URL, config.API_TOKEN, global_config)
