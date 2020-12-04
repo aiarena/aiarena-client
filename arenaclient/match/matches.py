@@ -342,9 +342,6 @@ class FileMatchSource(MatchSource):
             bot2 = BotFactory.from_values(config, 2, match_values[3], match_values[4], match_values[5])
             super().__init__(match_id, bot1, bot2, map_name)
 
-        def report_status(self, status: ACStatus):
-            pass
-
     def __init__(self, global_config, config: FileMatchSourceConfig):
         super().__init__(config)
         self._config = global_config
