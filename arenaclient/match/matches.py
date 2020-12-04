@@ -11,7 +11,7 @@ import requests
 from ..match.aiarena_web_api import AiArenaWebApi
 from ..match.bot import Bot, BotFactory
 from ..utl import Utl
-
+from loguru import logger
 
 class ACStatus(Enum):
     IDLE = 1
@@ -83,6 +83,22 @@ class HttpApiMatchSource(MatchSource):
         def __init__(self, match_id, bot1: Bot, bot2: Bot, map_name):
             super().__init__(match_id, bot1, bot2, map_name)
 
+        def report_status(self, status: ACStatus):
+            # todo: post the status string to the website (see other post calls for reference)
+            # todo: then call this throughout the AC code to notify the website of the AC's status
+            logger.info(status)
+            payload = {"status": status}
+
+            post = requests.post(
+                    self._api.API_SET_STATUS_URL,
+                    data=payload,
+                    headers={"Authorization": "Token " + self._config.MATCH_SOURCE_CONFIG.API_TOKEN},
+            )
+            if post is None:
+                logger.error("ERROR: Status submission failed. 'post' was None.")
+            else:
+                logger.info(status + " - Status Submitted")
+
     def __init__(self, config: HttpApiMatchSourceConfig, global_config):
         super().__init__(config)
         self._api = AiArenaWebApi(config.API_URL, config.API_TOKEN, global_config)
@@ -94,7 +110,7 @@ class HttpApiMatchSource(MatchSource):
 
     def next_match(self) -> Optional[HttpApiMatch]:
         next_match_data = self._api.get_match()
-
+        self.report_status(status='starting')
         if next_match_data is None:
             time.sleep(30)
             return None
@@ -138,22 +154,6 @@ class HttpApiMatchSource(MatchSource):
             return None
 
         return HttpApiMatchSource.HttpApiMatch(next_match_id, bot_1, bot_2, map_name)
-
-    def report_status(self, status: ACStatus):
-        # todo: post the status string to the website (see other post calls for reference)
-        # todo: then call this throughout the AC code to notify the website of the AC's status
-        self._utl.printout(status)
-        payload = {"status" : status}
-
-        post = requests.post(
-                self._config.API_SET_STATUS_URL,
-                data=payload,
-                headers={"Authorization": "Token " + self._config.MATCH_SOURCE_CONFIG.API_TOKEN},
-        )
-        if post is None:
-            self._utl.printout("ERROR: Status submission failed. 'post' was None.")
-        else:
-            self._utl.printout(status + " - Status Submitted")
 
     def submit_result(self, match: HttpApiMatch, result):
         """
@@ -333,7 +333,7 @@ class FileMatchSource(MatchSource):
             bot2 = BotFactory.from_values(config, 2, match_values[3], match_values[4], match_values[5])
             super().__init__(match_id, bot1, bot2, map_name)
 
-        def report_status(self, status):
+        def report_status(self, status: ACStatus):
             pass
 
     def __init__(self, global_config, config: FileMatchSourceConfig):
