@@ -90,8 +90,7 @@ class HttpApiMatchSource(MatchSource):
         def __init__(self, match_id, bot1: Bot, bot2: Bot, map_name):
             super().__init__(match_id, bot1, bot2, map_name)
 
-        @staticmethod
-        def report_status(status_enum):
+        def report_status(self,status_enum):
             return self.HttpApiMatchSource.report_status(status_enum)
 
     def __init__(self, config: HttpApiMatchSourceConfig, global_config):
