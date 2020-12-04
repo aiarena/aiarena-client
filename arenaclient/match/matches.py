@@ -11,7 +11,21 @@ import requests
 from ..match.aiarena_web_api import AiArenaWebApi
 from ..match.bot import Bot, BotFactory
 from ..utl import Utl
+from loguru import logger
 
+class ACStatus(Enum):
+    IDLE = 1
+    STARTING_GAME = 2
+    PLAYING_GAME = 3
+    SUBMITTING_RESULT = 4
+
+
+STATUS_TYPES = {
+        1: 'idle',
+        2: 'starting_game',
+        3: 'playing_game',
+        4: 'submitting_result',
+}
 
 class MatchSourceType(Enum):
     FILE = 1
@@ -54,9 +68,8 @@ class MatchSource:
     def submit_result(self, match: Match, result):
         raise NotImplementedError()
 
-    def report_status(self, status: str):
-        pass  # this does nothing at the moment - so the HttpApiMatchSource can report status.
-
+    def report_status(self, status_enum: ACStatus):
+        raise NotImplementedError()  # this does nothing at the moment - so the HttpApiMatchSource can report status.
 
 class HttpApiMatchSource(MatchSource):
     """
@@ -83,12 +96,30 @@ class HttpApiMatchSource(MatchSource):
         self._config = global_config
         self._utl = Utl(global_config)
 
+    def report_status(self, status_enum: ACStatus):
+        # todo: post the status string to the website (see other post calls for reference)
+        # todo: then call this throughout the AC code to notify the website of the AC's status
+        status = STATUS_TYPES[status_enum.value]
+        logger.info(status)
+        payload = {"status": status}
+
+        post = requests.post(
+                self._api.API_SET_STATUS_URL,
+                data=payload,
+                headers={"Authorization": "Token " + self._api.API_TOKEN},
+        )
+        if post is None:
+            logger.error("ERROR: Status submission failed. 'post' was None.")
+        else:
+            logger.info(status + " - Status Submitted")
+
+
     def has_next(self) -> bool:
         return True  # always return true
 
     def next_match(self) -> Optional[HttpApiMatch]:
         next_match_data = self._api.get_match()
-
+        self.report_status(status_enum=ACStatus.STARTING_GAME)
         if next_match_data is None:
             time.sleep(30)
             return None
@@ -97,6 +128,10 @@ class HttpApiMatchSource(MatchSource):
             self._utl.printout("No games available - sleeping")
             time.sleep(30)
             return None
+
+        self._utl.printout(f"Cleaning temp directory root {self._config.TEMP_ROOT}")
+        self._utl.clean_dir(self._config.TEMP_ROOT)
+        os.makedirs(self._config.TEMP_PATH, exist_ok=True)  # recreate aiarena temp folder
 
         next_match_id = next_match_data["id"]
         self._utl.printout(f"Next match: {next_match_id}")
@@ -117,12 +152,12 @@ class HttpApiMatchSource(MatchSource):
         with open(map_path, "wb") as map_file:
             map_file.write(r.content)
 
-        bot_1 = BotFactory.from_api_data(self._config, next_match_data["bot1"], player=1)
+        bot_1 = BotFactory.from_api_data(self._config, next_match_data["bot1"], 1)
         if not bot_1.get_bot_file():
             time.sleep(30)
             return None
 
-        bot_2 = BotFactory.from_api_data(self._config, next_match_data["bot2"], player=2)
+        bot_2 = BotFactory.from_api_data(self._config, next_match_data["bot2"], 2)
         if not bot_2.get_bot_file():
             time.sleep(30)
             return None
@@ -138,6 +173,8 @@ class HttpApiMatchSource(MatchSource):
         # quick hack to avoid these going uninitialized
         # todo: remove these and actually fix the issue
 
+        self.report_status(status_enum=ACStatus.SUBMITTING_RESULT)
+
         self._utl.printout(str(result.result))
         replay_file: str = ""
         for file in os.listdir(self._config.REPLAYS_DIRECTORY):
@@ -149,16 +186,14 @@ class HttpApiMatchSource(MatchSource):
 
         replay_file_path = os.path.join(self._config.REPLAYS_DIRECTORY, replay_file)
 
-        bot1_data_folder = os.path.join(self._config.BOTS_DIRECTORY, match.bot1.name, "data")
-        bot2_data_folder = os.path.join(self._config.BOTS_DIRECTORY, match.bot2.name, "data")
-        bot1_error_log = os.path.join(bot1_data_folder, "stderr.log")
+        bot1_error_log = os.path.join(match.bot1.bot_data_directory, "stderr.log")
         bot1_error_log_tmp = os.path.join(self._config.TEMP_PATH, match.bot1.name + "-error.log")
         if os.path.isfile(bot1_error_log):
             shutil.move(bot1_error_log, bot1_error_log_tmp)
         else:
             Path(bot1_error_log_tmp).touch()
 
-        bot2_error_log = os.path.join(bot2_data_folder, "stderr.log")
+        bot2_error_log = os.path.join(match.bot2.bot_data_directory, "stderr.log")
         bot2_error_log_tmp = os.path.join(self._config.TEMP_PATH, match.bot2.name + "-error.log")
         if os.path.isfile(bot2_error_log):
             shutil.move(bot2_error_log, bot2_error_log_tmp)
@@ -205,15 +240,15 @@ class HttpApiMatchSource(MatchSource):
         zip_file.close()
 
         # Create downloadable data archives
-        if not os.path.isdir(bot1_data_folder):
-            os.mkdir(bot1_data_folder)
+        if not os.path.isdir(match.bot1.bot_data_directory):
+            os.mkdir(match.bot1.bot_data_directory)
         shutil.make_archive(
-            os.path.join(self._config.TEMP_PATH, match.bot1.name + "-data"), "zip", bot1_data_folder
+            os.path.join(self._config.TEMP_PATH, match.bot1.name + "-data"), "zip", match.bot1.bot_data_directory
         )
-        if not os.path.isdir(bot2_data_folder):
-            os.mkdir(bot2_data_folder)
+        if not os.path.isdir(match.bot2.bot_data_directory):
+            os.mkdir(match.bot2.bot_data_directory)
         shutil.make_archive(
-            os.path.join(self._config.TEMP_PATH, match.bot2.name + "-data"), "zip", bot2_data_folder
+            os.path.join(self._config.TEMP_PATH, match.bot2.name + "-data"), "zip", match.bot2.bot_data_directory
         )
         attempt_number = 1
         while attempt_number < 60:
@@ -272,10 +307,7 @@ class HttpApiMatchSource(MatchSource):
             except ConnectionError:
                 self._utl.printout(f"ERROR: Result submission failed. Connection to website failed.")
 
-    def report_status(self, status: str):
-        pass
-        # todo: post the status string to the website (see other post calls for reference)
-        # todo: then call this throughout the AC code to notify the website of the AC's status
+        self.report_status(status_enum=ACStatus.IDLE)
 
 
 class FileMatchSource(MatchSource):
@@ -366,10 +398,8 @@ class FileMatchSource(MatchSource):
             os.mkdir(os.path.join(match_log_folder, str(match.bot2.name)))
         except FileExistsError:
             pass
-        
-        bot1_data_folder = os.path.join(self._config.BOTS_DIRECTORY, match.bot1.name, "data")
-        bot2_data_folder = os.path.join(self._config.BOTS_DIRECTORY, match.bot2.name, "data")
-        bot1_error_log = os.path.join(bot1_data_folder, "stderr.log")
+
+        bot1_error_log = os.path.join(match.bot1.bot_data_directory, "stderr.log")
         bot1_error_log_tmp = os.path.join(match_log_folder, match.bot1.name, 'stderr.log')
 
         if os.path.isfile(bot1_error_log):
@@ -377,7 +407,7 @@ class FileMatchSource(MatchSource):
         else:
             Path(bot1_error_log_tmp).touch()
 
-        bot2_error_log = os.path.join(bot2_data_folder, "stderr.log")
+        bot2_error_log = os.path.join(match.bot2.bot_data_directory, "stderr.log")
         bot2_error_log_tmp = os.path.join(match_log_folder, match.bot2.name, 'stderr.log')
         if os.path.isfile(bot2_error_log):
             shutil.copy(bot2_error_log, bot2_error_log_tmp)

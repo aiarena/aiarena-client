@@ -2,13 +2,17 @@ import json
 import os
 import asyncio
 import shutil
+import logging
 from arenaclient.configs import default_test_config as config
 
 from arenaclient.client import Client
 from arenaclient.match.matches import MatchSourceType
 from arenaclient.utl import Utl
-from rust_ac import Server
 from pathlib import Path
+logging.getLogger().setLevel(logging.DEBUG)  # Logging needs to be initialized before importing rust_ac
+logging.info("")
+from rust_ac import Server
+
 
 # Sanity check the config and remind people to check their config
 assert config.TEST_MODE, "LOCAL_TEST_MODE config value must must be set to True to run tests." + os.linesep \

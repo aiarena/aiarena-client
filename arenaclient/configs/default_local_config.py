@@ -24,9 +24,12 @@ RUN_LOCAL = True
 CLEANUP_BETWEEN_ROUNDS = False
 SYSTEM = platform.system()
 SC2_PROXY = {"HOST": "127.0.0.1", "PORT": 8765}
+
+# Secure mode will ignore the BOTS_DIRECTORY config setting and instead run each bot in their home directory.
 SECURE_MODE = False
-SECURE_PLAYER1_USERNAME = None
-SECURE_PLAYER2_USERNAME = None
+# Specify the users (if any) to run the bots as.
+RUN_PLAYER1_AS_USER = None
+RUN_PLAYER2_AS_USER = None
 
 
 # LOGGING
@@ -49,7 +52,7 @@ MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(
 )
 
 # WEBSITE
-BASE_WEBSITE_URL = "https://ai-arena.net"
+BASE_WEBSITE_URL = "https://aiarena.net"
 API_MATCHES_URL = parse.urljoin(BASE_WEBSITE_URL, "/api/arenaclient/matches/")
 API_RESULTS_URL = parse.urljoin(BASE_WEBSITE_URL, "/api/arenaclient/results/")
 
@@ -57,6 +60,7 @@ API_RESULTS_URL = parse.urljoin(BASE_WEBSITE_URL, "/api/arenaclient/results/")
 SC2_HOME = "/home/aiarena/StarCraftII/"
 SC2_BINARY = os.path.join(SC2_HOME, "Versions/Base75689/SC2_x64")
 MAX_GAME_TIME = 60486
+MAX_REAL_TIME = 7200  # 2 hours in seconds
 MAX_FRAME_TIME = 1000
 STRIKES = 10
 REALTIME = False

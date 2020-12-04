@@ -1,12 +1,12 @@
 import hashlib
+import stat
+
 from loguru import logger
 import os
-import stat
 import zipfile
 import requests
 from ..utl import Utl
 import subprocess
-# from ..configs.default_config import SECURE_MODE, SECURE_PLAYER1_USERNAME, SECURE_PLAYER2_USERNAME
 
 
 class Bot:
@@ -39,7 +39,7 @@ class Bot:
         return bot_type_map[bot_type][0], bot_type_map[bot_type][1]
 
     def __init__(self, config, bot_id, name, game_display_id, bot_zip, bot_zip_md5hash, bot_data, bot_data_md5hash,
-                 plays_race, bot_type, player=None):
+                 plays_race, bot_type, bot_directory: str, run_as_user: str):
         self._config = config
 
         self._logger = logger
@@ -55,7 +55,9 @@ class Bot:
         self.bot_data_md5hash = bot_data_md5hash
         self.plays_race = plays_race
         self.type = bot_type
-        self.player = player
+        self.run_as_user = run_as_user
+        self.bot_directory: str = bot_directory
+        self.bot_data_directory: str = os.path.join(bot_directory, 'data')
 
     @property
     def bot_json(self):
@@ -78,8 +80,11 @@ class Bot:
 
         :return: bool
         """
+        if self._config.CLEAN_BOT_DIRECTORIES_BEFORE_MATCH_START:
+            self._utl.printout(f"Cleaning destination directory {self.bot_directory} for bot {self.name}")
+            self._utl.clean_dir(self.bot_directory)
+
         self._utl.printout(f"Downloading bot {self.name}")
-        secure_mode = self._config.SYSTEM == "Linux" and self._config.SECURE_MODE and self.player
         # Download bot and save to .zip
         r = requests.get(
             self.bot_zip, headers={"Authorization": "Token " + self._config.MATCH_SOURCE_CONFIG.API_TOKEN}
@@ -92,36 +97,25 @@ class Bot:
             calculated_md5 = hashlib.md5(self._utl.file_as_bytes(bot_zip)).hexdigest()
         if self.bot_zip_md5hash == calculated_md5:
             self._utl.printout("MD5 hash matches transferred file...")
-            self._utl.printout(f"Extracting bot {self.name} to bots/{self.name}")
+            self._utl.printout(f"Extracting bot {self.name} to {self.bot_directory}")
+
             # Extract to bot folder
             with zipfile.ZipFile(bot_download_path, "r") as zip_ref:
-                if secure_mode:
-                    import pwd
-                    user_name = self.SECURE_MAPPING[self.player]
-                    user = pwd.getpwnam(user_name)
-                    uid = user.pw_uid
-                    gid = user.pw_gid
-                    directory = os.path.join('/home/', user_name, self.name)
-                else:
-                    directory = os.path.join("bots", self.name)
-                zip_ref.extractall(directory)
+                zip_ref.extractall(self.bot_directory)
 
-                if secure_mode:
-                    self._utl.change_permissions(uid, gid, directory)
-
-            # # if it's a linux bot, we need to add execute permissions
-            # if self.type == "cpplinux":
-            #     if secure_mode:
-            #         file = os.path.join('/home/', user_name, self.name, self.name)
-            #     else:
-            #         file = f"bots/{self.name}/{self.name}"
-            #     # Chmod 744: rwxr--r--
-            #     os.chmod(
-            #         file,
-            #         stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH,
-            #     )
+            # if it's a linux bot, we need to add execute permissions
+            if self.type == "cpplinux":
+                # Chmod 770: rwxrwx---
+                os.chmod(
+                    os.path.join(self.bot_directory, self.name),
+                    stat.S_IRWXU | stat.S_IRWXG,  # | stat.S_IROTH,  - no public permissions
+                )
 
             if self.get_bot_data_file():
+                if self._config.SECURE_MODE:
+                    import pwd
+                    user = pwd.getpwnam(self.run_as_user)
+                    self._utl.set_secure_mode_permissions(user.pw_uid, user.pw_gid, self.bot_directory)
                 return True
             else:
                 return False
@@ -140,7 +134,6 @@ class Bot:
         """
         if self.bot_data is None:
             return True
-        secure_mode = self._config.SYSTEM == "Linux" and self._config.SECURE_MODE and self.player
         self._utl.printout(f"Downloading bot data for {self.name}")
         # Download bot data and save to .zip
         r = requests.get(
@@ -153,22 +146,9 @@ class Bot:
             calculated_md5 = hashlib.md5(self._utl.file_as_bytes(bot_data_zip)).hexdigest()
         if self.bot_data_md5hash == calculated_md5:
             self._utl.printout("MD5 hash matches transferred file...")
-            self._utl.printout(f"Extracting data for {self.name} to bots/{self.name}/data")
+            self._utl.printout(f"Extracting data for {self.name} to {self.bot_data_directory}")
             with zipfile.ZipFile(bot_data_path, "r") as zip_ref:
-                if secure_mode:
-                    import pwd
-                    user_name = self.SECURE_MAPPING[self.player]
-                    user = pwd.getpwnam(user_name)
-                    uid = user.pw_uid
-                    gid = user.pw_gid
-                    directory = os.path.join('/home/', user_name, self.name, 'data')
-
-                else:
-                    directory = f"bots/{self.name}/data"
-                zip_ref.extractall(directory)
-
-                if secure_mode:
-                    self._utl.change_permissions(uid, gid, directory)
+                zip_ref.extractall(self.bot_data_directory)
             return True
         else:
             self._utl.printout(
@@ -185,7 +165,6 @@ class Bot:
         """
         # todo: move to Bot class
 
-        bot_path = os.path.join(self._config.BOTS_DIRECTORY, self.name)
         bot_file = self.bot_json["FileName"]
         bot_type = self.bot_json["Type"]
         cmd_line = [
@@ -211,7 +190,7 @@ class Bot:
             raise
         elif bot_type.lower() == "binarycpp":
             cmd_line.pop(0)
-            cmd_line.insert(0, os.path.join(bot_path, bot_file))
+            cmd_line.insert(0, os.path.join(self.bot_directory, bot_file))
         elif bot_type.lower() == "java":
             cmd_line.insert(0, "java")
             cmd_line.insert(1, "-jar")
@@ -219,12 +198,12 @@ class Bot:
             cmd_line.insert(0, "node")
         elif bot_type.lower() == "wsl":
             cmd_line.pop(0)
-            cmd_line.insert(0, self._utl.convert_wsl_paths(os.path.join(bot_path, bot_file)))
+            cmd_line.insert(0, self._utl.convert_wsl_paths(os.path.join(self.bot_directory, bot_file)))
             cmd_line.insert(0, 'wsl ')
         try:
-            os.stat(os.path.join(bot_path, "data"))
+            os.stat(os.path.join(self.bot_directory, "data"))
         except OSError:
-            os.mkdir(os.path.join(bot_path, "data"))
+            os.mkdir(os.path.join(self.bot_directory, "data"))
         try:
             os.stat(self._config.REPLAYS_DIRECTORY)
         except OSError:
@@ -238,41 +217,40 @@ class Bot:
 
         try:
             if self._config.SYSTEM == "Linux":
-                def demote(player):
+                def demote(username):
                     import pwd
 
                     def demote_function():
-                        user_name = self.SECURE_MAPPING[player]
-                        user = pwd.getpwnam(user_name)
+                        user = pwd.getpwnam(username)
                         uid = user.pw_uid
                         gid = user.pw_gid
-                        os.initgroups(user_name, gid)
+                        os.initgroups(username, gid)
                         os.setgid(gid)
                         os.setuid(uid)
                         os.setpgrp()
                     return demote_function
 
-                with open(os.path.join(bot_path, "data", "stderr.log"), "w+") as out:
-                    if self._config.SECURE_MODE and self.player:
-                        function = demote(self.player)
+                with open(os.path.join(self.bot_directory, "data", "stderr.log"), "w+") as out:
+                    if self.run_as_user:
+                        function = demote(self.run_as_user)
                     else:
                         function = os.setpgrp
                     process = subprocess.Popen(
                         " ".join(cmd_line),
                         stdout=out,
                         stderr=subprocess.STDOUT,
-                        cwd=(str(bot_path)),
+                        cwd=(str(self.bot_directory)),
                         shell=True,
                         preexec_fn=function,
                     )
                 return process
             else:
-                with open(os.path.join(bot_path, "data", "stderr.log"), "w+") as out:
+                with open(os.path.join(self.bot_directory, "data", "stderr.log"), "w+") as out:
                     process = subprocess.Popen(
                         " ".join(cmd_line),
                         stdout=out,
                         stderr=subprocess.STDOUT,
-                        cwd=(str(bot_path)),
+                        cwd=(str(self.bot_directory)),
                         shell=False,
                         creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
                     )
@@ -285,17 +263,32 @@ class BotFactory:
     """
     Factory to create bot object
     """
+
     @staticmethod
-    def from_api_data(config, data, player=None):
+    def get_bot_directory_and_run_as_user(config, bot_name: str, player_number: int) -> (str, str):
+        if config.SECURE_MODE:
+            if player_number == 1:
+                return os.path.join('/home', config.RUN_PLAYER1_AS_USER), config.RUN_PLAYER1_AS_USER
+            elif player_number == 2:
+                return os.path.join('/home', config.RUN_PLAYER2_AS_USER), config.RUN_PLAYER2_AS_USER
+            else:
+                raise Exception("player_number is invalid!")
+        else:
+            return os.path.join(config.BOTS_DIRECTORY, bot_name), None
+
+    @staticmethod
+    def from_api_data(config, data, player_number: int):
         """
         Creates bot from api data
         """
+        bot_directory, run_as_user = BotFactory.get_bot_directory_and_run_as_user(config, data["name"], player_number)
         return Bot(config, data["id"], data["name"], data["game_display_id"], data["bot_zip"], data["bot_zip_md5hash"],
-                   data["bot_data"], data["bot_data_md5hash"], data["plays_race"], data["type"], player)
+                   data["bot_data"], data["bot_data_md5hash"], data["plays_race"], data["type"], bot_directory, run_as_user)
 
     @staticmethod
-    def from_values(config, bot_id, bot_name, bot_race, bot_type, player=None):
+    def from_values(config, bot_id, bot_name, bot_race, bot_type):
         """
         Creates bot from values
         """
-        return Bot(config, bot_id, bot_name, bot_id, None, None, None, None, bot_race, bot_type, player)
+        return Bot(config, bot_id, bot_name, bot_id, None, None, None, None, bot_race, bot_type,
+                   os.path.join(config.BOTS_DIRECTORY, bot_name), None)
