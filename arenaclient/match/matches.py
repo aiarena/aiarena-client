@@ -90,9 +90,6 @@ class HttpApiMatchSource(MatchSource):
         def __init__(self, match_id, bot1: Bot, bot2: Bot, map_name):
             super().__init__(match_id, bot1, bot2, map_name)
 
-        def report_status(self,status_enum):
-            pass
-
     def __init__(self, config: HttpApiMatchSourceConfig, global_config):
         super().__init__(config)
         self._api = AiArenaWebApi(config.API_URL, config.API_TOKEN, global_config)
