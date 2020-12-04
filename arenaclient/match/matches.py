@@ -68,7 +68,7 @@ class MatchSource:
     def submit_result(self, match: Match, result):
         raise NotImplementedError()
 
-    def report_status(self, status: ACStatus):
+    def report_status(self, status_enum: ACStatus):
         raise NotImplementedError()  # this does nothing at the moment - so the HttpApiMatchSource can report status.
 
 class HttpApiMatchSource(MatchSource):
@@ -135,7 +135,7 @@ class HttpApiMatchSource(MatchSource):
 
     def next_match(self) -> Optional[HttpApiMatch]:
         next_match_data = self._api.get_match()
-        self.report_status(status=ACStatus.STARTING_GAME)
+        self.report_status(status_enum=ACStatus.STARTING_GAME)
         if next_match_data is None:
             time.sleep(30)
             return None
@@ -189,7 +189,7 @@ class HttpApiMatchSource(MatchSource):
         # quick hack to avoid these going uninitialized
         # todo: remove these and actually fix the issue
 
-        self.report_status(ACStatus.SUBMITTING_RESULT)
+        self.report_status(status_enum=ACStatus.SUBMITTING_RESULT)
 
         self._utl.printout(str(result.result))
         replay_file: str = ""
@@ -323,7 +323,7 @@ class HttpApiMatchSource(MatchSource):
             except ConnectionError:
                 self._utl.printout(f"ERROR: Result submission failed. Connection to website failed.")
 
-        self.report_status(ACStatus.IDLE)
+        self.report_status(status_enum=ACStatus.IDLE)
 
 
 class FileMatchSource(MatchSource):
