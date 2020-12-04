@@ -169,10 +169,12 @@ class Client:
             # todo: work out a way to fix this
             return
         self._utl.printout(f"Next match: {match.id}")
+        match.report_status(ACStatus.STARTING_GAME)
         result = await self.run_match(
             match_count,
             match
         )
+        match.report_status(ACStatus.SUBMITTING_RESULT)
         self._match_source.submit_result(match, result)
         return
 
