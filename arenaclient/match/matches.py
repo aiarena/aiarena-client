@@ -98,9 +98,9 @@ class HttpApiMatchSource(MatchSource):
             payload = {"status": status}
 
             post = requests.post(
-                    self._api.API_SET_STATUS_URL,
+                    AiArenaWebApi.API_SET_STATUS_URL,
                     data=payload,
-                    headers={"Authorization": "Token " + self._config.MATCH_SOURCE_CONFIG.API_TOKEN},
+                    headers={"Authorization": "Token " + AiArenaWebApi.API_TOKEN},
             )
             if post is None:
                 logger.error("ERROR: Status submission failed. 'post' was None.")
