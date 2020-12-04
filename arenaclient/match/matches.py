@@ -90,22 +90,9 @@ class HttpApiMatchSource(MatchSource):
         def __init__(self, match_id, bot1: Bot, bot2: Bot, map_name):
             super().__init__(match_id, bot1, bot2, map_name)
 
-        def report_status(self, status_enum: ACStatus):
-            # todo: post the status string to the website (see other post calls for reference)
-            # todo: then call this throughout the AC code to notify the website of the AC's status
-            status = STATUS_TYPES[status_enum.value]
-            logger.info(status)
-            payload = {"status": status}
-
-            post = requests.post(
-                    self.HttpApiMatchSource._api.API_SET_STATUS_URL,
-                    data=payload,
-                    headers={"Authorization": "Token " + self.HttpApiMatchSourceConfig.API_TOKEN},
-            )
-            if post is None:
-                logger.error("ERROR: Status submission failed. 'post' was None.")
-            else:
-                logger.info(status + " - Status Submitted")
+        @staticmethod
+        def report_status(status_enum):
+            return self.HttpApiMatchSource.report_status(status_enum)
 
     def __init__(self, config: HttpApiMatchSourceConfig, global_config):
         super().__init__(config)
@@ -113,6 +100,22 @@ class HttpApiMatchSource(MatchSource):
         self._config = global_config
         self._utl = Utl(global_config)
 
+    def report_status(self, status_enum: ACStatus):
+        # todo: post the status string to the website (see other post calls for reference)
+        # todo: then call this throughout the AC code to notify the website of the AC's status
+        status = STATUS_TYPES[status_enum.value]
+        logger.info(status)
+        payload = {"status": status}
+
+        post = requests.post(
+                self._api.API_SET_STATUS_URL,
+                data=payload,
+                headers={"Authorization": "Token " + self.HttpApiMatchSourceConfig.API_TOKEN},
+        )
+        if post is None:
+            logger.error("ERROR: Status submission failed. 'post' was None.")
+        else:
+            logger.info(status + " - Status Submitted")
 
 
     def has_next(self) -> bool:
@@ -120,8 +123,7 @@ class HttpApiMatchSource(MatchSource):
 
     def next_match(self) -> Optional[HttpApiMatch]:
         next_match_data = self._api.get_match()
-        HttpApiMatch.report_status(status_enum=ACStatus.STARTING_GAME)
-
+        self.HttpApiMatch.report_status(status_enum=ACStatus.STARTING_GAME)
         if next_match_data is None:
             time.sleep(30)
             return None
