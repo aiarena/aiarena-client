@@ -20,6 +20,13 @@ class ACStatus(Enum):
     SUBMITTING_RESULT = 4
 
 
+STATUS_TYPES = {
+        1: 'idle',
+        2: 'starting_game',
+        3: 'playing_game',
+        4: 'submitting_result',
+}
+
 class MatchSourceType(Enum):
     FILE = 1
     HTTP_API = 2
@@ -83,9 +90,10 @@ class HttpApiMatchSource(MatchSource):
         def __init__(self, match_id, bot1: Bot, bot2: Bot, map_name):
             super().__init__(match_id, bot1, bot2, map_name)
 
-        def report_status(self, status: ACStatus):
+        def report_status(self, status_enum: ACStatus):
             # todo: post the status string to the website (see other post calls for reference)
             # todo: then call this throughout the AC code to notify the website of the AC's status
+            status = STATUS_TYPES[status_enum]
             logger.info(status)
             payload = {"status": status}
 
