@@ -68,7 +68,7 @@ class MatchSource:
     def submit_result(self, match: Match, result):
         raise NotImplementedError()
 
-    def report_status(self, status: str):
+    def report_status(self, status: ACStatus):
         raise NotImplementedError()  # this does nothing at the moment - so the HttpApiMatchSource can report status.
 
 class HttpApiMatchSource(MatchSource):
@@ -112,6 +112,23 @@ class HttpApiMatchSource(MatchSource):
         self._api = AiArenaWebApi(config.API_URL, config.API_TOKEN, global_config)
         self._config = global_config
         self._utl = Utl(global_config)
+
+    def report_status(self, status_enum: ACStatus):
+        # todo: post the status string to the website (see other post calls for reference)
+        # todo: then call this throughout the AC code to notify the website of the AC's status
+        status = STATUS_TYPES[status_enum]
+        logger.info(status)
+        payload = {"status": status}
+
+        post = requests.post(
+                self._api.API_SET_STATUS_URL,
+                data=payload,
+                headers={"Authorization": "Token " + self._config.MATCH_SOURCE_CONFIG.API_TOKEN},
+        )
+        if post is None:
+            logger.error("ERROR: Status submission failed. 'post' was None.")
+        else:
+            logger.info(status + " - Status Submitted")
 
     def has_next(self) -> bool:
         return True  # always return true
