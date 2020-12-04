@@ -169,12 +169,11 @@ class Client:
             # todo: work out a way to fix this
             return
         self._utl.printout(f"Next match: {match.id}")
-        match.report_status(ACStatus.STARTING_GAME)
         result = await self.run_match(
             match_count,
             match
         )
-        match.report_status(ACStatus.SUBMITTING_RESULT)
+
         self._match_source.submit_result(match, result)
         return
 
@@ -264,8 +263,6 @@ class Client:
             self._ws, self._session = await connect(address=self.address, headers=self.headers)
 
             if await self.connected():
-
-                match.report_status(ACStatus.PLAYING_GAME)
 
                 await self.send(json.dumps(self.json_config(match)))
 
@@ -487,7 +484,7 @@ class Client:
             self._utl.printout(f"Starting game - Round {match_count}")
             self._utl.printout(f"{match.bot1.name} vs {match.bot2.name}")
 
-            match.report_status(ACStatus.STARTING_GAME)
+
 
             self.kill_current_server()
 
