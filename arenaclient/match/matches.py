@@ -93,7 +93,7 @@ class HttpApiMatchSource(MatchSource):
         def report_status(self, status_enum: ACStatus):
             # todo: post the status string to the website (see other post calls for reference)
             # todo: then call this throughout the AC code to notify the website of the AC's status
-            status = STATUS_TYPES[status_enum]
+            status = STATUS_TYPES[status_enum.value]
             logger.info(status)
             payload = {"status": status}
 
@@ -116,7 +116,7 @@ class HttpApiMatchSource(MatchSource):
     def report_status(self, status_enum: ACStatus):
         # todo: post the status string to the website (see other post calls for reference)
         # todo: then call this throughout the AC code to notify the website of the AC's status
-        status = STATUS_TYPES[status_enum]
+        status = STATUS_TYPES[status_enum.value]
         logger.info(status)
         payload = {"status": status}
 
