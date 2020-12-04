@@ -173,7 +173,6 @@ class Client:
             match_count,
             match
         )
-
         self._match_source.submit_result(match, result)
         return
 
@@ -263,7 +262,6 @@ class Client:
             self._ws, self._session = await connect(address=self.address, headers=self.headers)
 
             if await self.connected():
-
                 await self.send(json.dumps(self.json_config(match)))
 
                 _ = await self.receive()
@@ -483,9 +481,6 @@ class Client:
         try:
             self._utl.printout(f"Starting game - Round {match_count}")
             self._utl.printout(f"{match.bot1.name} vs {match.bot2.name}")
-
-
-
             self.kill_current_server()
 
             result = await self.main(match)
