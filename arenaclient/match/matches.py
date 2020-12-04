@@ -104,7 +104,7 @@ class HttpApiMatchSource(MatchSource):
         payload = {"status": status}
 
         post = requests.post(
-                self._api.API_SET_STATUS_URL,
+                self.HttpApiMatchSourceConfig._api.API_SET_STATUS_URL,
                 data=payload,
                 headers={"Authorization": "Token " + self._config.MATCH_SOURCE_CONFIG.API_TOKEN},
         )
