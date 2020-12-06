@@ -68,6 +68,8 @@ class MatchSource:
     def submit_result(self, match: Match, result):
         raise NotImplementedError()
 
+    def report_status(self, status_enum: ACStatus):
+        raise NotImplementedError()  # this does nothing at the moment - so the HttpApiMatchSource can report status.
 
 class HttpApiMatchSource(MatchSource):
     """
