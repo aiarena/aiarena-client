@@ -11,7 +11,21 @@ import requests
 from ..match.aiarena_web_api import AiArenaWebApi
 from ..match.bot import Bot, BotFactory
 from ..utl import Utl
+from loguru import logger
 
+class ACStatus(Enum):
+    IDLE = 1
+    STARTING_GAME = 2
+    PLAYING_GAME = 3
+    SUBMITTING_RESULT = 4
+
+
+STATUS_TYPES = {
+        1: 'idle',
+        2: 'starting_game',
+        3: 'playing_game',
+        4: 'submitting_result',
+}
 
 class MatchSourceType(Enum):
     FILE = 1
