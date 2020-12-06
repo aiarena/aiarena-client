@@ -96,11 +96,27 @@ class HttpApiMatchSource(MatchSource):
         self._config = global_config
         self._utl = Utl(global_config)
 
+    def report_status(self, status_enum: ACStatus):
+        status = STATUS_TYPES[status_enum.value]
+        logger.info(status)
+        payload = {"status": status}
+
+        post = requests.post(
+                self._api.API_SET_STATUS_URL,
+                data=payload,
+                headers={"Authorization": "Token " + self._api.API_TOKEN},
+        )
+        if post is None:
+            logger.error("ERROR: Status submission failed. 'post' was None.")
+        else:
+            logger.info(status + " - Status Submitted")
+
     def has_next(self) -> bool:
         return True  # always return true
 
     def next_match(self) -> Optional[HttpApiMatch]:
         next_match_data = self._api.get_match()
+        self.report_status(status_enum=ACStatus.STARTING_GAME)
 
         if next_match_data is None:
             time.sleep(30)
@@ -154,6 +170,8 @@ class HttpApiMatchSource(MatchSource):
         """
         # quick hack to avoid these going uninitialized
         # todo: remove these and actually fix the issue
+
+        self.report_status(status_enum=ACStatus.SUBMITTING_RESULT)
 
         self._utl.printout(str(result.result))
         replay_file: str = ""
@@ -286,6 +304,8 @@ class HttpApiMatchSource(MatchSource):
                     break
             except ConnectionError:
                 self._utl.printout(f"ERROR: Result submission failed. Connection to website failed.")
+
+        self.report_status(status_enum=ACStatus.IDLE)
 
 
 class FileMatchSource(MatchSource):
