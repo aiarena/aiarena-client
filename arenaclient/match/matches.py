@@ -20,6 +20,11 @@ class ACStatus(Enum):
     PLAYING_GAME = 3
     SUBMITTING_RESULT = 4
 
+    #  this is to keep the ENUM keys in high case, while delivering lower case as status string
+    @property
+    def name(self):
+        return super().name.lower()
+
 
 class MatchSourceType(Enum):
     FILE = 1
