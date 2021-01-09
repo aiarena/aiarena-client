@@ -12,6 +12,7 @@ class AiArenaWebApi:
     """
     API_MATCHES_ENDPOINT = "/api/arenaclient/matches/"
     API_RESULTS_ENDPOINT = "/api/arenaclient/results/"
+    API_SET_STATUS_ENDPOINT = "/api/arenaclient/set-status/"
 
     def __init__(self, api_url, api_token, global_config):
         self.API_URL = api_url
@@ -19,6 +20,7 @@ class AiArenaWebApi:
 
         self.API_MATCHES_URL = parse.urljoin(self.API_URL, AiArenaWebApi.API_MATCHES_ENDPOINT)
         self.API_RESULTS_URL = parse.urljoin(self.API_URL, AiArenaWebApi.API_RESULTS_ENDPOINT)
+        self.API_SET_STATUS_URL = parse.urljoin(self.API_URL, AiArenaWebApi.API_SET_STATUS_ENDPOINT)
 
         self._utl = Utl(global_config)
 

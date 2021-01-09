@@ -53,7 +53,7 @@ MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(
 )
 
 # WEBSITE
-BASE_WEBSITE_URL = "https://ai-arena.net"
+BASE_WEBSITE_URL = "https://aiarena.net"
 API_MATCHES_URL = parse.urljoin(BASE_WEBSITE_URL, "/api/arenaclient/matches/")
 API_RESULTS_URL = parse.urljoin(BASE_WEBSITE_URL, "/api/arenaclient/results/")
 
