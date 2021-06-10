@@ -18,7 +18,7 @@ setup(
         "typing==3.7.4.3",
         "aiodns==2.0.0",
         "Brotli==1.0.9",
-        "cchardet==2.1.6",
+        "cchardet==2.1.7",
         "loguru==0.5.3",
     ]
 )
