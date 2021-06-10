@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='arenaclient',
-    version='0.1.16',
+    version='0.1.18',
     packages=[
         "arenaclient",
         "arenaclient/configs",
@@ -10,13 +10,14 @@ setup(
     ],
     include_package_data=True,
     install_requires=[
-        "rust_arenaclient==0.1.16",
+        "rust_arenaclient==0.1.18",
         "requests==2.25.1",
-        "aiohttp==3.7.4",
+        "requests-oauthlib==1.3.0",
+        "aiohttp==3.7.4.post0",
         "termcolor==1.1.0",
         "psutil==5.8.0",
         "typing==3.7.4.3",
-        "aiodns==2.0.0",
+        "aiodns==3.0.0",
         "Brotli==1.0.9",
         "cchardet==2.1.7",
         "loguru==0.5.3",
