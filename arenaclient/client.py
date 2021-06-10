@@ -430,7 +430,10 @@ class Client:
                     )
                     await self._ws.close()
                     await self._session.close()
-                await self._ws.send_str("Received")
+                try:
+                    await self._ws.send_str("Received")
+                except:
+                    pass
 
             if not result.has_result():
                 result.parse_result(init_error(match))

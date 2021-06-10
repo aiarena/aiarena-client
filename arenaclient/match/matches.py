@@ -205,12 +205,12 @@ class HttpApiMatchSource(MatchSource):
 
         # Create downloadable data archives
         if not os.path.isdir(match.bot1.bot_data_directory):
-            os.mkdir(match.bot1.bot_data_directory)
+            os.makedirs(match.bot1.bot_data_directory, exist_ok=True)
         shutil.make_archive(
             os.path.join(self._config.TEMP_PATH, match.bot1.name + "-data"), "zip", match.bot1.bot_data_directory
         )
         if not os.path.isdir(match.bot2.bot_data_directory):
-            os.mkdir(match.bot2.bot_data_directory)
+            os.makedirs(match.bot2.bot_data_directory, exist_ok=True)
         shutil.make_archive(
             os.path.join(self._config.TEMP_PATH, match.bot2.name + "-data"), "zip", match.bot2.bot_data_directory
         )
@@ -354,10 +354,11 @@ class FileMatchSource(MatchSource):
         except:
             pass
         
-        os.mkdir(match_log_folder)
+        # os.mkdir(match_log_folder)
+        os.makedirs(match_log_folder, exist_ok=True)
         try:
-            os.mkdir(os.path.join(match_log_folder, str(match.bot1.name)))
-            os.mkdir(os.path.join(match_log_folder, str(match.bot2.name)))
+            os.makedirs(os.path.join(match_log_folder, str(match.bot1.name)), exist_ok=True)
+            os.makedirs(os.path.join(match_log_folder, str(match.bot2.name)), exist_ok=True)
         except FileExistsError:
             pass
 
