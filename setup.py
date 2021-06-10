@@ -11,7 +11,7 @@ setup(
     include_package_data=True,
     install_requires=[
         "rust_arenaclient==0.1.16",
-        "requests==2.24.0",
+        "requests==2.25.1",
         "aiohttp==3.7.4",
         "termcolor==1.1.0",
         "psutil==5.7.2",
