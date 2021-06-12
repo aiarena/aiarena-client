@@ -1,0 +1,16 @@
+{
+    "loser_bot,T,python,loser_bot,T,python,AutomatonLE": "Tie",
+    "basic_bot,T,python,crash,T,python,AutomatonLE": "Player2Crash",
+    "basic_bot,T,python,connect_timeout,T,python,AutomatonLE": "InitializationError",
+    "basic_bot,T,python,crash_on_first_frame,T,python,AutomatonLE": "Player2Crash",
+    "basic_bot,T,python,hang,T,python,AutomatonLE": "Player2Crash",
+    "basic_bot,T,python,instant_crash,T,python,AutomatonLE": "InitializationError",
+    "crash,T,python,basic_bot,T,python,AutomatonLE": "Player1Crash",
+    "connect_timeout,T,python,basic_bot,T,python,AutomatonLE": "InitializationError",
+    "crash_on_first_frame,T,python,basic_bot,T,python,AutomatonLE": "Player1Crash",
+    "hang,T,python,basic_bot,T,python,AutomatonLE": "Player1Crash",
+    "instant_crash,T,python,basic_bot,T,python,AutomatonLE": "InitializationError",
+    "loser_bot,T,python,basic_bot,T,python,AutomatonLE": "Player2Win",
+    "basic_bot,T,python,loser_bot,T,python,AutomatonLE": "Player1Win",
+    "timeout_bot,T,python,timeout_bot,T,python,AutomatonLE": "Tie"
+}
