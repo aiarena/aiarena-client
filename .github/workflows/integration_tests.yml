@@ -21,6 +21,8 @@ jobs:
       options: --entrypoint=''
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: true
       - name: Install dependencies
         run: "python -m pip install -r requirements.txt"
 
@@ -37,7 +39,7 @@ jobs:
         with:
           name: bot_logs
           path: |
-            ./**/*.log
+            ./aiarena-test-bots/**/*.log
             *.log
 
 
