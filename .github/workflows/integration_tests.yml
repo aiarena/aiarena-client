@@ -28,7 +28,7 @@ jobs:
         run: cp -a ./testing/maps/. /root/StarCraftII/maps/
 
       - name: Move test_config to root
-        run: cp /testing/test_config.py .
+        run: cp ./testing/test_config.py .
 
       - name: Run Tests
         run: "python -m arenaclient --test"
