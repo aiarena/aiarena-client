@@ -30,6 +30,13 @@ jobs:
       - name: Move test_config to root
         run: cp ./testing/test_config.py .
 
+      - uses: actions/upload-artifact@v2
+        with:
+          name: bot_logs
+          path: |
+            ./**/*.log
+            *.log
+
       - name: Run Tests
         run: "python -m arenaclient --test"
 
