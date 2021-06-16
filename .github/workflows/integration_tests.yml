@@ -16,6 +16,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'aiarena/aiarena-client'
     container:
       image: aiarena/arenaclient
       options: |
