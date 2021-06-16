@@ -33,6 +33,8 @@ jobs:
         run: cp ./testing/test_config.py .
 
       - name: Run Tests
+        env:
+          SC2_PROXY_BIN: SC2_x64
         run: "python -m arenaclient --test"
 
       - uses: actions/upload-artifact@v2
