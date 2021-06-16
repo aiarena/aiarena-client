@@ -74,7 +74,7 @@ VALIDATE_RACE = False
 try:
     from test_config import *
 except ImportError as e:
-    if e.name == "test_config":
+    try:
+        from testing.test_config import *
+    except ImportError:
         pass
-    else:
-        raise
