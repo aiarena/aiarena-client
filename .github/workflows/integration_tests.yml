@@ -35,6 +35,7 @@ jobs:
       - name: Run Tests
         env:
           SC2_PROXY_BIN: SC2_x64
+          SC2_PROXY_BASE: /root/StarCraftII/
         run: "python -m arenaclient --test"
 
       - uses: actions/upload-artifact@v2
