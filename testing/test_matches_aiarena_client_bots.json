@@ -12,5 +12,5 @@
     "instant_crash,T,python,basic_bot,T,python,AutomatonLE": "InitializationError",
     "loser_bot,T,python,basic_bot,T,python,AutomatonLE": "Player2Win",
     "basic_bot,T,python,loser_bot,T,python,AutomatonLE": "Player1Win",
-    "timeout_bot,T,python,timeout_bot,T,python,AutomatonLE": "Tie"
+    "stop_bot,T,python,stop_bot,T,python,AutomatonLE": "Tie"
 }
