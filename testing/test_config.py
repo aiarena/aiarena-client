@@ -35,21 +35,21 @@ RUN_PLAYER2_AS_USER = None
 
 
 # LOGGING
-LOGGING_HANDLER = logging.FileHandler("supervisor.log", "a+")
+LOGGING_HANDLER = logging.FileHandler("../supervisor.log", "a+")
 LOGGING_LEVEL = 10
 
 # PATHS AND FILES
 TEMP_PATH = "/tmp/aiarena/"
 LOCAL_PATH = os.path.dirname(__file__)
 WORKING_DIRECTORY = LOCAL_PATH  # same for now
-LOG_FILE = os.path.join(WORKING_DIRECTORY, "client.log")
-REPLAYS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "replays")
-BOTS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "aiarena-test-bots")
-BOT_LOGS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "logs")
+LOG_FILE = os.path.join(WORKING_DIRECTORY, "../client.log")
+REPLAYS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "../replays")
+BOTS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "../aiarena-test-bots")
+BOT_LOGS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "../logs")
 
 MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(
-    matches_file=os.path.join(WORKING_DIRECTORY, "matches"),
-    results_file=os.path.join(WORKING_DIRECTORY, "results")
+    matches_file=os.path.join(WORKING_DIRECTORY, "../matches"),
+    results_file=os.path.join(WORKING_DIRECTORY, "../results")
 )
 
 # WEBSITE

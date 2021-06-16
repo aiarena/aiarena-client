@@ -24,7 +24,7 @@ if __name__ == "__main__":  # execute only if run as a script
     if args.test:
         import json
         from .tests import IntegrationTest
-        with open("./test_matches_aiarena_client_bots.json") as f:
+        with open("./testing/test_matches_aiarena_client_bots.json") as f:
             matches = json.load(f)
             server = Server('127.0.0.1:8642')
             integration_test = IntegrationTest(matches)
