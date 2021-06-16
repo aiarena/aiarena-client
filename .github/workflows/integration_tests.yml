@@ -18,8 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: aiarena/arenaclient
-      options: --entrypoint=''
+      options: |
+        --entrypoint=''
+        --workdir=/root/
     steps:
+      - name: Remove current arenaclient directory
+        run: rm -rf aiarena-client/
       - uses: actions/checkout@v2
         with:
           submodules: true
