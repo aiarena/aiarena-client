@@ -36,6 +36,7 @@ jobs:
         run: "python -m arenaclient --test"
 
       - uses: actions/upload-artifact@v2
+        if: always()
         with:
           name: bot_logs
           path: |
