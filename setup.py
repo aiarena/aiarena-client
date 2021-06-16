@@ -16,7 +16,7 @@ setup(
         "termcolor==1.1.0",
         "psutil==5.8.0",
         "typing==3.7.4.3",
-        "aiodns==2.0.0",
+        "aiodns==3.0.0",
         "Brotli==1.0.9",
         "cchardet==2.1.7",
         "loguru==0.5.3",
