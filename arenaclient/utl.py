@@ -189,10 +189,12 @@ class Utl:
             for d in dirs:
                 path = os.path.join(root, d)
                 self.printout(path)
+                os.chmod(path, mode=0o777)
                 os.chown(path, uid=uid, gid=gid)
             for f in files:
                 path = os.path.join(root, f)
                 self.printout(path)
+                os.chmod(path, mode=0o777)
                 os.chown(path, uid=uid, gid=gid)
 
     def clean_dir(self, directory):
