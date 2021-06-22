@@ -186,15 +186,19 @@ class Utl:
     def set_secure_mode_permissions(self, uid, gid, directory):
         self.printout(f"CHOWNing the following paths to uid {uid} gid {gid}")
         for root, dirs, files in os.walk(directory):
+            path = root
+            self.printout(path)
+            os.chmod(path, mode=0o770)
+            os.chown(path, uid=uid, gid=gid)
             for d in dirs:
                 path = os.path.join(root, d)
                 self.printout(path)
-                os.chmod(path, mode=0o777)
+                os.chmod(path, mode=0o770)
                 os.chown(path, uid=uid, gid=gid)
             for f in files:
                 path = os.path.join(root, f)
                 self.printout(path)
-                os.chmod(path, mode=0o777)
+                os.chmod(path, mode=0o660)
                 os.chown(path, uid=uid, gid=gid)
 
     def clean_dir(self, directory):
