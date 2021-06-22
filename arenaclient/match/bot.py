@@ -1,4 +1,5 @@
 import hashlib
+import pathlib
 import stat
 
 from loguru import logger
@@ -112,6 +113,7 @@ class Bot:
                 )
 
             if self.get_bot_data_file():
+                pathlib.Path(self.bot_data_directory).mkdir(mode=0o770, exist_ok=True)
                 if self._config.SECURE_MODE:
                     import pwd
                     user = pwd.getpwnam(self.run_as_user)
