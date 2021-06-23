@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='arenaclient',
-    version='0.1.23',
+    version='0.1.24',
     packages=[
         "arenaclient",
         "arenaclient/configs",
