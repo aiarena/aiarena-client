@@ -230,6 +230,7 @@ class Bot:
                         os.setgid(gid)
                         os.setuid(uid)
                         os.setpgrp()
+                        os.umask(0o007)
                     return demote_function
 
                 with open(os.path.join(self.bot_directory, "data", "stderr.log"), "w+") as out:
