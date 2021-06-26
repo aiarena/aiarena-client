@@ -118,8 +118,8 @@ class Result:
             self.bot2_avg_frame = result['AverageFrameTime'].get(self.bot2, 0)
 
         if result.get("Tags", None):
-            self.bot1_avg_frame = result['Tags'].get(self.bot1, 0)
-            self.bot2_avg_frame = result['Tags'].get(self.bot2, 0)
+            self.bot1_tags = result['Tags'].get(self.bot1, 0)
+            self.bot2_tags = result['Tags'].get(self.bot2, 0)
 
         if result.get("TimeStamp", None):
             self.time_stamp = result["TimeStamp"]
