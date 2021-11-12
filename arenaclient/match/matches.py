@@ -305,7 +305,7 @@ class FileMatchSource(MatchSource):
             match_values = file_line.split(FileMatchSource.MATCH_FILE_VALUE_SEPARATOR)
 
             # the last character might be a new line, so rstrip just in case
-            map_name = match_values[6].rstrip()
+            map_name = match_values[8].rstrip()
             bot1 = BotFactory.from_values(config, match_values[0], match_values[1], match_values[2], match_values[3])
             bot2 = BotFactory.from_values(config, match_values[4], match_values[5], match_values[6], match_values[7])
             super().__init__(match_id, bot1, bot2, map_name)
