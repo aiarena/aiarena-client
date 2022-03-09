@@ -10,7 +10,7 @@ import logging
 import os
 import platform
 from urllib import parse
-from ..match.matches import FileMatchSource
+from arenaclient.match.matches import FileMatchSource
 
 # GENERAL
 ARENA_CLIENT_ID = "aiarenaclient_000"

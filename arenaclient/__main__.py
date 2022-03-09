@@ -16,7 +16,9 @@ async def run_client():
     ac = Client(cfg)
     await ac.run()
 
-if __name__ == "__main__":  # execute only if run as a script
+
+def main():
+    global server, PORT
     parser = argparse.ArgumentParser()
     parser.add_argument("--test",  help='Run tests', required=False, action="store_true")
     args, unknown = parser.parse_known_args()
@@ -49,3 +51,7 @@ if __name__ == "__main__":  # execute only if run as a script
         except Exception as e:
             print(e)
             server.kill()
+
+
+if __name__ == "__main__":  # execute only if run as a script
+    main()

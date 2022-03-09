@@ -2,7 +2,7 @@
 
 import os
 
-from ..match.matches import FileMatchSource
+from arenaclient.match.matches import FileMatchSource
 
 # GENERAL
 ARENA_CLIENT_ID = "aiarenaclient_local"

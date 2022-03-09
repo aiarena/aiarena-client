@@ -193,6 +193,8 @@ class Bot:
         elif bot_type.lower() == "binarycpp":
             cmd_line.pop(0)
             cmd_line.insert(0, os.path.join(self.bot_directory, bot_file))
+
+            self._logger.debug(f'Path: {os.path.join(self.bot_directory, bot_file)}')
         elif bot_type.lower() == "java":
             cmd_line.insert(0, "java")
             cmd_line.insert(1, "-jar")

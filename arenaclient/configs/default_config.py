@@ -11,6 +11,8 @@ import os
 import platform
 
 # GENERAL
+import sys
+
 from ..match.matches import FileMatchSource
 
 ARENA_CLIENT_ID = "aiarenaclient_000"  # ID of arenaclient. Used for AiArena

@@ -133,7 +133,7 @@ class Client:
             "DisableDebug": self._config.DISABLE_DEBUG,
             "MaxFrameTime": self._config.MAX_FRAME_TIME,
             "Strikes": self._config.STRIKES,
-            "RealTime": self._config.REALTIME,
+            "RealTime": True,
             "Visualize": self._config.VISUALIZE,
             "ValidateRace": self._config.VALIDATE_RACE,
             "Player1Race": match.bot1.plays_race,
@@ -236,6 +236,9 @@ class Client:
         :param opponent_id:
         :return:
         """
+
+        self._logger.debug(f"Starting bot {bot.name}...")
+        self._logger.debug(f'Name: {bot.bot_json["FileName"]}')
         process = bot.start_bot(opponent_id)
         try:
             msg = await self.receive(40)
@@ -471,7 +474,7 @@ class Client:
                         pass
 
         except:
-            pass
+            self._utl.printout("Except")
 
     async def run_match(self, match_count, match: MatchSource.Match):
         """
@@ -519,11 +522,11 @@ class Client:
             while self._match_source.has_next() and (
                     count < self._config.ROUNDS_PER_RUN or self._config.ROUNDS_PER_RUN == -1):
                 try:
+                    count += 1  # do this first to avoid repeat attempts on error
                     if self._config.CLEANUP_BETWEEN_ROUNDS:
                         self.cleanup()
 
                     await self.run_next_match(count)
-                    count += 1
 
                 except Exception as e:
                     self._utl.printout(traceback.format_exc())
