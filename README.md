@@ -1,5 +1,12 @@
 # aiarena-client
-## Bootstrapping for local play on windows
+
+## Playing local bot matches
+
+### Just want to run some local bot matches without installing everything?
+Try the [aiarena-docker image](https://github.com/aiarena/aiarena-docker) instead.
+
+### Bootstrapping this repo for windows (more complex, more control)
+
 The linux steps are probably essentially the same, I just can't guarantee they'd work because I haven't tested it.
 
 #### Clone this repo
