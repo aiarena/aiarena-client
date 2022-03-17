@@ -304,10 +304,20 @@ class FileMatchSource(MatchSource):
         def __init__(self, config, match_id, file_line):
             match_values = file_line.split(FileMatchSource.MATCH_FILE_VALUE_SEPARATOR)
 
+            # map name is the last entry
             # the last character might be a new line, so rstrip just in case
-            map_name = match_values[6].rstrip()
-            bot1 = BotFactory.from_values(config, 1, match_values[0], match_values[1], match_values[2])
-            bot2 = BotFactory.from_values(config, 2, match_values[3], match_values[4], match_values[5])
+            map_name = match_values[-1].rstrip()
+
+            if len(match_values) == 7:
+                # no bot IDs present
+                bot1 = BotFactory.from_values(config, 1, match_values[0], match_values[1], match_values[2])
+                bot2 = BotFactory.from_values(config, 2, match_values[3], match_values[4], match_values[5])
+            elif len(match_values) == 9:
+                # bot IDs present
+                bot1 = BotFactory.from_values(config, match_values[0], match_values[1], match_values[2], match_values[3])
+                bot2 = BotFactory.from_values(config, match_values[4], match_values[5], match_values[6], match_values[7])
+            else:
+                raise Exception("Invalid number of matches file values. Expected either 7 or 9 values.")
             super().__init__(match_id, bot1, bot2, map_name)
 
     def __init__(self, global_config, config: FileMatchSourceConfig):
