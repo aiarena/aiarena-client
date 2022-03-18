@@ -1,11 +1,7 @@
-#########################################################
-#                                                       #
-# DEFAULT CONFIG                                        #
-#                                                       #
-# !!!! DO NOT UPDATE THIS FILE WITH LOCAL SETTINGS !!!! #
-# Create a config.py file to override config values     #
-#                                                       #
-#########################################################
+"""
+This is a config template for local play.
+To use it, set the MODE environment variable to 'local'.
+"""
 import logging
 import os
 import platform

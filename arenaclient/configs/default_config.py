@@ -6,6 +6,7 @@
 # Create a config.py file to override config values     #
 #                                                       #
 #########################################################
+import importlib
 import logging
 import os
 import platform
@@ -64,6 +65,33 @@ VISUALIZE = False
 # MATCHES
 DISABLE_DEBUG = True
 VALIDATE_RACE = False
+
+def from_model_import_star(module: str):
+    # get a handle on the module
+    mdl = importlib.import_module(module)
+
+    # is there an __all__?  if so respect it
+    if "__all__" in mdl.__dict__:
+        names = mdl.__dict__["__all__"]
+    else:
+        # otherwise we import all names that don't begin with _
+        names = [x for x in mdl.__dict__ if not x.startswith("_")]
+
+    # now drag them in
+    globals().update({k: getattr(mdl, k) for k in names})
+
+# Override values a standard config template
+CONFIG_TEMPLATE = os.getenv('MODE')
+if CONFIG_TEMPLATE is not None:
+    module_to_import = f'arenaclient.configs.{CONFIG_TEMPLATE}_config_template'
+    try:
+        from_model_import_star(module_to_import)
+    except ImportError as e:
+        if e.name == module_to_import:
+            raise f"Could not locate a config template called {module_to_import}!"
+        else:
+            raise
+
 # Override values with environment specific config
 try:
     from config import *
