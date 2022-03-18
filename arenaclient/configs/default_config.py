@@ -17,7 +17,6 @@ ARENA_CLIENT_ID = "aiarenaclient_000"  # ID of arenaclient. Used for AiArena
 API_TOKEN = "12345"  # API Token to retrieve matches and submit results. Used for AiArena
 ROUNDS_PER_RUN = 5  # Set to -1 to ignore this
 BASE_WEBSITE_URL = ""
-SHUT_DOWN_AFTER_RUN = True  # Write a .shutdown file after running games. Used for AiArena
 USE_PID_CHECK = False
 RUN_REPLAY_CHECK = False  # Validate replays
 DEBUG_MODE = True  # Enables debug mode for more logging

@@ -17,7 +17,6 @@ from arenaclient.match.matches import FileMatchSource
 ARENA_CLIENT_ID = "aiarenaclient_test"
 API_TOKEN = ""
 ROUNDS_PER_RUN = 1
-SHUT_DOWN_AFTER_RUN = True
 USE_PID_CHECK = False
 DEBUG_MODE = True
 PYTHON = "python"

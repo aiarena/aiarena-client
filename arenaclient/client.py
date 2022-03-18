@@ -541,10 +541,3 @@ class Client:
             except:
                 pass  # ensure we don't skip the shutdown
 
-            try:
-                if self._config.SHUT_DOWN_AFTER_RUN:
-                    self._utl.printout("Stopping system")
-                    with open(os.path.join(self._config.LOCAL_PATH, ".shutdown"), "w") as f:
-                        f.write("Shutdown")
-            except:
-                self._utl.printout("ERROR: Failed to shutdown.")
