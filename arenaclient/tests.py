@@ -51,6 +51,8 @@ class IntegrationTest:
                 else:
                     config.MAX_GAME_TIME = self.original_max_time
 
+                self._purge_previous_results()
+
                 ac = Client(config)
                 await ac.run()
 
@@ -68,6 +70,13 @@ class IntegrationTest:
                     self.utl.printout("Test failed: Results file not found")
                 except KeyError:
                     self.utl.printout("Test failed: Result not found in file")
+
+    @staticmethod
+    def _purge_previous_results():
+        try:
+            os.remove(config.MATCH_SOURCE_CONFIG.RESULTS_FILE)
+        except OSError:
+            pass
 
 
 def setup_bots():
