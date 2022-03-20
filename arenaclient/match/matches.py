@@ -6,6 +6,7 @@ import zipfile
 from enum import Enum
 from pathlib import Path
 from typing import Optional
+
 import requests
 
 from ..match.aiarena_web_api import AiArenaWebApi
@@ -164,18 +165,16 @@ class HttpApiMatchSource(MatchSource):
         else:
             Path(bot2_error_log_tmp).touch()
 
-        zip_file = zipfile.ZipFile(
-            os.path.join(self._config.TEMP_PATH, match.bot1.name + "-error.zip"), "w"
-        )
+        bot1_error_log_zip_path = os.path.join(self._config.TEMP_PATH, match.bot1.name + "-error.zip")
+        zip_file = zipfile.ZipFile(bot1_error_log_zip_path, "w")
         zip_file.write(
             os.path.join(self._config.TEMP_PATH, match.bot1.name + "-error.log"),
             compress_type=zipfile.ZIP_DEFLATED,
         )
         zip_file.close()
 
-        zip_file = zipfile.ZipFile(
-            os.path.join(self._config.TEMP_PATH, match.bot2.name + "-error.zip"), "w"
-        )
+        bot2_error_log_zip_path = os.path.join(self._config.TEMP_PATH, match.bot2.name + "-error.zip")
+        zip_file = zipfile.ZipFile(bot2_error_log_zip_path, "w")
         zip_file.write(
             os.path.join(self._config.TEMP_PATH, match.bot2.name + "-error.log"),
             compress_type=zipfile.ZIP_DEFLATED,
@@ -204,78 +203,23 @@ class HttpApiMatchSource(MatchSource):
         zip_file.close()
 
         # Create downloadable data archives
+        bot1_data_path = os.path.join(self._config.TEMP_PATH, match.bot1.name + "-data")
         if not os.path.isdir(match.bot1.bot_data_directory):
             os.makedirs(match.bot1.bot_data_directory, exist_ok=True)
-        shutil.make_archive(
-            os.path.join(self._config.TEMP_PATH, match.bot1.name + "-data"), "zip", match.bot1.bot_data_directory
-        )
+        shutil.make_archive(bot1_data_path, "zip", match.bot1.bot_data_directory)
+        bot2_data_path = os.path.join(self._config.TEMP_PATH, match.bot2.name + "-data")
         if not os.path.isdir(match.bot2.bot_data_directory):
             os.makedirs(match.bot2.bot_data_directory, exist_ok=True)
-        shutil.make_archive(
-            os.path.join(self._config.TEMP_PATH, match.bot2.name + "-data"), "zip", match.bot2.bot_data_directory
-        )
-        attempt_number = 1
-        while attempt_number < 60:
-            try:  # Upload replay file and bot data archives
-                self._utl.printout(
-                    f"Attempting to submit result. Attempt number: {attempt_number}."
-                )
-                file_list = {
-                    "bot1_data": open(
-                        os.path.join(self._config.TEMP_PATH, f"{match.bot1.name}-data.zip"), "rb"
-                    ),
-                    "bot2_data": open(
-                        os.path.join(self._config.TEMP_PATH, f"{match.bot2.name}-data.zip"), "rb"
-                    ),
-                    "bot1_log": open(
-                        os.path.join(self._config.TEMP_PATH, f"{match.bot1.name}-error.zip"), "rb"
-                    ),
-                    "bot2_log": open(
-                        os.path.join(self._config.TEMP_PATH, f"{match.bot2.name}-error.zip"), "rb"
-                    ),
-                    "arenaclient_log": open(arenaclient_log_zip, "rb"),
-                }
+        shutil.make_archive(bot2_data_path, "zip", match.bot2.bot_data_directory)
 
-                if os.path.isfile(replay_file_path):
-                    file_list["replay_file"] = open(replay_file_path, "rb")
-
-                payload = {"type": result.result, "match": int(match.id), "game_steps": result.game_time}
-
-                if result.bot1_avg_frame is not None:
-                    payload["bot1_avg_step_time"] = result.bot1_avg_frame
-                if result.bot2_avg_frame is not None:
-                    payload["bot2_avg_step_time"] = result.bot2_avg_frame
-
-                if result.bot1_tags is not None:
-                    payload["bot1_tags"] = result.bot1_tags
-
-                if result.bot2_tags is not None:
-                    payload["bot2_tags"] = result.bot2_tags
-
-                if self._config.DEBUG_MODE:
-                    self._utl.printout(json.dumps(payload))
-
-                post = requests.post(
-                    self._config.API_RESULTS_URL,
-                    files=file_list,
-                    data=payload,
-                    headers={"Authorization": "Token " + self._config.MATCH_SOURCE_CONFIG.API_TOKEN},
-                )
-                if post is None:
-                    self._utl.printout("ERROR: Result submission failed. 'post' was None.")
-                    attempt_number += 1
-                    time.sleep(60)
-                elif post.status_code >= 400:  # todo: retry?
-                    self._utl.printout(
-                        f"ERROR: Result submission failed. Status code: {post.status_code}."
-                    )
-                    attempt_number += 1
-                    time.sleep(60)
-                else:
-                    self._utl.printout(result.result + " - Result transferred")
-                    break
-            except ConnectionError:
-                self._utl.printout(f"ERROR: Result submission failed. Connection to website failed.")
+        self._api.submit_result(match.id,
+                                result,
+                                replay_file_path,
+                                bot1_data_path,
+                                bot2_data_path,
+                                bot1_error_log_zip_path,
+                                bot2_error_log_zip_path,
+                                arenaclient_log_zip)
 
 
 class FileMatchSource(MatchSource):
