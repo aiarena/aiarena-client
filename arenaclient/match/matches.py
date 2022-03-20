@@ -169,6 +169,7 @@ class HttpApiMatchSource(MatchSource):
         )
         zip_file.write(
             os.path.join(self._config.TEMP_PATH, match.bot1.name + "-error.log"),
+            arcname=match.id + "-" + match.bot1.name + "-error.log",
             compress_type=zipfile.ZIP_DEFLATED,
         )
         zip_file.close()
@@ -178,6 +179,7 @@ class HttpApiMatchSource(MatchSource):
         )
         zip_file.write(
             os.path.join(self._config.TEMP_PATH, match.bot2.name + "-error.log"),
+            arcname=match.id + "-" + match.bot2.name + "-error.log",
             compress_type=zipfile.ZIP_DEFLATED,
         )
         zip_file.close()
