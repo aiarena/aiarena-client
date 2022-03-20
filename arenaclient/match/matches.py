@@ -356,10 +356,6 @@ class FileMatchSource(MatchSource):
         return next_match
 
     def submit_result(self, match: FileMatch, result):
-        result_json = result.to_json()
-        filename = Path(self._results_file)
-        filename.touch(exist_ok=True)  # will create file, if it exists will do nothing
-
         # LOGS
         log_folder = os.path.join(self._config.BOT_LOGS_DIRECTORY)
         match_log_folder = os.path.join(log_folder, str(match.id))
@@ -394,18 +390,18 @@ class FileMatchSource(MatchSource):
         else:
             Path(bot2_error_log_tmp).touch()
 
-        with open(self._results_file, "w+") as results_log:
-            try:
-                results = json.loads(results_log.read())
-                result_list = results['Results']
-                result_list.append(result_json)
-                results_log.seek(0)
-                json_object = dict({"Results": result_list})
-                results_log.write(json.dumps(json_object, indent=4))
-            except:
-                results_log.seek(0)
-                json_object = dict({"Results": [result_json]})
-                results_log.write(json.dumps(json_object, indent=4))
+        self._ensure_results_file_exists()
+
+        with open(self._results_file) as results_log:
+            content = results_log.read()
+            results = json.loads(content)
+
+        result_list = results['Results']
+        result_list.append(result.to_json())
+        json_object = dict({"Results": result_list})
+
+        with open(self._results_file, "w") as results_log:
+            json.dump(json_object, results_log)
 
         # remove the played match from the match list
         # with open(self._matches_file, "r") as match_list:
@@ -415,6 +411,11 @@ class FileMatchSource(MatchSource):
 
         # with open(self._matches_file, "w") as match_list:
         #     match_list.writelines(lines)
+
+    def _ensure_results_file_exists(self):
+        if not os.path.exists(self._results_file):
+            with open(self._results_file, "w") as results_log:
+                json.dump({"Results": []}, results_log)  # create empty results file
 
 
 class MatchSourceFactory:
