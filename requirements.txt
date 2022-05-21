@@ -5,6 +5,6 @@ psutil==5.8.0
 typing==3.7.4.3
 aiodns==3.0.0
 Brotli==1.0.9
-loguru==0.5.3
+loguru==0.6.0
 rust_arenaclient==0.1.20
 
