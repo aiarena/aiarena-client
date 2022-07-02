@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import json
+from aiohttp import ClientTimeout
 from loguru import logger
 import os
 import shutil
@@ -50,7 +51,7 @@ async def connect(address: str, headers=None):
     for i in range(60):
         await asyncio.sleep(1)
         try:
-            session = aiohttp.ClientSession()
+            session = aiohttp.ClientSession(timeout=ClientTimeout(total=10 * 60))  # 10min for slow CI
             ws = await session.ws_connect(address, headers=headers)
             logger.debug("Websocket connection ready")
             return ws, session

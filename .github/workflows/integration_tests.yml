@@ -23,8 +23,12 @@ jobs:
         --entrypoint=''
         --workdir=/root/
     steps:
+      - name: Uninstall current arenaclient
+        run: /usr/bin/yes | pip uninstall arenaclient
+
       - name: Remove current arenaclient directory
         run: rm -rf aiarena-client/
+
       - uses: actions/checkout@v2
         with:
           submodules: true

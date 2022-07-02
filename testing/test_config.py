@@ -35,7 +35,7 @@ RUN_PLAYER2_AS_USER = None
 
 # LOGGING
 LOGGING_HANDLER = logging.FileHandler("../supervisor.log", "a+")
-LOGGING_LEVEL = 10
+LOGGING_LEVEL = 5
 
 # PATHS AND FILES
 TEMP_PATH = "/tmp/aiarena/"
@@ -59,7 +59,7 @@ API_RESULTS_URL = parse.urljoin(BASE_WEBSITE_URL, "/api/arenaclient/results/")
 # STARCRAFT
 MAX_GAME_TIME = 60486
 MAX_REAL_TIME = 7200  # 2 hours in seconds
-MAX_FRAME_TIME = 1000
+MAX_FRAME_TIME = 10
 STRIKES = 10
 REALTIME = False
 VISUALIZE = False
