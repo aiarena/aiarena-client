@@ -51,7 +51,7 @@ async def connect(address: str, headers=None):
     for i in range(60):
         await asyncio.sleep(1)
         try:
-            session = aiohttp.ClientSession(timeout=ClientTimeout(total=10 * 60))  # 10min for slow CI
+            session = aiohttp.ClientSession(timeout=ClientTimeout(connect=10, sock_read=60 * 60, sock_connect=10))
             ws = await session.ws_connect(address, headers=headers)
             logger.debug("Websocket connection ready")
             return ws, session
@@ -59,6 +59,11 @@ async def connect(address: str, headers=None):
             await session.close()
             if i > 15:
                 logger.debug("Connection refused (startup not complete (yet))")
+                return None, None
+        except asyncio.TimeoutError:
+            await session.close()
+            if i > 15:
+                logger.debug("Connection timed out (startup not complete (yet))")
                 return None, None
 
     return ws, session
@@ -541,4 +546,3 @@ class Client:
                     self.cleanup()
             except:
                 pass  # ensure we don't skip the shutdown
-
