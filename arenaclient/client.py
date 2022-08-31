@@ -51,7 +51,7 @@ async def connect(address: str, headers=None):
     for i in range(60):
         await asyncio.sleep(1)
         try:
-            session = aiohttp.ClientSession(timeout=ClientTimeout(connect=10, sock_read=60 * 60, sock_connect=10))
+            session = aiohttp.ClientSession(timeout=ClientTimeout(connect=20, sock_read=120 * 60, sock_connect=20))
             ws = await session.ws_connect(address, headers=headers)
             logger.debug("Websocket connection ready")
             return ws, session
