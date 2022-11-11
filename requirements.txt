@@ -6,5 +6,5 @@ typing==3.7.4.3
 aiodns==3.0.0
 Brotli==1.0.9
 loguru==0.6.0
-rust_arenaclient==0.2.2
+rust_arenaclient==0.2.3
 
