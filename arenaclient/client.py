@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import json
+from aiohttp import ClientTimeout
 from loguru import logger
 import os
 import shutil
@@ -50,7 +51,7 @@ async def connect(address: str, headers=None):
     for i in range(60):
         await asyncio.sleep(1)
         try:
-            session = aiohttp.ClientSession()
+            session = aiohttp.ClientSession(timeout=ClientTimeout(connect=20, sock_read=120 * 60, sock_connect=20))
             ws = await session.ws_connect(address, headers=headers)
             logger.debug("Websocket connection ready")
             return ws, session
@@ -58,6 +59,11 @@ async def connect(address: str, headers=None):
             await session.close()
             if i > 15:
                 logger.debug("Connection refused (startup not complete (yet))")
+                return None, None
+        except asyncio.TimeoutError:
+            await session.close()
+            if i > 15:
+                logger.debug("Connection timed out (startup not complete (yet))")
                 return None, None
 
     return ws, session
@@ -430,7 +436,10 @@ class Client:
                     )
                     await self._ws.close()
                     await self._session.close()
-                await self._ws.send_str("Received")
+                try:
+                    await self._ws.send_str("Received")
+                except:
+                    pass
 
             if not result.has_result():
                 result.parse_result(init_error(match))
@@ -537,11 +546,3 @@ class Client:
                     self.cleanup()
             except:
                 pass  # ensure we don't skip the shutdown
-
-            try:
-                if self._config.SHUT_DOWN_AFTER_RUN:
-                    self._utl.printout("Stopping system")
-                    with open(os.path.join(self._config.LOCAL_PATH, ".shutdown"), "w") as f:
-                        f.write("Shutdown")
-            except:
-                self._utl.printout("ERROR: Failed to shutdown.")

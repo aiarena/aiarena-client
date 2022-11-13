@@ -17,7 +17,6 @@ from arenaclient.match.matches import FileMatchSource
 ARENA_CLIENT_ID = "aiarenaclient_test"
 API_TOKEN = ""
 ROUNDS_PER_RUN = 1
-SHUT_DOWN_AFTER_RUN = True
 USE_PID_CHECK = False
 DEBUG_MODE = True
 PYTHON = "python"
@@ -36,7 +35,7 @@ RUN_PLAYER2_AS_USER = None
 
 # LOGGING
 LOGGING_HANDLER = logging.FileHandler("supervisor.log", "a+")
-LOGGING_LEVEL = 10
+LOGGING_LEVEL = logging.DEBUG  # Set to 5 for trace logs
 
 # PATHS AND FILES
 TEMP_PATH = "/tmp/aiarena/"
@@ -60,7 +59,7 @@ API_RESULTS_URL = parse.urljoin(BASE_WEBSITE_URL, "/api/arenaclient/results/")
 # STARCRAFT
 MAX_GAME_TIME = 60486
 MAX_REAL_TIME = 7200  # 2 hours in seconds
-MAX_FRAME_TIME = 1000
+MAX_FRAME_TIME = 10
 STRIKES = 10
 REALTIME = False
 VISUALIZE = False
@@ -74,7 +73,7 @@ VALIDATE_RACE = False
 try:
     from test_config import *
 except ImportError as e:
-    if e.name == "test_config":
+    try:
+        from testing.test_config import *
+    except ImportError:
         pass
-    else:
-        raise

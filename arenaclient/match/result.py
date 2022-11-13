@@ -15,6 +15,8 @@ class Result:
         self.time_stamp = None
         self.bot1_avg_frame = 0
         self.bot2_avg_frame = 0
+        self.bot1_tags = None
+        self.bot2_tags = None
         self.replay_path = None
         self._config = cfg
     
@@ -44,6 +46,8 @@ class Result:
             "Bot1AvgFrame": self.bot1_avg_frame,
             "Bot2AvgFrame": self.bot2_avg_frame,
             'ReplayPath': self.replay_path,
+            'Bot1Tags': self.bot1_tags,
+            'Bot2Tags': self.bot2_tags
         }
 
     def has_result(self):
@@ -112,6 +116,10 @@ class Result:
         if result.get("AverageFrameTime", None):
             self.bot1_avg_frame = result['AverageFrameTime'].get(self.bot1, 0)
             self.bot2_avg_frame = result['AverageFrameTime'].get(self.bot2, 0)
+
+        if result.get("Tags", None):
+            self.bot1_tags = result['Tags'].get(self.bot1, 0)
+            self.bot2_tags = result['Tags'].get(self.bot2, 0)
 
         if result.get("TimeStamp", None):
             self.time_stamp = result["TimeStamp"]

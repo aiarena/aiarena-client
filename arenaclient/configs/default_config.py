@@ -6,6 +6,7 @@
 # Create a config.py file to override config values     #
 #                                                       #
 #########################################################
+import importlib
 import logging
 import os
 import platform
@@ -17,7 +18,6 @@ ARENA_CLIENT_ID = "aiarenaclient_000"  # ID of arenaclient. Used for AiArena
 API_TOKEN = "12345"  # API Token to retrieve matches and submit results. Used for AiArena
 ROUNDS_PER_RUN = 5  # Set to -1 to ignore this
 BASE_WEBSITE_URL = ""
-SHUT_DOWN_AFTER_RUN = True  # Write a .shutdown file after running games. Used for AiArena
 USE_PID_CHECK = False
 RUN_REPLAY_CHECK = False  # Validate replays
 DEBUG_MODE = True  # Enables debug mode for more logging
@@ -35,7 +35,7 @@ RUN_PLAYER2_AS_USER = None
 
 # LOGGING
 LOGGING_HANDLER = logging.FileHandler("../supervisor.log", "a+")
-LOGGING_LEVEL = 10
+LOGGING_LEVEL = logging.DEBUG
 
 # PATHS AND FILES
 TEMP_ROOT = "/tmp/"
@@ -57,7 +57,7 @@ SC2_HOME = "/home/aiarena/StarCraftII/"
 SC2_BINARY = os.path.join(SC2_HOME, "Versions/Base75689/SC2_x64")
 MAX_GAME_TIME = 60486
 MAX_REAL_TIME = 7200  # 2 hours in seconds
-MAX_FRAME_TIME = 1000
+MAX_FRAME_TIME = 40
 STRIKES = 10
 REALTIME = False
 VISUALIZE = False
@@ -65,6 +65,33 @@ VISUALIZE = False
 # MATCHES
 DISABLE_DEBUG = True
 VALIDATE_RACE = False
+
+def from_model_import_star(module: str):
+    # get a handle on the module
+    mdl = importlib.import_module(module)
+
+    # is there an __all__?  if so respect it
+    if "__all__" in mdl.__dict__:
+        names = mdl.__dict__["__all__"]
+    else:
+        # otherwise we import all names that don't begin with _
+        names = [x for x in mdl.__dict__ if not x.startswith("_")]
+
+    # now drag them in
+    globals().update({k: getattr(mdl, k) for k in names})
+
+# Override values a standard config template
+CONFIG_TEMPLATE = os.getenv('MODE')
+if CONFIG_TEMPLATE is not None:
+    module_to_import = f'arenaclient.configs.{CONFIG_TEMPLATE}_config_template'
+    try:
+        from_model_import_star(module_to_import)
+    except ImportError as e:
+        if e.name == module_to_import:
+            raise f"Could not locate a config template called {module_to_import}!"
+        else:
+            raise
+
 # Override values with environment specific config
 try:
     from config import *

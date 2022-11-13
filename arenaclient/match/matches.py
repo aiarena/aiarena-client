@@ -5,7 +5,7 @@ import time
 import zipfile
 from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Callable, Match
 import requests
 
 from ..match.aiarena_web_api import AiArenaWebApi
@@ -29,6 +29,7 @@ class ACStatus(Enum):
 class MatchSourceType(Enum):
     FILE = 1
     HTTP_API = 2
+    CUSTOM = 3
 
 
 class MatchSource:
@@ -56,7 +57,7 @@ class MatchSource:
             self.map_name = map_name
 
     def __init__(self, config: MatchSourceConfig):
-        pass
+        self._config = config
 
     def has_next(self) -> bool:
         raise NotImplementedError()
@@ -235,12 +236,12 @@ class HttpApiMatchSource(MatchSource):
 
         # Create downloadable data archives
         if not os.path.isdir(match.bot1.bot_data_directory):
-            os.mkdir(match.bot1.bot_data_directory)
+            os.makedirs(match.bot1.bot_data_directory, exist_ok=True)
         shutil.make_archive(
             os.path.join(self._config.TEMP_PATH, match.bot1.name + "-data"), "zip", match.bot1.bot_data_directory
         )
         if not os.path.isdir(match.bot2.bot_data_directory):
-            os.mkdir(match.bot2.bot_data_directory)
+            os.makedirs(match.bot2.bot_data_directory, exist_ok=True)
         shutil.make_archive(
             os.path.join(self._config.TEMP_PATH, match.bot2.name + "-data"), "zip", match.bot2.bot_data_directory
         )
@@ -275,6 +276,12 @@ class HttpApiMatchSource(MatchSource):
                     payload["bot1_avg_step_time"] = result.bot1_avg_frame
                 if result.bot2_avg_frame is not None:
                     payload["bot2_avg_step_time"] = result.bot2_avg_frame
+
+                if result.bot1_tags is not None:
+                    payload["bot1_tags"] = result.bot1_tags
+
+                if result.bot2_tags is not None:
+                    payload["bot2_tags"] = result.bot2_tags
 
                 if self._config.DEBUG_MODE:
                     self._utl.printout(json.dumps(payload))
@@ -330,10 +337,20 @@ class FileMatchSource(MatchSource):
         def __init__(self, config, match_id, file_line):
             match_values = file_line.split(FileMatchSource.MATCH_FILE_VALUE_SEPARATOR)
 
+            # map name is the last entry
             # the last character might be a new line, so rstrip just in case
-            map_name = match_values[6].rstrip()
-            bot1 = BotFactory.from_values(config, 1, match_values[0], match_values[1], match_values[2])
-            bot2 = BotFactory.from_values(config, 2, match_values[3], match_values[4], match_values[5])
+            map_name = match_values[-1].rstrip()
+
+            if len(match_values) == 7:
+                # no bot IDs present
+                bot1 = BotFactory.from_values(config, 1, match_values[0], match_values[1], match_values[2])
+                bot2 = BotFactory.from_values(config, 2, match_values[3], match_values[4], match_values[5])
+            elif len(match_values) == 9:
+                # bot IDs present
+                bot1 = BotFactory.from_values(config, match_values[0], match_values[1], match_values[2], match_values[3])
+                bot2 = BotFactory.from_values(config, match_values[4], match_values[5], match_values[6], match_values[7])
+            else:
+                raise Exception("Invalid number of matches file values. Expected either 7 or 9 values.")
             super().__init__(match_id, bot1, bot2, map_name)
 
     def __init__(self, global_config, config: FileMatchSourceConfig):
@@ -372,10 +389,6 @@ class FileMatchSource(MatchSource):
         return next_match
 
     def submit_result(self, match: FileMatch, result):
-        result_json = result.to_json()
-        filename = Path(self._results_file)
-        filename.touch(exist_ok=True)  # will create file, if it exists will do nothing
-
         # LOGS
         log_folder = os.path.join(self._config.BOT_LOGS_DIRECTORY)
         match_log_folder = os.path.join(log_folder, str(match.id))
@@ -386,10 +399,11 @@ class FileMatchSource(MatchSource):
         except:
             pass
         
-        os.mkdir(match_log_folder)
+        # os.mkdir(match_log_folder)
+        os.makedirs(match_log_folder, exist_ok=True)
         try:
-            os.mkdir(os.path.join(match_log_folder, str(match.bot1.name)))
-            os.mkdir(os.path.join(match_log_folder, str(match.bot2.name)))
+            os.makedirs(os.path.join(match_log_folder, str(match.bot1.name)), exist_ok=True)
+            os.makedirs(os.path.join(match_log_folder, str(match.bot2.name)), exist_ok=True)
         except FileExistsError:
             pass
 
@@ -409,18 +423,18 @@ class FileMatchSource(MatchSource):
         else:
             Path(bot2_error_log_tmp).touch()
 
-        with open(self._results_file, "w+") as results_log:
-            try:
-                results = json.loads(results_log.read())
-                result_list = results['Results']
-                result_list.append(result_json)
-                results_log.seek(0)
-                json_object = dict({"Results": result_list})
-                results_log.write(json.dumps(json_object, indent=4))
-            except:
-                results_log.seek(0)
-                json_object = dict({"Results": [result_json]})
-                results_log.write(json.dumps(json_object, indent=4))
+        self._ensure_results_file_exists()
+
+        with open(self._results_file) as results_log:
+            content = results_log.read()
+            results = json.loads(content)
+
+        result_list = results['Results']
+        result_list.append(result.to_json())
+        json_object = dict({"Results": result_list})
+
+        with open(self._results_file, "w") as results_log:
+            json.dump(json_object, results_log)
 
         # remove the played match from the match list
         # with open(self._matches_file, "r") as match_list:
@@ -431,6 +445,36 @@ class FileMatchSource(MatchSource):
         # with open(self._matches_file, "w") as match_list:
         #     match_list.writelines(lines)
 
+    def _ensure_results_file_exists(self):
+        if not os.path.exists(self._results_file):
+            with open(self._results_file, "w") as results_log:
+                json.dump({"Results": []}, results_log)  # create empty results file
+
+
+class CustomMatchSource(MatchSource):
+    """
+    Represents a source of matches implemented by the user of the arena client
+    """
+
+    class CustomMatchSourceConfig(MatchSource.MatchSourceConfig):
+        def __init__(self, has_next: Callable, next_match: Callable, submit_result: Callable):
+            super().__init__(MatchSourceType.CUSTOM)
+            self.has_next = has_next
+            self.next_match = next_match
+            self.submit_result = submit_result
+
+    def __init__(self, config: CustomMatchSourceConfig, global_config):
+        super().__init__(config)
+        self._global_config = global_config
+
+    def has_next(self) -> bool:
+        return self._config.has_next()
+
+    def next_match(self) -> Match:
+        return self._config.next_match()
+
+    def submit_result(self, match: Match, result):
+        return self._config.submit_result(match, result)
 
 class MatchSourceFactory:
     """
@@ -443,5 +487,7 @@ class MatchSourceFactory:
             return FileMatchSource(config, config.MATCH_SOURCE_CONFIG)
         elif config.MATCH_SOURCE_CONFIG.TYPE == MatchSourceType.HTTP_API:
             return HttpApiMatchSource(config.MATCH_SOURCE_CONFIG, config)
+        elif config.MATCH_SOURCE_CONFIG.TYPE == MatchSourceType.CUSTOM:
+            return CustomMatchSource(config.MATCH_SOURCE_CONFIG, config)
         else:
             raise NotImplementedError()

@@ -1,4 +1,5 @@
 import hashlib
+import pathlib
 import stat
 
 from loguru import logger
@@ -112,6 +113,7 @@ class Bot:
                 )
 
             if self.get_bot_data_file():
+                pathlib.Path(self.bot_data_directory).mkdir(mode=0o770, exist_ok=True)
                 if self._config.SECURE_MODE:
                     import pwd
                     user = pwd.getpwnam(self.run_as_user)
@@ -203,17 +205,17 @@ class Bot:
         try:
             os.stat(os.path.join(self.bot_directory, "data"))
         except OSError:
-            os.mkdir(os.path.join(self.bot_directory, "data"))
+            os.makedirs(os.path.join(self.bot_directory, "data"), exist_ok=True)
         try:
             os.stat(self._config.REPLAYS_DIRECTORY)
         except OSError:
-            os.mkdir(self._config.REPLAYS_DIRECTORY)
+            os.makedirs(self._config.REPLAYS_DIRECTORY, exist_ok=True)
 
         if self._config.RUN_LOCAL:
             try:
                 os.stat(self._config.BOT_LOGS_DIRECTORY)
             except OSError:
-                os.mkdir(self._config.BOT_LOGS_DIRECTORY)
+                os.makedirs(self._config.BOT_LOGS_DIRECTORY, exist_ok=True)
 
         try:
             if self._config.SYSTEM == "Linux":
@@ -228,6 +230,7 @@ class Bot:
                         os.setgid(gid)
                         os.setuid(uid)
                         os.setpgrp()
+                        os.umask(0o007)
                     return demote_function
 
                 with open(os.path.join(self.bot_directory, "data", "stderr.log"), "w+") as out:

@@ -1,0 +1,74 @@
+"""
+This is a config template for local play.
+To use it, set the MODE environment variable to 'local'.
+"""
+import logging
+import os
+import platform
+from urllib import parse
+from ..match.matches import FileMatchSource
+
+# GENERAL
+ARENA_CLIENT_ID = "aiarenaclient_000"
+API_TOKEN = "12345"
+ROUNDS_PER_RUN = 5
+USE_PID_CHECK = False
+DEBUG_MODE = False
+PYTHON = "python3.7"
+RUN_LOCAL = True
+CLEANUP_BETWEEN_ROUNDS = False
+SYSTEM = platform.system()
+SC2_PROXY = {"HOST": "127.0.0.1", "PORT": 8765}
+
+# Secure mode will ignore the BOTS_DIRECTORY config setting and instead run each bot in their home directory.
+SECURE_MODE = False
+# Specify the users (if any) to run the bots as.
+RUN_PLAYER1_AS_USER = None
+RUN_PLAYER2_AS_USER = None
+
+
+# LOGGING
+LOGGING_HANDLER = logging.FileHandler("../supervisor.log", "a+")
+LOGGING_LEVEL = logging.DEBUG
+
+# PATHS AND FILES
+TEMP_PATH = "/tmp/aiarena/"
+LOCAL_PATH = os.path.dirname(__file__)
+WORKING_DIRECTORY = LOCAL_PATH  # same for now
+LOG_FILE = os.path.join(WORKING_DIRECTORY, "client.log")
+REPLAYS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "replays")
+BOT_LOGS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "logs")
+BOTS_DIRECTORY = os.path.join(WORKING_DIRECTORY, "bots")
+VISUALIZE = False
+
+MATCH_SOURCE_CONFIG = FileMatchSource.FileMatchSourceConfig(		
+    matches_file=os.path.join(WORKING_DIRECTORY, "matches"),		
+    results_file=os.path.join(WORKING_DIRECTORY, "results")		
+)
+
+# WEBSITE
+BASE_WEBSITE_URL = "https://aiarena.net"
+API_MATCHES_URL = parse.urljoin(BASE_WEBSITE_URL, "/api/arenaclient/matches/")
+API_RESULTS_URL = parse.urljoin(BASE_WEBSITE_URL, "/api/arenaclient/results/")
+
+# STARCRAFT
+SC2_HOME = "/home/aiarena/StarCraftII/"
+SC2_BINARY = os.path.join(SC2_HOME, "Versions/Base75689/SC2_x64")
+MAX_GAME_TIME = 60486
+MAX_REAL_TIME = 7200  # 2 hours in seconds
+MAX_FRAME_TIME = 40
+STRIKES = 10
+REALTIME = False
+
+# MATCHES
+DISABLE_DEBUG = True
+VALIDATE_RACE = False
+
+# Override values with environment specific config
+try:
+    from local_config import *
+except ImportError as e:
+    if e.name == "local_config":
+        pass
+    else:
+        raise

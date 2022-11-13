@@ -8,7 +8,7 @@ from ..utl import Utl
 
 class AiArenaWebApi:
     """
-    Match class to handle the Ai-Arena API
+    Match class to handle the AI Arena API
     """
     API_MATCHES_ENDPOINT = "/api/arenaclient/matches/"
     API_RESULTS_ENDPOINT = "/api/arenaclient/results/"

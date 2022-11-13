@@ -140,7 +140,7 @@ class Utl:
     @staticmethod
     def move_pids(pids):
         """
-        Move the pid/pids to another process group to avoid the bot killing the ai-arena client when closing.
+        Move the pid/pids to another process group to avoid the bot killing the aiarena client when closing.
         (CPP API specific)
 
         :param pids:
@@ -186,13 +186,19 @@ class Utl:
     def set_secure_mode_permissions(self, uid, gid, directory):
         self.printout(f"CHOWNing the following paths to uid {uid} gid {gid}")
         for root, dirs, files in os.walk(directory):
+            path = root
+            self.printout(path)
+            os.chmod(path, mode=0o770)
+            os.chown(path, uid=uid, gid=gid)
             for d in dirs:
                 path = os.path.join(root, d)
                 self.printout(path)
+                os.chmod(path, mode=0o770)
                 os.chown(path, uid=uid, gid=gid)
             for f in files:
                 path = os.path.join(root, f)
                 self.printout(path)
+                os.chmod(path, mode=0o770)
                 os.chown(path, uid=uid, gid=gid)
 
     def clean_dir(self, directory):
