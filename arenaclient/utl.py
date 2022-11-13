@@ -208,3 +208,35 @@ class Utl:
                 os.unlink(file_path)
             elif os.path.isdir(file_path):
                 shutil.rmtree(file_path)
+
+
+# How to process SIGTERM signal gracefully?
+# https://stackoverflow.com/questions/18499497/how-to-process-sigterm-signal-gracefully
+import signal
+import time
+
+
+class KillSignalDetector:
+    signal_received = False
+    signal_name = "none"
+
+    def __init__(self):
+        signal.signal(signal.SIGINT, self.exit_gracefully_sigint)
+        signal.signal(signal.SIGTERM, self.exit_gracefully_sigterm)
+
+    def exit_gracefully_sigint(self, *args):
+        self.signal_name = "SIGINT"
+        self.signal_received = True
+
+    def exit_gracefully_sigterm(self, *args):
+        self.signal_name = "SIGTERM"
+        self.signal_received = True
+
+
+# if __name__ == '__main__':
+#     killer = GracefulKiller()
+#     while not killer.kill_now:
+#         time.sleep(1)
+#         print("doing something in a loop ...")
+#
+#     print("End of the program. I was killed gracefully :)")

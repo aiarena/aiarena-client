@@ -13,7 +13,7 @@ import hashlib
 import aiohttp
 import psutil
 from .match.matches import MatchSourceFactory, MatchSource
-from .utl import Utl
+from .utl import Utl, KillSignalDetector
 from .match.result import Result
 
 
@@ -265,6 +265,8 @@ class Client:
         bot2_process = None
         pids = []
         try:
+            kill_signal_detector = KillSignalDetector()  # for exiting gracefully when terminated
+
             self._ws, self._session = await connect(address=self.address, headers=self.headers)
 
             if await self.connected():
@@ -442,6 +444,11 @@ class Client:
                     pass
 
             if not result.has_result():
+                # todo: implemented now simply to log for testing.
+                # todo: if this works, don't submit the result.
+                if kill_signal_detector.signal_received:
+                    self._utl.printout(f"{kill_signal_detector.signal_name} signal received.")
+
                 result.parse_result(init_error(match))
             self._utl.pid_cleanup(pids)
             return result
