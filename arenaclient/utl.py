@@ -140,7 +140,7 @@ class Utl:
     @staticmethod
     def move_pids(pids):
         """
-        Move the pid/pids to another process group to avoid the bot killing the ai-arena client when closing.
+        Move the pid/pids to another process group to avoid the bot killing the aiarena client when closing.
         (CPP API specific)
 
         :param pids:
