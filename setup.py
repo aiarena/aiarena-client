@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='arenaclient',
-    version='0.1.24',
+    version='0.2.2',
     packages=[
         "arenaclient",
         "arenaclient/configs",
@@ -19,6 +19,6 @@ setup(
         "Brotli==1.0.9",
         "cchardet==2.1.7",
         "loguru==0.6.0",
-        "rust_arenaclient==0.1.20",
+        "rust_arenaclient==0.2.2",
     ]
 )

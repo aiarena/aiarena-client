@@ -5,7 +5,7 @@ import time
 import zipfile
 from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Callable, Match
 import requests
 
 from ..match.aiarena_web_api import AiArenaWebApi
@@ -16,6 +16,7 @@ from ..utl import Utl
 class MatchSourceType(Enum):
     FILE = 1
     HTTP_API = 2
+    CUSTOM = 3
 
 
 class MatchSource:
@@ -43,7 +44,7 @@ class MatchSource:
             self.map_name = map_name
 
     def __init__(self, config: MatchSourceConfig):
-        pass
+        self._config = config
 
     def has_next(self) -> bool:
         raise NotImplementedError()
@@ -418,6 +419,31 @@ class FileMatchSource(MatchSource):
                 json.dump({"Results": []}, results_log)  # create empty results file
 
 
+class CustomMatchSource(MatchSource):
+    """
+    Represents a source of matches implemented by the user of the arena client
+    """
+
+    class CustomMatchSourceConfig(MatchSource.MatchSourceConfig):
+        def __init__(self, has_next: Callable, next_match: Callable, submit_result: Callable):
+            super().__init__(MatchSourceType.CUSTOM)
+            self.has_next = has_next
+            self.next_match = next_match
+            self.submit_result = submit_result
+
+    def __init__(self, config: CustomMatchSourceConfig, global_config):
+        super().__init__(config)
+        self._global_config = global_config
+
+    def has_next(self) -> bool:
+        return self._config.has_next()
+
+    def next_match(self) -> Match:
+        return self._config.next_match()
+
+    def submit_result(self, match: Match, result):
+        return self._config.submit_result(match, result)
+
 class MatchSourceFactory:
     """
     Builds MatchSources
@@ -429,5 +455,7 @@ class MatchSourceFactory:
             return FileMatchSource(config, config.MATCH_SOURCE_CONFIG)
         elif config.MATCH_SOURCE_CONFIG.TYPE == MatchSourceType.HTTP_API:
             return HttpApiMatchSource(config.MATCH_SOURCE_CONFIG, config)
+        elif config.MATCH_SOURCE_CONFIG.TYPE == MatchSourceType.CUSTOM:
+            return CustomMatchSource(config.MATCH_SOURCE_CONFIG, config)
         else:
             raise NotImplementedError()

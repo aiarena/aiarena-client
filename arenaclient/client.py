@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import json
+from aiohttp import ClientTimeout
 from loguru import logger
 import os
 import shutil
@@ -50,7 +51,7 @@ async def connect(address: str, headers=None):
     for i in range(60):
         await asyncio.sleep(1)
         try:
-            session = aiohttp.ClientSession()
+            session = aiohttp.ClientSession(timeout=ClientTimeout(connect=20, sock_read=120 * 60, sock_connect=20))
             ws = await session.ws_connect(address, headers=headers)
             logger.debug("Websocket connection ready")
             return ws, session
@@ -58,6 +59,11 @@ async def connect(address: str, headers=None):
             await session.close()
             if i > 15:
                 logger.debug("Connection refused (startup not complete (yet))")
+                return None, None
+        except asyncio.TimeoutError:
+            await session.close()
+            if i > 15:
+                logger.debug("Connection timed out (startup not complete (yet))")
                 return None, None
 
     return ws, session
@@ -540,4 +546,3 @@ class Client:
                     self.cleanup()
             except:
                 pass  # ensure we don't skip the shutdown
-

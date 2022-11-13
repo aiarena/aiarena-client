@@ -10,7 +10,7 @@ from arenaclient.match.matches import MatchSourceType
 from arenaclient.utl import Utl
 from pathlib import Path
 
-logging.getLogger().setLevel(logging.DEBUG)  # Logging needs to be initialized before importing rust_ac
+logging.getLogger().setLevel(config.LOGGING_LEVEL)  # Logging needs to be initialized before importing rust_ac
 logging.info("")
 from rust_ac import Server
 
