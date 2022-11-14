@@ -10,7 +10,7 @@ setup(
     ],
     include_package_data=True,
     install_requires=[
-        "rust_arenaclient==0.2.2",
+        "rust_arenaclient==0.2.4",
         "requests==2.25.1",
         "aiohttp==3.7.4",
         "termcolor==1.1.0",
