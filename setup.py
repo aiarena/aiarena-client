@@ -13,7 +13,7 @@ setup(
         "rust_arenaclient==0.2.2",
         "requests==2.25.1",
         "aiohttp==3.7.4",
-        "termcolor==1.1.0",
+        "termcolor==2.1.1",
         "psutil==5.8.0",
         "typing==3.7.4.3",
         "aiodns==3.0.0",
