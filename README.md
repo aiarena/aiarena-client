@@ -3,7 +3,7 @@
 ## Playing local bot matches
 
 ### Just want to run some local bot matches without installing everything?
-Try the [aiarena-docker image](https://github.com/aiarena/aiarena-docker) instead.
+Use the [local-play-bootstrap](https://github.com/aiarena/local-play-bootstrap) instead.
 
 ### Bootstrapping this repo for windows (more complex, more control)
 
