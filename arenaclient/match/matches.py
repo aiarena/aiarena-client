@@ -7,7 +7,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional, Callable, Match
 
-from ..match.aiarena_web_api import AiArenaWebACApi
+from ..match.aiarena_web_api import AiArenaWebAcApiFactory
 from ..match.bot import Bot, BotFactory
 from ..utl import Utl
 
@@ -61,10 +61,13 @@ class HttpApiMatchSource(MatchSource):
     """
 
     class HttpApiMatchSourceConfig(MatchSource.MatchSourceConfig):
-        def __init__(self, api_url, api_token):
+        def __init__(self, api_url, api_token, ac_api_class='arenaclient.match.aiarena_web_api.AiArenaWebACApi'):
+            """The default ac_api_class referenced here is the default one for production use,
+            but can be swapped out for testing purposes"""
             super().__init__(MatchSourceType.HTTP_API)
             self.API_URL = api_url
             self.API_TOKEN = api_token
+            self.AC_API_CLASS = ac_api_class
 
     class HttpApiMatch(MatchSource.Match):
         """
@@ -428,6 +431,7 @@ class CustomMatchSource(MatchSource):
     def submit_result(self, match: Match, result):
         return self._config.submit_result(match, result)
 
+
 class MatchSourceFactory:
     """
     Builds MatchSources
@@ -438,7 +442,7 @@ class MatchSourceFactory:
         if config.MATCH_SOURCE_CONFIG.TYPE == MatchSourceType.FILE:
             return FileMatchSource(config, config.MATCH_SOURCE_CONFIG)
         elif config.MATCH_SOURCE_CONFIG.TYPE == MatchSourceType.HTTP_API:
-            ac_api = AiArenaWebACApi(config.API_URL, config.API_TOKEN, config)
+            ac_api = AiArenaWebAcApiFactory.build_api(config.MATCH_SOURCE_CONFIG.AC_API_CLASS, config.MATCH_SOURCE_CONFIG.API_URL, config.MATCH_SOURCE_CONFIG.API_TOKEN, config)
             return HttpApiMatchSource(config.MATCH_SOURCE_CONFIG, config, ac_api)
         elif config.MATCH_SOURCE_CONFIG.TYPE == MatchSourceType.CUSTOM:
             return CustomMatchSource(config.MATCH_SOURCE_CONFIG, config)

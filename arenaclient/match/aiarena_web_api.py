@@ -146,3 +146,28 @@ class AiArenaWebACApi(BaseAiArenaWebACApi):
             bot_data_zip.write(r.content)
 
 
+class AiArenaWebAcApiFactory:
+    """
+    Builds a AiArenaWebAcApi
+    """
+
+    @staticmethod
+    def build_api(ac_api_class, api_url, api_token, global_config) -> BaseAiArenaWebACApi:
+        ac_api_class_ref = AiArenaWebAcApiFactory._str_to_class_ref(ac_api_class)
+        assert issubclass(ac_api_class_ref, BaseAiArenaWebACApi), \
+            f"Type {str(ac_api_class_ref)} does not implement BaseAiArenaWebACApi"
+        return ac_api_class_ref(api_url, api_token, global_config)
+
+    @staticmethod
+    def _str_to_class_ref(ac_api_class):
+        """Return a class instance from a string reference"""
+        module_name, class_name = ac_api_class.rsplit('.', 1)
+        try:
+            module_ = importlib.import_module(module_name)
+            try:
+                class_ = getattr(module_, class_name)
+            except AttributeError:
+                raise 'Class does not exist'
+        except ImportError:
+            raise 'Module does not exist'
+        return class_ or None
