@@ -6,7 +6,6 @@ import zipfile
 from enum import Enum
 from pathlib import Path
 from typing import Optional, Callable, Match
-import requests
 
 from ..match.aiarena_web_api import AiArenaWebACApi
 from ..match.bot import Bot, BotFactory
@@ -75,9 +74,9 @@ class HttpApiMatchSource(MatchSource):
         def __init__(self, match_id, bot1: Bot, bot2: Bot, map_name):
             super().__init__(match_id, bot1, bot2, map_name)
 
-    def __init__(self, config: HttpApiMatchSourceConfig, global_config):
+    def __init__(self, config: HttpApiMatchSourceConfig, global_config, ac_api):
         super().__init__(config)
-        self._api = AiArenaWebACApi(config.API_URL, config.API_TOKEN, global_config)
+        self._api = ac_api
         self._config = global_config
         self._utl = Utl(global_config)
 
@@ -108,24 +107,19 @@ class HttpApiMatchSource(MatchSource):
         map_url = next_match_data["map"]["file"]
         self._utl.printout(f"Downloading map {map_name}")
 
-        try:
-            r = requests.get(map_url)
-        except Exception as download_exception:
-            self._utl.printout(f"ERROR: Failed to download map {map_name} at URL {map_url}. Error {download_exception}")
+        map_path = os.path.join(self._config.SC2_HOME, "maps", f"{map_name}.SC2Map")
+        if not self._api.download_map(map_url, map_path):
+            self._utl.printout(f"ERROR: Map download failed. Sleeping...")
             time.sleep(30)
             return None
 
-        map_path = os.path.join(self._config.SC2_HOME, "maps", f"{map_name}.SC2Map")
-        with open(map_path, "wb") as map_file:
-            map_file.write(r.content)
-
         bot_1 = BotFactory.from_api_data(self._config, next_match_data["bot1"], 1)
-        if not bot_1.get_bot_file():
+        if not bot_1.get_bot_file(self._api):
             time.sleep(30)
             return None
 
         bot_2 = BotFactory.from_api_data(self._config, next_match_data["bot2"], 2)
-        if not bot_2.get_bot_file():
+        if not bot_2.get_bot_file(self._api):
             time.sleep(30)
             return None
 
@@ -444,7 +438,8 @@ class MatchSourceFactory:
         if config.MATCH_SOURCE_CONFIG.TYPE == MatchSourceType.FILE:
             return FileMatchSource(config, config.MATCH_SOURCE_CONFIG)
         elif config.MATCH_SOURCE_CONFIG.TYPE == MatchSourceType.HTTP_API:
-            return HttpApiMatchSource(config.MATCH_SOURCE_CONFIG, config)
+            ac_api = AiArenaWebACApi(config.API_URL, config.API_TOKEN, config)
+            return HttpApiMatchSource(config.MATCH_SOURCE_CONFIG, config, ac_api)
         elif config.MATCH_SOURCE_CONFIG.TYPE == MatchSourceType.CUSTOM:
             return CustomMatchSource(config.MATCH_SOURCE_CONFIG, config)
         else:

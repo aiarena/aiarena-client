@@ -5,7 +5,8 @@ import stat
 from loguru import logger
 import os
 import zipfile
-import requests
+
+from .aiarena_web_api import BaseAiArenaWebACApi
 from ..utl import Utl
 import subprocess
 
@@ -75,7 +76,7 @@ class Bot:
     def SECURE_MAPPING(self):
         return {1: self._config.SECURE_PLAYER1_USERNAME, 2: self._config.SECURE_PLAYER2_USERNAME}
 
-    def get_bot_file(self):
+    def get_bot_file(self, api: BaseAiArenaWebACApi):
         """
         Download the bot's folder and extracts it to a specified location.
 
@@ -87,12 +88,9 @@ class Bot:
 
         self._utl.printout(f"Downloading bot {self.name}")
         # Download bot and save to .zip
-        r = requests.get(
-            self.bot_zip, headers={"Authorization": "Token " + self._config.MATCH_SOURCE_CONFIG.API_TOKEN}
-        )
         bot_download_path = os.path.join(self._config.TEMP_PATH, self.name + ".zip")
-        with open(bot_download_path, "wb") as bot_zip:
-            bot_zip.write(r.content)
+        api.download_bot_zip(self.bot_zip, bot_download_path)
+
         # Load bot from .zip to calculate md5
         with open(bot_download_path, "rb") as bot_zip:
             calculated_md5 = hashlib.md5(self._utl.file_as_bytes(bot_zip)).hexdigest()
@@ -112,7 +110,7 @@ class Bot:
                     stat.S_IRWXU | stat.S_IRWXG,  # | stat.S_IROTH,  - no public permissions
                 )
 
-            if self.get_bot_data_file():
+            if self.get_bot_data_file(api):
                 pathlib.Path(self.bot_data_directory).mkdir(mode=0o770, exist_ok=True)
                 if self._config.SECURE_MODE:
                     import pwd
@@ -128,7 +126,7 @@ class Bot:
             return False
 
     # Get bot data
-    def get_bot_data_file(self):
+    def get_bot_data_file(self, api):
         """
         Download bot's personal data folder and extract to specified location.
 
@@ -138,12 +136,8 @@ class Bot:
             return True
         self._utl.printout(f"Downloading bot data for {self.name}")
         # Download bot data and save to .zip
-        r = requests.get(
-            self.bot_data, headers={"Authorization": "Token " + self._config.MATCH_SOURCE_CONFIG.API_TOKEN}
-        )
         bot_data_path = os.path.join(self._config.TEMP_PATH, self.name + "-data.zip")
-        with open(bot_data_path, "wb") as bot_data_zip:
-            bot_data_zip.write(r.content)
+        api.download_bot_data(self.bot_data, bot_data_path)
         with open(bot_data_path, "rb") as bot_data_zip:
             calculated_md5 = hashlib.md5(self._utl.file_as_bytes(bot_data_zip)).hexdigest()
         if self.bot_data_md5hash == calculated_md5:
