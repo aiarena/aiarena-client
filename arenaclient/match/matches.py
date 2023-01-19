@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Optional, Callable, Match
 import requests
 
-from ..match.aiarena_web_api import AiArenaWebApi
+from ..match.aiarena_web_api import AiArenaWebACApi
 from ..match.bot import Bot, BotFactory
 from ..utl import Utl
 
@@ -77,7 +77,7 @@ class HttpApiMatchSource(MatchSource):
 
     def __init__(self, config: HttpApiMatchSourceConfig, global_config):
         super().__init__(config)
-        self._api = AiArenaWebApi(config.API_URL, config.API_TOKEN, global_config)
+        self._api = AiArenaWebACApi(config.API_URL, config.API_TOKEN, global_config)
         self._config = global_config
         self._utl = Utl(global_config)
 
@@ -221,24 +221,16 @@ class HttpApiMatchSource(MatchSource):
                 self._utl.printout(
                     f"Attempting to submit result. Attempt number: {attempt_number}."
                 )
-                file_list = {
-                    "bot1_data": open(
-                        os.path.join(self._config.TEMP_PATH, f"{match.bot1.name}-data.zip"), "rb"
-                    ),
-                    "bot2_data": open(
-                        os.path.join(self._config.TEMP_PATH, f"{match.bot2.name}-data.zip"), "rb"
-                    ),
-                    "bot1_log": open(
-                        os.path.join(self._config.TEMP_PATH, f"{match.bot1.name}-error.zip"), "rb"
-                    ),
-                    "bot2_log": open(
-                        os.path.join(self._config.TEMP_PATH, f"{match.bot2.name}-error.zip"), "rb"
-                    ),
-                    "arenaclient_log": open(arenaclient_log_zip, "rb"),
-                }
+                bot1_data = open(os.path.join(self._config.TEMP_PATH, f"{match.bot1.name}-data.zip"), "rb")
+                bot2_data = open(os.path.join(self._config.TEMP_PATH, f"{match.bot2.name}-data.zip"), "rb")
+                bot1_log = open(os.path.join(self._config.TEMP_PATH, f"{match.bot1.name}-error.zip"), "rb")
+                bot2_log = open(os.path.join(self._config.TEMP_PATH, f"{match.bot2.name}-error.zip"), "rb")
+                arenaclient_log = open(arenaclient_log_zip, "rb")
 
                 if os.path.isfile(replay_file_path):
-                    file_list["replay_file"] = open(replay_file_path, "rb")
+                    replay_file_stream = open(replay_file_path, "rb")
+                else:
+                    replay_file_stream = None
 
                 payload = {"type": result.result, "match": int(match.id), "game_steps": result.game_time}
 
@@ -256,12 +248,10 @@ class HttpApiMatchSource(MatchSource):
                 if self._config.DEBUG_MODE:
                     self._utl.printout(json.dumps(payload))
 
-                post = requests.post(
-                    self._config.API_RESULTS_URL,
-                    files=file_list,
-                    data=payload,
-                    headers={"Authorization": "Token " + self._config.MATCH_SOURCE_CONFIG.API_TOKEN},
-                )
+                post = self._api.submit_result(result.result, int(match.id), result.game_time,
+                                               bot1_data, bot2_data,
+                                               bot1_log, bot2_log,
+                                               arenaclient_log, replay_file_stream)
                 if post is None:
                     self._utl.printout("ERROR: Result submission failed. 'post' was None.")
                     attempt_number += 1
