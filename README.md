@@ -1,5 +1,8 @@
 # aiarena-client
 
+## ARCHIVED
+This arena client has been superseded by the [sc2-ai-match-controller](https://github.com/aiarena/sc2-ai-match-controller)
+
 ## Playing local bot matches
 
 ### Just want to run some local bot matches without installing everything?
