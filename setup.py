@@ -10,7 +10,6 @@ setup(
     ],
     include_package_data=True,
     install_requires=[
-        "rust_arenaclient==0.2.2",
         "requests==2.25.1",
         "aiohttp==3.7.4",
         "termcolor==1.1.0",
@@ -20,5 +19,6 @@ setup(
         "Brotli==1.0.9",
         "cchardet==2.1.7",
         "loguru==0.6.0",
+        "rust_arenaclient==0.2.2",
     ]
 )
