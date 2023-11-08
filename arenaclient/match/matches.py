@@ -11,6 +11,19 @@ import requests
 from ..match.aiarena_web_api import AiArenaWebApi
 from ..match.bot import Bot, BotFactory
 from ..utl import Utl
+from loguru import logger
+
+
+class ACStatus(Enum):
+    IDLE = 1
+    STARTING_GAME = 2
+    PLAYING_GAME = 3
+    SUBMITTING_RESULT = 4
+
+    #  this is to keep the ENUM keys in high case, while delivering lower case as status string
+    @property
+    def name(self):
+        return super().name.lower()
 
 
 class MatchSourceType(Enum):
@@ -55,7 +68,6 @@ class MatchSource:
     def submit_result(self, match: Match, result):
         raise NotImplementedError()
 
-
 class HttpApiMatchSource(MatchSource):
     """
     Represents a source of matches originating from the AI Arena Website HTTP API
@@ -81,11 +93,27 @@ class HttpApiMatchSource(MatchSource):
         self._config = global_config
         self._utl = Utl(global_config)
 
+    def report_status(self, status_enum: ACStatus):
+        status = status_enum.name
+        logger.info(status)
+        payload = {"status": status}
+
+        post = requests.post(
+                self._api.API_SET_STATUS_URL,
+                data=payload,
+                headers={"Authorization": "Token " + self._api.API_TOKEN},
+        )
+        if post is None:
+            logger.error("ERROR: Status submission failed. 'post' was None.")
+        else:
+            logger.info(status + " - Status Submitted")
+
     def has_next(self) -> bool:
         return True  # always return true
 
     def next_match(self) -> Optional[HttpApiMatch]:
         next_match_data = self._api.get_match()
+        self.report_status(status_enum=ACStatus.STARTING_GAME)
 
         if next_match_data is None:
             time.sleep(30)
@@ -139,6 +167,8 @@ class HttpApiMatchSource(MatchSource):
         """
         # quick hack to avoid these going uninitialized
         # todo: remove these and actually fix the issue
+
+        self.report_status(status_enum=ACStatus.SUBMITTING_RESULT)
 
         self._utl.printout(str(result.result))
         replay_file: str = ""
@@ -277,6 +307,8 @@ class HttpApiMatchSource(MatchSource):
                     break
             except ConnectionError:
                 self._utl.printout(f"ERROR: Result submission failed. Connection to website failed.")
+
+        self.report_status(status_enum=ACStatus.IDLE)
 
 
 class FileMatchSource(MatchSource):
